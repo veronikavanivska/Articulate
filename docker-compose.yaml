@@ -1,0 +1,14 @@
+services:
+  user:
+    build:
+      context: ./user
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8080"
+  auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    ports:
+      - "8889:8080"
+
