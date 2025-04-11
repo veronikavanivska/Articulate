@@ -1,14 +1,31 @@
 services:
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8080"
+    networks:
+      - articulate
+      -
   user:
     build:
       context: ./user
       dockerfile: Dockerfile
     ports:
-      - "8888:8080"
+      - "8887:8080"
+    networks:
+      - articulate
+
   auth:
     build:
       context: ./auth
       dockerfile: Dockerfile
     ports:
       - "8889:8080"
+    networks:
+      - articulate
 
+networks:
+  articulate:
+    driver: bridge
