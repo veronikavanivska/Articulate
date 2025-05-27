@@ -11,12 +11,12 @@ COPY src ./src
 RUN --mount=type=cache,id=maven-cache,target=/root/.m2/repository \
     mvn clean package -DskipTests -B
 
-FROM openjdk:17-alpine
+FROM openjdk:17-slim
 
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
-
+COPY --from=build /app/target target
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

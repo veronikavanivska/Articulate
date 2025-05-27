@@ -1,13 +1,13 @@
 services:
-  api-gateway:
-    build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
-    ports:
-      - "8888:8080"
-    networks:
-      - articulate
-      -
+#  api-gateway:
+#    build:
+#      context: ./api-gateway
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8888:8080"
+#    networks:
+#      - articulate
+#
   user:
     build:
       context: ./user
@@ -17,15 +17,37 @@ services:
     networks:
       - articulate
 
-  auth:
-    build:
-      context: ./auth
-      dockerfile: Dockerfile
+#
+#  auth:
+#    build:
+#      context: ./auth
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8889:8080"
+#    networks:
+#      - articulate
+
+  user-postgres:
+    image: postgres
+    container_name: "user-postgres-articulate"
     ports:
-      - "8889:8080"
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345678
+      - POSTGRES_DB=users
     networks:
       - articulate
+      - user-postgres-n
+    volumes:
+      - user_service_postgres:/var/lib/postgresql/data
+
+
+volumes:
+  user_service_postgres:
 
 networks:
   articulate:
+    driver: bridge
+  user-postgres-n:
     driver: bridge
