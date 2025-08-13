@@ -1,19 +1,21 @@
-package org.example.user.Entity;
+package org.example.auth.entities;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 @Entity
 @Data
 @Table(name = "roles")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Role {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long roleId;
+    private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(unique = true, nullable = false)
-    private RoleTypes name;
+    private RoleName name;
 
+    private String description;
 }
