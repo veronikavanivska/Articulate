@@ -1,0 +1,64 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+package com.example.generated;
+
+option java_multiple_files = true;
+
+message RegistrationRequest{
+  string email = 1;
+  string password = 2;
+}
+
+message LoginRequest{
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse{
+  string token = 1;
+  ApiResponse apiResponse= 2;
+}
+
+message DeleteRequest{
+  uint32 userId = 1;
+}
+// do i need the userId for delete my user? TODO:think about it
+
+message ChangePasswordRequest{
+  string password = 1;
+  string newPassword = 2;
+}
+
+message ChangeEmailRequest{
+  string newEmail = 1;
+}
+
+message AssignRoleRequest{
+  uint32 userId =1 ;
+  string role_name = 2;
+}
+
+message RevokeRoleRequest{
+  uint32 userId =1 ;
+  string role_name = 2;
+}
+
+message DisableUserRequest {
+  uint32 user_id = 1;
+}
+
+message ApiResponse{
+  uint32 code = 1;
+  string message = 2;
+}
+
+service AuthService{
+  rpc register(RegistrationRequest) returns (ApiResponse);
+  rpc login(LoginRequest) returns (LoginResponse);
+  rpc changePassword(ChangePasswordRequest) returns (ApiResponse);
+  rpc changeEmail(ChangeEmailRequest) returns (ApiResponse);
+  rpc deleteUser(DeleteRequest) returns (ApiResponse);
+  rpc assignRole(AssignRoleRequest) returns (ApiResponse);
+  rpc revokeRole(RevokeRoleRequest) returns (ApiResponse);
+  rpc disableUser(DisableUserRequest) returns (ApiResponse);
+}
