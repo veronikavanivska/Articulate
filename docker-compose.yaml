@@ -1,12 +1,12 @@
 services:
-#  api-gateway:
-#    build:
-#      context: ./api-gateway
-#      dockerfile: Dockerfile
-#    ports:
-#      - "8888:8080"
-#    networks:
-#      - articulate
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8080"
+    networks:
+      - articulate
 ##
 #  user:
 #    build:
@@ -23,7 +23,6 @@ services:
       context: ./auth
       dockerfile: Dockerfile
     ports:
-      - "8889:8080"
       - "9091:9090"
     networks:
       - articulate

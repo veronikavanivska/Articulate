@@ -5,7 +5,7 @@ WORKDIR /app
 COPY pom.xml .
 
 RUN --mount=type=cache,id=maven-cache,target=/root/.m2/repository \
-    mvn dependency:go-offline -B \
+    mvn dependency:go-offline -B
 
 COPY src ./src
 
