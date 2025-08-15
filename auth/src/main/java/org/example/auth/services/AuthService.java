@@ -14,10 +14,8 @@ import org.example.auth.repositories.RoleRepository;
 import org.example.auth.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 @Service
 public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
@@ -99,6 +97,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
             responseObserver.onError(Status.PERMISSION_DENIED.withDescription("User is disabled").asRuntimeException());
             return;
         }
+
         if(!bcrypt.checkPassword(password,user.getPasswordHash())){
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Password does not match").asException());
             return;
@@ -153,7 +152,29 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    @Override
+    public void changeEmail(ChangeEmailRequest request, StreamObserver<ApiResponse> responseObserver) {
+        Long userId = (long) request.getUserId();
+        String email = request.getNewEmail();
+        User user = userRepository.findUsersById(userId).orElseThrow(null);
+        if(user == null){
+            responseObserver.onError(Status.NOT_FOUND.withDescription("User does not exist").asRuntimeException());
+        }
 
+        if(!checkInput.isEmailValid(email)){
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Email is not right(like the strong)").asRuntimeException());
+        }
 
+        if(userRepository.existsByEmail(email)){
+            responseObserver.onError(Status.ALREADY_EXISTS.withDescription("Email already exists").asException());
+            return;
+        }
 
+        user.setEmail(email);
+        userRepository.save(user);
+
+        ApiResponse apiResponse = ApiResponse.newBuilder().setCode(200).setMessage("Email changed").build();
+        responseObserver.onNext(apiResponse);
+        responseObserver.onCompleted();
+    }
 }
