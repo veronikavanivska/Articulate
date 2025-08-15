@@ -27,10 +27,12 @@ message DeleteRequest{
 message ChangePasswordRequest{
   string password = 1;
   string newPassword = 2;
+  uint32 userId = 3;
 }
 
 message ChangeEmailRequest{
   string newEmail = 1;
+  uint32 userId = 2;
 }
 
 message AssignRoleRequest{

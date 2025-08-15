@@ -123,7 +123,34 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
     @Override
     public void changePassword(ChangePasswordRequest changePasswordRequest, StreamObserver<ApiResponse> responseObserver){
+        Long userId = (long) changePasswordRequest.getUserId();
+        String oldPassword = changePasswordRequest.getPassword();
+        String newPassword = changePasswordRequest.getNewPassword();
+        User user = userRepository.findUsersById(userId).orElseThrow(null);
 
+        if(user == null){
+            responseObserver.onError(Status.NOT_FOUND.withDescription("User does not exist").asRuntimeException());
+        }
+
+        if(!bcrypt.checkPassword(oldPassword ,user.getPasswordHash())){
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Password does not match").asRuntimeException());
+        }
+
+
+        if(!checkInput.isPasswordStrong(newPassword)){
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Password should be strong").asRuntimeException());
+        }
+
+        if(newPassword.equals(oldPassword)){
+            responseObserver.onError(Status.ALREADY_EXISTS.withDescription("New password must be different").asRuntimeException());
+        }
+
+        user.setPasswordHash(bcrypt.hashPassword(newPassword));
+        userRepository.save(user);
+
+        ApiResponse apiResponse = ApiResponse.newBuilder().setCode(200).setMessage("Password changed").build();
+        responseObserver.onNext(apiResponse);
+        responseObserver.onCompleted();
     }
 
 
