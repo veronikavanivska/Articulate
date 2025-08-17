@@ -20,38 +20,44 @@ message LoginResponse{
 }
 
 message DeleteRequest{
-  uint32 userId = 1;
+  uint64  userId = 1;
 }
-// do i need the userId for delete my user? TODO:think about it
+
 
 message ChangePasswordRequest{
   string password = 1;
   string newPassword = 2;
-  uint32 userId = 3;
+  uint64 userId = 3;
 }
 
 message ChangeEmailRequest{
   string newEmail = 1;
-  uint32 userId = 2;
+  uint64 userId = 2;
 }
 
 message AssignRoleRequest{
-  uint32 userId =1 ;
-  string role_name = 2;
+  uint64 userId =1 ;
+  RoleName role_name = 2;
 }
 
 message RevokeRoleRequest{
-  uint32 userId =1 ;
-  string role_name = 2;
+  uint64 userId =1 ;
+  RoleName role_name = 2;
 }
 
 message DisableUserRequest {
-  uint32 user_id = 1;
+  uint64 user_id = 1;
 }
 
 message ApiResponse{
   uint32 code = 1;
   string message = 2;
+}
+
+enum RoleName {
+  ROLE_USER = 0;
+  ROLE_WORKER = 1;
+  ROLE_ADMIN = 2;
 }
 
 service AuthService{
@@ -62,5 +68,5 @@ service AuthService{
   rpc deleteUser(DeleteRequest) returns (ApiResponse);
   rpc assignRole(AssignRoleRequest) returns (ApiResponse);
   rpc revokeRole(RevokeRoleRequest) returns (ApiResponse);
-  rpc disableUser(DisableUserRequest) returns (ApiResponse);
+  rpc enableDisableUser(DisableUserRequest) returns (ApiResponse);
 }
