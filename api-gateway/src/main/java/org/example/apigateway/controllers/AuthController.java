@@ -4,6 +4,7 @@ package org.example.apigateway.controllers;
 
 import org.example.apigateway.clients.AuthClient;
 import org.example.apigateway.requests.LoginRequest;
+import org.example.apigateway.requests.RefreshRequest;
 import org.example.apigateway.requests.RegistrationRequest;
 import org.example.apigateway.responses.Response;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,21 @@ public class AuthController {
         return new Response<>(
                 api.getCode(),
                 api.getMessage(),
-                apiResponse.getToken()
+                apiResponse.getAccessToken(),
+                apiResponse.getRefreshToken()
+        );
+    }
+
+    @PostMapping("/refresh")
+    public Response<String> refresh(@RequestBody RefreshRequest refreshRequest) {
+        var apiResponse = AuthClient.refresh(refreshRequest.getRefreshToken());
+
+        var api = apiResponse.getResponse();
+        return new Response<>(
+                api.getCode(),
+                api.getMessage(),
+                apiResponse.getAccessToken(),
+                apiResponse.getRefreshToken()
         );
     }
 }

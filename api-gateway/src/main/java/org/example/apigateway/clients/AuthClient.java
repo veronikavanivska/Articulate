@@ -32,4 +32,22 @@ public class AuthClient {
 
         return stub.login(req);
     }
+
+    public static RefreshResponse refresh(String rawToken ){
+        RefreshRequest req = RefreshRequest.newBuilder()
+                .setRefreshToken(rawToken)
+                .build();
+
+        return stub.refresh(req);
+    }
+
+    public static ApiResponse changePassword(Long userId, String password, String newPassword){
+        ChangePasswordRequest req = ChangePasswordRequest.newBuilder()
+                .setUserId(userId)
+                .setPassword(password)
+                .setNewPassword(newPassword)
+                .build();
+
+        return stub.changePassword(req);
+    }
 }
