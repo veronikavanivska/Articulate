@@ -23,6 +23,7 @@ public class User {
     private String passwordHash;
     private boolean enabled;
     private Instant createdAt ;
+    private int tokenVersion;
 
     @ManyToMany
     @JoinTable(
@@ -38,7 +39,10 @@ public class User {
         createdAt = Instant.now();
     }
 
+    public void incrementTokenVersion() { this.tokenVersion++; }
     public boolean hasRole(Role role) {
         return roles.contains(role);
     }
+
+
 }

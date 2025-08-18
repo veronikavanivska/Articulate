@@ -17,6 +17,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class JwtUtil {
@@ -28,12 +29,15 @@ public class JwtUtil {
     private long duration;
 
 
-    public String generateToken(Long userId, List<String> roles) {
+    public String generateToken(Long userId, List<String> roles, int tokenVersion) {
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
+                .subject(userId.toString())
                 .expiresAt(Instant.now().plus(duration, ChronoUnit.SECONDS))
-                .claim("sub", userId)
+                .issuedAt(Instant.now())
+                .id(UUID.randomUUID().toString())
                 .claim("roles", roles)
+                .claim("ver",tokenVersion)
                 .build();
 
         JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS512).build();
