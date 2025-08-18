@@ -4,35 +4,50 @@ import com.example.generated.*;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import org.example.auth.helpers.RoleMapper;
+import org.example.auth.entities.RefreshTokens;
+import org.example.auth.helpers.*;
+import org.example.auth.repositories.RefreshTokenRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.cache.CacheProperties;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.example.auth.entities.Role;
 import org.example.auth.entities.RoleName;
 import org.example.auth.entities.User;
-import org.example.auth.helpers.BCrypt;
-import org.example.auth.helpers.CheckInput;
-import org.example.auth.helpers.JwtUtil;
 import org.example.auth.repositories.RoleRepository;
+
 import org.example.auth.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 
 @Service
 public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
+
+    @Value("${refresh.duration}")
+    private long refreshDuration;
+
+    private final RedisTemplate<String, String> redisTemplate;
+
     private final CheckInput checkInput;
     private final BCrypt bcrypt;
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final RoleRepository roleRepository;
     private final JwtUtil jwtUtil;
 
-    public AuthService(CheckInput checkInput, BCrypt bcrypt, UserRepository userRepository, RoleRepository roleRepository, JwtUtil jwtUtil) {
+    public AuthService(RedisTemplate<String, String> redisTemplate,CheckInput checkInput, BCrypt bcrypt, UserRepository userRepository, RoleRepository roleRepository, JwtUtil jwtUtil, RefreshTokenRepository refreshTokenRepository) {
         this.checkInput = checkInput;
         this.bcrypt = bcrypt;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.jwtUtil = jwtUtil;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -108,10 +123,22 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
         List<String> roles = user.getRoles().stream().map(role -> role.getName().name()).toList();
 
-        String token = jwtUtil.generateToken(user.getId(), roles );
+        String accessToken = jwtUtil.generateToken(user.getId(), roles, user.getTokenVersion());
+
+        String rawRefresh = TokenHelper.newOpaqueToken(64);
+        String hashedRefresh = TokenHelper.sha256Base64Url(rawRefresh);
+
+        RefreshTokens rt = new RefreshTokens();
+        rt.setUser(user);
+        rt.setTokenHash(hashedRefresh);
+        rt.setExpiresAt(Instant.now().plus(Duration.ofDays(refreshDuration)));
+        refreshTokenRepository.save(rt);
+
+        redisTemplate.opsForValue().set("usr:ver:" + user.getId(), String.valueOf(user.getTokenVersion()));
 
         LoginResponse loginResponse = LoginResponse.newBuilder()
-                .setToken(token)
+                .setAccessToken(accessToken)
+                .setRefreshToken(rawRefresh)
                 .setApiResponse(
                         ApiResponse.newBuilder()
                                 .setCode(200)
@@ -260,7 +287,6 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
         }
 
-
         User user = userRepository.findByIdWithRoles(userId)
                 .orElseThrow(()->new StatusRuntimeException(
                         Status.NOT_FOUND.withDescription("User does not exist")));
@@ -306,6 +332,61 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
     }
 
+    @Override
+    public void refresh(RefreshRequest request, StreamObserver<RefreshResponse> responseObserver) {
+        String rawRefresh = request.getRefreshToken();
+
+        if(rawRefresh == null || rawRefresh.isBlank()){
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("refresh token required").asRuntimeException());
+            return;
+        }
+
+        String hashToken = TokenHelper.sha256Base64Url(rawRefresh);
+        RefreshTokens currentToken = refreshTokenRepository.findActiveByHash(hashToken,Instant.now())
+                .orElseThrow(
+                        () -> Status.UNAUTHENTICATED.withDescription("invalid refresh token").asRuntimeException());
+
+        Long userId = currentToken.getUser().getId();
+        User user = userRepository.findByIdWithRoles(userId)
+                .orElseThrow(
+                        () -> Status.UNAUTHENTICATED.withDescription("user not found").asRuntimeException());
+
+        if(!user.isEnabled()){
+            currentToken.setRevoked(true);
+            currentToken.setLastUsedAt(Instant.now());
+            refreshTokenRepository.save(currentToken);
+            responseObserver.onError(Status.PERMISSION_DENIED.withDescription("user disabled").asRuntimeException());
+            return;
+        }
+
+        currentToken.setRevoked(true);
+        currentToken.setLastUsedAt(Instant.now());
+        refreshTokenRepository.save(currentToken);
+
+
+        String newRaw = TokenHelper.newOpaqueToken(64);
+        String newHash = TokenHelper.sha256Base64Url(newRaw);
+
+        RefreshTokens next = new RefreshTokens();
+        next.setUser(user);
+        next.setTokenHash(newHash);
+        next.setExpiresAt(Instant.now().plus(Duration.ofDays(refreshDuration)));
+        refreshTokenRepository.save(next);
+
+        List<String> roles = user.getRoles().stream().map(r -> r.getName().name()).toList();
+        String newAccess = jwtUtil.generateToken(user.getId(), roles, user.getTokenVersion());
+
+        redisTemplate.opsForValue().set("usr:ver:" + user.getId(), String.valueOf(user.getTokenVersion()));
+
+        RefreshResponse resp = RefreshResponse.newBuilder()
+                .setAccessToken(newAccess)
+                .setRefreshToken(newRaw)
+                .setResponse(ApiResponse.newBuilder().setCode(200).setMessage("Refreshed and rotated").build())
+                .build();
+
+        responseObserver.onNext(resp);
+        responseObserver.onCompleted();
+    }
 
 }
 
