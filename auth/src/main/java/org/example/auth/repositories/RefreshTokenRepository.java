@@ -21,4 +21,10 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshTokens, Lon
     )
     Optional<RefreshTokens> findActiveByHash(@Param("hash") String hash, @Param("now") Instant now);
 
+    @Query("""
+           update RefreshTokens rt
+              set rt.revoked = true, rt.lastUsedAt = :now
+            where rt.user.id = :userId and rt.revoked = false
+           """)
+    int revokeAllByUserId(@Param("userId") Long userId, @Param("now") Instant now);
 }

@@ -388,5 +388,17 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
         responseObserver.onCompleted();
     }
 
+
+
+
+
+    private void OnStateChanged(User user){
+        user.incrementTokenVersion();
+        userRepository.save(user);
+
+        refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now());
+        redisTemplate.opsForValue().set("usr:ver:" + user.getId(), String.valueOf(user.getTokenVersion()));
+    }
+
 }
 
