@@ -1,13 +1,19 @@
 package org.example.apigateway.config;
 
+
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -16,7 +22,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.time.Duration;
+
 
 @Configuration
 public class SecurityConfig {
@@ -27,7 +33,7 @@ public class SecurityConfig {
     private Long duration;
 
     @Bean
-    public SecurityFilterChain securityWebFilterChain(HttpSecurity httpSecurity) throws Exception {
+    public SecurityFilterChain securityWebFilterChain(HttpSecurity httpSecurity,JwtDecoder jwtDecoder) throws Exception {
         httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
@@ -36,7 +42,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 ).oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt
-                        .decoder(this.jwtDecoder())
+                        .decoder(jwtDecoder)
                         .jwtAuthenticationConverter(jwtAuthenticationConverter())
                 )
         );
@@ -46,22 +52,54 @@ public class SecurityConfig {
 
 
     @Bean
-    public JwtDecoder jwtDecoder() {
+    public OAuth2TokenValidator<Jwt> versionValidator(StringRedisTemplate redis) {
+        return jwt -> {
+            String sub = jwt.getSubject();
+            Number verNum = jwt.getClaim("ver");
+
+            if (sub == null || verNum == null) {
+                return OAuth2TokenValidatorResult.failure(
+                        new OAuth2Error("invalid_token", "missing subject or version", null));
+            }
+
+            String current = redis.opsForValue().get("usr:ver:" + sub);
+            if (current == null) {
+                return OAuth2TokenValidatorResult.failure(
+                        new OAuth2Error("invalid_token", "no version found in Redis", null));
+            }
+
+            long tokenVer = verNum.longValue();
+            long redisVer = Long.parseLong(current);
+
+            if (tokenVer != redisVer) {
+                return OAuth2TokenValidatorResult.failure(
+                        new OAuth2Error("invalid_token", "stale token version", null));
+            }
+
+            return OAuth2TokenValidatorResult.success();
+        };
+    }
+    @Bean
+    public JwtDecoder jwtDecoder(OAuth2TokenValidator<Jwt> versionValidator) {
+
         SecretKey key = new SecretKeySpec(secret.getBytes(), SignatureAlgorithm.HS512.getJcaName());
 
-        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder
+        NimbusJwtDecoder decoder = NimbusJwtDecoder
                 .withSecretKey(key)
                 .macAlgorithm(MacAlgorithm.HS512)
                 .build();
 
-        JwtClaimValidator<String> subClaimValidator = new JwtClaimValidator<>("sub", sub -> sub != null && !sub.isEmpty());
-        JwtTimestampValidator timestampValidator = new JwtTimestampValidator(Duration.ofSeconds(duration));
+        OAuth2TokenValidator<Jwt> defaults = JwtValidators.createDefault();
 
-        OAuth2TokenValidator<Jwt> withClockSkew = new DelegatingOAuth2TokenValidator<>(subClaimValidator, timestampValidator);
 
-        jwtDecoder.setJwtValidator(withClockSkew);
+        OAuth2TokenValidator<Jwt> subRequired = jwt ->
+                (jwt.getSubject() != null && !jwt.getSubject().isBlank())
+                        ? OAuth2TokenValidatorResult.success()
+                        : OAuth2TokenValidatorResult.failure(new OAuth2Error("invalid_token", "missing subject", null));
 
-        return jwtDecoder;
+        OAuth2TokenValidator<Jwt> composite = new DelegatingOAuth2TokenValidator<>(defaults, subRequired, versionValidator);
+        decoder.setJwtValidator(composite);
+        return decoder;
     }
 
     @Bean
@@ -73,6 +111,15 @@ public class SecurityConfig {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
         return converter;
+    }
+
+    public static String getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken token) {
+            Jwt jwt = token.getToken();
+            return jwt.getSubject();
+        }
+        return null;
     }
 }
 
