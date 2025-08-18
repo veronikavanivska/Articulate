@@ -58,10 +58,21 @@ services:
     volumes:
       - auth_service_postgres:/var/lib/postgresql/data
 
+  redis:
+    image: redis:latest
+    container_name: token_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - articulate
+    volumes:
+      - redis-data:/data
+    command: [ "redis-server", "--save", "60", "1", "--loglevel", "warning" ]
 
 volumes:
   user_service_postgres:
   auth_service_postgres:
+  redis-data:
 
 networks:
   articulate:
