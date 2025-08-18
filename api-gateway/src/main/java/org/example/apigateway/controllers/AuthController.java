@@ -2,10 +2,12 @@ package org.example.apigateway.controllers;
 
 
 
+
+
+import com.example.generated.DeleteRequest;
 import org.example.apigateway.clients.AuthClient;
-import org.example.apigateway.requests.LoginRequest;
-import org.example.apigateway.requests.RefreshRequest;
-import org.example.apigateway.requests.RegistrationRequest;
+import org.example.apigateway.config.SecurityConfig;
+import org.example.apigateway.requests.*;
 import org.example.apigateway.responses.Response;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,5 +50,41 @@ public class AuthController {
                 apiResponse.getAccessToken(),
                 apiResponse.getRefreshToken()
         );
+    }
+
+    @PostMapping("/change-password")
+    public Response<Void> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
+        Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
+
+        var apiResponse = AuthClient.changePassword(userId, changePasswordRequest.getPassword(), changePasswordRequest.getNewPassword());
+
+        return new Response<>(
+                apiResponse.getCode(),
+                apiResponse.getMessage()
+        );
+
+    }
+
+    @PostMapping("/change-email")
+    public Response<Void> changeEmail(@RequestBody ChangeEmailRequest changeEmailRequest) {
+        Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
+
+        var apiResponse = AuthClient.changeEmail(userId, changeEmailRequest.getEmail());
+
+        return new Response<>(
+                apiResponse.getCode(),
+                apiResponse.getMessage()
+        );
+    }
+
+    @DeleteMapping("/delete-me")
+    public Response<Void> delete() {
+            Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
+            var apiResponse = AuthClient.deleteUser(userId);
+
+            return new Response<>(
+                    apiResponse.getCode(),
+                    apiResponse.getMessage()
+           );
     }
 }

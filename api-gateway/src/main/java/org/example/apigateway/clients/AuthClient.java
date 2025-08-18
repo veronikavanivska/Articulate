@@ -50,4 +50,47 @@ public class AuthClient {
 
         return stub.changePassword(req);
     }
+
+    public static ApiResponse changeEmail(Long userId, String newEmail){
+        ChangeEmailRequest req = ChangeEmailRequest.newBuilder()
+                .setUserId(userId)
+                .setNewEmail(newEmail)
+                .build();
+
+        return stub.changeEmail(req);
+    }
+
+    public static ApiResponse deleteUser(Long userId){
+        DeleteRequest req =DeleteRequest.newBuilder()
+                .setUserId(userId)
+                .build();
+
+        return stub.deleteUser(req);
+    }
+
+    public static ApiResponse assignRole(Long userId, RoleName roleName){
+        AssignRoleRequest req = AssignRoleRequest.newBuilder()
+                .setUserId(userId)
+                .setRoleName(roleName)
+                .build();
+
+        return stub.assignRole(req);
+    }
+
+    public static ApiResponse revokeRole(Long userId, RoleName roleName){
+        RevokeRoleRequest req = RevokeRoleRequest.newBuilder()
+                .setUserId(userId)
+                .setRoleName(roleName)
+                .build();
+
+        return stub.revokeRole(req);
+    }
+
+    public static ApiResponse enableDisableUser(Long userId){
+        DisableUserRequest req = DisableUserRequest.newBuilder()
+                .setUserId(userId)
+                .build();
+
+        return stub.enableDisableUser(req);
+    }
 }
