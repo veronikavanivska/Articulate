@@ -31,7 +31,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     @Value("${refresh.duration}")
     private long refreshDuration;
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     private final CheckInput checkInput;
     private final BCrypt bcrypt;
@@ -40,7 +40,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     private final RoleRepository roleRepository;
     private final JwtUtil jwtUtil;
 
-    public AuthService(RedisTemplate<String, String> redisTemplate,CheckInput checkInput, BCrypt bcrypt, UserRepository userRepository, RoleRepository roleRepository, JwtUtil jwtUtil, RefreshTokenRepository refreshTokenRepository) {
+    public AuthService(StringRedisTemplate redisTemplate,CheckInput checkInput, BCrypt bcrypt, UserRepository userRepository, RoleRepository roleRepository, JwtUtil jwtUtil, RefreshTokenRepository refreshTokenRepository) {
         this.checkInput = checkInput;
         this.bcrypt = bcrypt;
         this.userRepository = userRepository;
@@ -149,6 +149,18 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
         responseObserver.onNext(loginResponse);
         responseObserver.onCompleted();
     }
+    private void OnStateChanged(User user){
+        user.incrementTokenVersion();
+        userRepository.save(user);
+
+        refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now());
+        redisTemplate.opsForValue().set("usr:ver:" + user.getId(), String.valueOf(user.getTokenVersion()));
+    }
+
+    private void onUserDeleted(Long userId) {
+        refreshTokenRepository.revokeAllByUserId(userId, Instant.now());
+        redisTemplate.delete("usr:ver:" + userId);
+    }
 
     @Override
     @Transactional
@@ -226,7 +238,9 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
                 return;
             }
 
+            onUserDeleted(user.getId());
             userRepository.delete(user);
+
             ApiResponse apiResponse = ApiResponse.newBuilder().setCode(200).setMessage("User deleted").build();
             responseObserver.onNext(apiResponse);
             responseObserver.onCompleted();
@@ -257,7 +271,10 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
 
         boolean added = user.getRoles().add(role);
-        if (added) userRepository.save(user);
+        if (added) {
+          //  userRepository.save(user);
+            OnStateChanged(user);
+        }
 
         ApiResponse resp = ApiResponse.newBuilder()
                 .setCode(200)
@@ -298,7 +315,10 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
 
         boolean removed = user.getRoles().remove(role);
-        if(removed) userRepository.save(user);
+        if(removed) {
+         //   userRepository.save(user);
+            OnStateChanged(user);
+        }
 
         ApiResponse resp = ApiResponse.newBuilder()
                 .setCode(200)
@@ -310,7 +330,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     }
 
     @Override
-
+    @Transactional
     public void enableDisableUser(DisableUserRequest request, StreamObserver<ApiResponse> responseObserver) {
         Long userId = request.getUserId();
         User user = userRepository.findUsersById(userId).orElseThrow(null);
@@ -321,7 +341,8 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
         boolean enabled = user.isEnabled();
         user.setEnabled(!enabled) ;
-        userRepository.save(user);
+        OnStateChanged(user);
+        //userRepository.save(user);
         ApiResponse resp = ApiResponse.newBuilder()
                 .setCode(200)
                 .setMessage(enabled ? "User disabled" : "User enabled")
@@ -392,13 +413,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
 
 
-    private void OnStateChanged(User user){
-        user.incrementTokenVersion();
-        userRepository.save(user);
 
-        refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now());
-        redisTemplate.opsForValue().set("usr:ver:" + user.getId(), String.valueOf(user.getTokenVersion()));
-    }
 
 }
 
