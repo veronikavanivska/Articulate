@@ -4,14 +4,11 @@ package org.example.apigateway.controllers;
 
 
 
-import com.example.generated.DeleteRequest;
 import org.example.apigateway.clients.AuthClient;
 import org.example.apigateway.config.SecurityConfig;
 import org.example.apigateway.requests.*;
 import org.example.apigateway.responses.Response;
 import org.springframework.web.bind.annotation.*;
-
-import javax.annotation.security.PermitAll;
 
 @RequestMapping("/auth")
 @RestController
@@ -52,6 +49,7 @@ public class AuthController {
         );
     }
 
+
     @PostMapping("/change-password")
     public Response<Void> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
@@ -77,14 +75,46 @@ public class AuthController {
         );
     }
 
+
     @DeleteMapping("/delete-me")
     public Response<Void> delete() {
             Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
             var apiResponse = AuthClient.deleteUser(userId);
 
-            return new Response<>(
+           return new Response<>(
                     apiResponse.getCode(),
                     apiResponse.getMessage()
            );
+    }
+
+
+    @PostMapping("/admin/assign-role")
+    public Response<Void> assignRole(@RequestBody AssignRoleRequest assignRoleRequest) {
+        var apiResponse = AuthClient.assignRole(assignRoleRequest.getUserId(), assignRoleRequest.getRoleName());
+
+        return new Response<>(
+                apiResponse.getCode(),
+                apiResponse.getMessage()
+        );
+    }
+
+    @PostMapping("/admin/revoke-role")
+    public Response<Void> revokeRole(@RequestBody RevokeRoleRequest revokeRoleRequest) {
+        var apiResponse = AuthClient.revokeRole(revokeRoleRequest.getUserId(), revokeRoleRequest.getRoleName());
+
+        return new Response<>(
+                apiResponse.getCode(),
+                apiResponse.getMessage()
+        );
+    }
+
+    @PostMapping("/admin/enable-disable")
+    public Response<Void> enableDisableUser(@RequestBody EnableDisableUserRequest enableDisableUserRequest) {
+        var apiResponse = AuthClient.enableDisableUser(enableDisableUserRequest.getUserId());
+
+        return new Response<>(
+                apiResponse.getCode(),
+                apiResponse.getMessage()
+        );
     }
 }

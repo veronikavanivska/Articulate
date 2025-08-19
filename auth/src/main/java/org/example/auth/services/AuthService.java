@@ -36,7 +36,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     private final CheckInput checkInput;
     private final BCrypt bcrypt;
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private RefreshTokenRepository refreshTokenRepository;
     private final RoleRepository roleRepository;
     private final JwtUtil jwtUtil;
 
@@ -238,7 +238,8 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
                 return;
             }
 
-            onUserDeleted(user.getId());
+            refreshTokenRepository.revokeAllByUserId(userId, Instant.now());
+            redisTemplate.delete("usr:ver:" + userId);
             userRepository.delete(user);
 
             ApiResponse apiResponse = ApiResponse.newBuilder().setCode(200).setMessage("User deleted").build();
@@ -272,8 +273,11 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
         boolean added = user.getRoles().add(role);
         if (added) {
-          //  userRepository.save(user);
-            OnStateChanged(user);
+            user.incrementTokenVersion();
+            userRepository.save(user);
+
+            refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now());
+            redisTemplate.opsForValue().set("usr:ver:" + user.getId(), String.valueOf(user.getTokenVersion()));
         }
 
         ApiResponse resp = ApiResponse.newBuilder()
@@ -316,8 +320,11 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
         boolean removed = user.getRoles().remove(role);
         if(removed) {
-         //   userRepository.save(user);
-            OnStateChanged(user);
+            user.incrementTokenVersion();
+            userRepository.save(user);
+
+            refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now());
+            redisTemplate.opsForValue().set("usr:ver:" + user.getId(), String.valueOf(user.getTokenVersion()));
         }
 
         ApiResponse resp = ApiResponse.newBuilder()
@@ -341,8 +348,11 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
         boolean enabled = user.isEnabled();
         user.setEnabled(!enabled) ;
-        OnStateChanged(user);
-        //userRepository.save(user);
+        user.incrementTokenVersion();
+        userRepository.save(user);
+
+        refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now());
+        redisTemplate.opsForValue().set("usr:ver:" + user.getId(), String.valueOf(user.getTokenVersion()));
         ApiResponse resp = ApiResponse.newBuilder()
                 .setCode(200)
                 .setMessage(enabled ? "User disabled" : "User enabled")

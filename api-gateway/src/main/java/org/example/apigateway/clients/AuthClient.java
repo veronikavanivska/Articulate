@@ -3,6 +3,7 @@ package org.example.apigateway.clients;
 import com.example.generated.*;
 import io.grpc.Channel;
 import org.example.apigateway.Client;
+import org.example.apigateway.config.RoleMapper;
 
 
 @Client(host = "${auth.server.host}",
@@ -68,19 +69,19 @@ public class AuthClient {
         return stub.deleteUser(req);
     }
 
-    public static ApiResponse assignRole(Long userId, RoleName roleName){
+    public static ApiResponse assignRole(Long userId, org.example.apigateway.requests.RoleName roleName){
         AssignRoleRequest req = AssignRoleRequest.newBuilder()
                 .setUserId(userId)
-                .setRoleName(roleName)
+                .setRoleName(RoleMapper.map(roleName))
                 .build();
 
         return stub.assignRole(req);
     }
 
-    public static ApiResponse revokeRole(Long userId, RoleName roleName){
+    public static ApiResponse revokeRole(Long userId,org.example.apigateway.requests.RoleName roleName){
         RevokeRoleRequest req = RevokeRoleRequest.newBuilder()
                 .setUserId(userId)
-                .setRoleName(roleName)
+                .setRoleName(RoleMapper.map(roleName))
                 .build();
 
         return stub.revokeRole(req);
