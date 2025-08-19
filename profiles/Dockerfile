@@ -1,5 +1,6 @@
 FROM maven:3.8.4-openjdk-17-slim AS build
 
+
 WORKDIR /app
 
 COPY pom.xml .
@@ -11,7 +12,8 @@ COPY src ./src
 RUN --mount=type=cache,id=maven-cache,target=/root/.m2/repository \
     mvn clean package -DskipTests -B
 
-FROM openjdk:17-slim
+
+FROM openjdk:17-alpine
 
 WORKDIR /app
 

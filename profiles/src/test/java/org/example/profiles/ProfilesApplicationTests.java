@@ -1,10 +1,10 @@
-package org.example.user;
+package org.example.profiles;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class UserApplicationTests {
+class ProfilesApplicationTests {
 
     @Test
     void contextLoads() {

@@ -1,1 +1,4 @@
 .idea/
+/api-gateway/src/main/resources/application.properties
+/article/src/main/resources/application.properties
+/profiles/src/main/resources/application.properties
