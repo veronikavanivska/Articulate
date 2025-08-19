@@ -3,10 +3,12 @@ package org.example.auth.repositories;
 
 import org.example.auth.entities.RefreshTokens;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -21,10 +23,12 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshTokens, Lon
     )
     Optional<RefreshTokens> findActiveByHash(@Param("hash") String hash, @Param("now") Instant now);
 
+    @Modifying
+    @Transactional
     @Query("""
-           update RefreshTokens rt
-              set rt.revoked = true, rt.lastUsedAt = :now
-            where rt.user.id = :userId and rt.revoked = false
-           """)
+       update RefreshTokens rt
+          set rt.revoked = true, rt.lastUsedAt = :now
+        where rt.user.id = :userId and rt.revoked = false
+       """)
     int revokeAllByUserId(@Param("userId") Long userId, @Param("now") Instant now);
 }

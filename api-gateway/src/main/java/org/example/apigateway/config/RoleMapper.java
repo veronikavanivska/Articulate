@@ -1,6 +1,6 @@
-package org.example.auth.helpers;
+package org.example.apigateway.config;
 
-import org.example.auth.entities.RoleName;
+import org.example.apigateway.requests.RoleName;
 import org.springframework.stereotype.Component;
 
 import static com.example.generated.RoleName.*;
@@ -8,7 +8,7 @@ import static com.example.generated.RoleName.*;
 @Component
 public class RoleMapper {
 
-    public static org.example.auth.entities.RoleName map(com.example.generated.RoleName roleName) {
+    public static org.example.apigateway.requests.RoleName map(com.example.generated.RoleName roleName) {
         if(roleName == null || roleName == com.example.generated.RoleName.UNRECOGNIZED) {
             throw new IllegalArgumentException("RoleName cannot be null");
         }
@@ -27,7 +27,7 @@ public class RoleMapper {
 
     }
 
-    public static com.example.generated.RoleName map( org.example.auth.entities.RoleName roleName) {
+    public static com.example.generated.RoleName map(org.example.apigateway.requests.RoleName roleName) {
         if(roleName == null) {
             throw new IllegalArgumentException("RoleName cannot be null");
         }
