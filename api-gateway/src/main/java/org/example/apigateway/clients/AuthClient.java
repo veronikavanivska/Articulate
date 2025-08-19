@@ -13,7 +13,7 @@ public class AuthClient {
 
     private static AuthServiceGrpc.AuthServiceBlockingStub stub;
 
-    public static ApiResponse register(String email, String password){
+    public static ApiResponse register(String email, String password) {
         RegistrationRequest req = RegistrationRequest.newBuilder().
                 setEmail(email).
                 setPassword(password)
@@ -21,11 +21,12 @@ public class AuthClient {
 
         return stub.register(req);
     }
+
     public static void init(Channel channel) {
         stub = AuthServiceGrpc.newBlockingStub(channel);
     }
 
-    public static LoginResponse login(String email, String password){
+    public static LoginResponse login(String email, String password) {
         LoginRequest req = LoginRequest.newBuilder()
                 .setEmail(email)
                 .setPassword(password)
@@ -34,7 +35,7 @@ public class AuthClient {
         return stub.login(req);
     }
 
-    public static RefreshResponse refresh(String rawToken ){
+    public static RefreshResponse refresh(String rawToken) {
         RefreshRequest req = RefreshRequest.newBuilder()
                 .setRefreshToken(rawToken)
                 .build();
@@ -42,7 +43,7 @@ public class AuthClient {
         return stub.refresh(req);
     }
 
-    public static ApiResponse changePassword(Long userId, String password, String newPassword){
+    public static ApiResponse changePassword(Long userId, String password, String newPassword) {
         ChangePasswordRequest req = ChangePasswordRequest.newBuilder()
                 .setUserId(userId)
                 .setPassword(password)
@@ -52,7 +53,7 @@ public class AuthClient {
         return stub.changePassword(req);
     }
 
-    public static ApiResponse changeEmail(Long userId, String newEmail){
+    public static ApiResponse changeEmail(Long userId, String newEmail) {
         ChangeEmailRequest req = ChangeEmailRequest.newBuilder()
                 .setUserId(userId)
                 .setNewEmail(newEmail)
@@ -61,15 +62,15 @@ public class AuthClient {
         return stub.changeEmail(req);
     }
 
-    public static ApiResponse deleteUser(Long userId){
-        DeleteRequest req =DeleteRequest.newBuilder()
+    public static ApiResponse deleteUser(Long userId) {
+        DeleteRequest req = DeleteRequest.newBuilder()
                 .setUserId(userId)
                 .build();
 
         return stub.deleteUser(req);
     }
 
-    public static ApiResponse assignRole(Long userId, org.example.apigateway.requests.RoleName roleName){
+    public static ApiResponse assignRole(Long userId, org.example.apigateway.requests.RoleName roleName) {
         AssignRoleRequest req = AssignRoleRequest.newBuilder()
                 .setUserId(userId)
                 .setRoleName(RoleMapper.map(roleName))
@@ -78,7 +79,7 @@ public class AuthClient {
         return stub.assignRole(req);
     }
 
-    public static ApiResponse revokeRole(Long userId,org.example.apigateway.requests.RoleName roleName){
+    public static ApiResponse revokeRole(Long userId, org.example.apigateway.requests.RoleName roleName) {
         RevokeRoleRequest req = RevokeRoleRequest.newBuilder()
                 .setUserId(userId)
                 .setRoleName(RoleMapper.map(roleName))
@@ -87,11 +88,18 @@ public class AuthClient {
         return stub.revokeRole(req);
     }
 
-    public static ApiResponse enableDisableUser(Long userId){
+    public static ApiResponse enableDisableUser(Long userId) {
         DisableUserRequest req = DisableUserRequest.newBuilder()
                 .setUserId(userId)
                 .build();
 
         return stub.enableDisableUser(req);
+    }
+
+    public static ApiResponse logOut(Long userId) {
+        LogoutRequest req = LogoutRequest.newBuilder()
+                .setUserId(userId)
+                .build();
+        return stub.logout(req);
     }
 }

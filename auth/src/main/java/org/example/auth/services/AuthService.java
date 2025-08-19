@@ -1,6 +1,7 @@
 package org.example.auth.services;
 
 import com.example.generated.*;
+import com.google.protobuf.Api;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -290,6 +291,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     }
 
     @Override
+    @Transactional
     public void revokeRole(RevokeRoleRequest request, StreamObserver<ApiResponse> responseObserver) {
         Long userId = request.getUserId();
 
@@ -420,10 +422,30 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     }
 
 
+    @Override
+    @Transactional
+    public void logout(LogoutRequest request, StreamObserver<ApiResponse> responseObserver) {
+        Long userId = request.getUserId();
 
+        User user = userRepository.findUsersById(userId).orElseThrow(null);
+        if(user == null){
+            responseObserver.onError(Status.NOT_FOUND.withDescription("User does not exist").asRuntimeException());
+            return;
+        }
 
+        user.incrementTokenVersion();
+        userRepository.save(user);
 
+        refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now());
+        redisTemplate.opsForValue().set("usr:ver:" + user.getId(), String.valueOf(user.getTokenVersion()));
 
+        ApiResponse apiResponse = ApiResponse.newBuilder()
+                .setCode(200)
+                .setMessage("Log out !!!")
+                .build();
 
+        responseObserver.onNext(apiResponse);
+        responseObserver.onCompleted();
+    }
 }
 

@@ -61,6 +61,9 @@ message DisableUserRequest {
   uint64 user_id = 1;
 }
 
+message LogoutRequest{
+  uint64 userId = 1;
+}
 message ApiResponse{
   uint32 code = 1;
   string message = 2;
@@ -82,5 +85,6 @@ service AuthService{
   rpc revokeRole(RevokeRoleRequest) returns (ApiResponse);
   rpc enableDisableUser(DisableUserRequest) returns (ApiResponse);
   rpc refresh(RefreshRequest) returns (RefreshResponse);
+  rpc logout(LogoutRequest) returns (ApiResponse);
 
 }

@@ -117,4 +117,15 @@ public class AuthController {
                 apiResponse.getMessage()
         );
     }
+
+    @PostMapping("/logout")
+    public Response<Void> logout() {
+        Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
+        var apiResponse = AuthClient.logOut(userId);
+
+        return new Response<>(
+                apiResponse.getCode(),
+                apiResponse.getMessage()
+        );
+    }
 }
