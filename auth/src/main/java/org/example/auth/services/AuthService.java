@@ -426,6 +426,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     @Transactional
     public void logout(LogoutRequest request, StreamObserver<ApiResponse> responseObserver) {
         Long userId = request.getUserId();
+      
 
         User user = userRepository.findUsersById(userId).orElseThrow(null);
         if(user == null){
