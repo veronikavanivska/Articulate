@@ -1,0 +1,11 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+package com.example.generated;
+
+option java_multiple_files = true;
+
+
+message ApiResponse{
+  uint32 code = 1;
+  string message = 2;
+}

@@ -1,0 +1,64 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+import "common.proto";
+
+package com.example.generated;
+
+option java_multiple_files = true;
+
+message ProfileUser {
+  string fullname  = 1;
+  string bio       = 2;
+}
+
+message ProfileWorker {
+  string degreeTitle  = 1;
+  string unitName     = 2;
+}
+
+message ProfileAdmin {
+  string unitName  = 1;
+}
+
+message ProfileView {
+  ProfileUser user     = 1;
+  ProfileWorker worker = 2;
+  ProfileAdmin admin   = 3;
+}
+
+message GetProfileRequest {
+  int64 userId = 1;
+}
+
+message GetProfileResponse {
+  ProfileView profile = 1;
+  ApiResponse response = 2;
+}
+
+message UpdateMyProfileRequest {
+  int64 userId = 1;
+  ProfileUser user     = 2;
+  ProfileWorker worker = 3;
+  ProfileAdmin admin   = 4;
+}
+
+message UpdateMyProfileResponse {
+  ProfileView profile = 1;
+  ApiResponse response = 2;
+}
+
+message SeeSomeoneProfileRequest{
+  int64 userId = 1;
+}
+
+message SeeSomeoneProfileResponse {
+  ProfileView profile = 1;
+  ApiResponse response = 2;
+}
+
+
+service ProfilesService{
+  rpc GetMyProfile(GetProfileRequest) returns (GetProfileResponse);
+  rpc UpdateMyProfile(UpdateMyProfileRequest) returns (UpdateMyProfileResponse);
+  rpc SeeSomeoneProfile(SeeSomeoneProfileRequest) returns (GetProfileResponse);
+}
