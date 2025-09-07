@@ -11,14 +11,13 @@ import java.time.Instant;
 public class ProfileUser {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    private String fullName;
+    private String fullname;
     private String bio;
 
     private Instant createdAt = Instant.now();
-    private Instant updatedAt;
+    private Instant updatedAt = Instant.now();
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private ProfileWorker worker;

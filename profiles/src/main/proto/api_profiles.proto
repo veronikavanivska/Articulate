@@ -26,7 +26,6 @@ message ProfileView {
 
 message GetProfileRequest {
   int64 userId = 1;
-  repeated string roles = 2;
 }
 
 message GetProfileResponse {
@@ -39,7 +38,6 @@ message UpdateMyProfileRequest {
   ProfileUser user     = 2;
   ProfileWorker worker = 3;
   ProfileAdmin admin   = 4;
-  repeated string roles = 5;
 }
 
 message UpdateMyProfileResponse {
@@ -71,5 +69,5 @@ message ApiResponse{
 service ProfilesService{
     rpc GetMyProfile(GetProfileRequest) returns (GetProfileResponse);
     rpc UpdateMyProfile(UpdateMyProfileRequest) returns (UpdateMyProfileResponse);
-    rpc SeeSomeoneProfile(SeeSomeoneProfileRequest) returns (SeeSomeoneProfileResponse);
+    rpc SeeSomeoneProfile(SeeSomeoneProfileRequest) returns (GetProfileResponse);
 }

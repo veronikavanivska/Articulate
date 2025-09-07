@@ -1,4 +1,4 @@
-package org.example.apigateway.requests;
+package org.example.apigateway.requests.auth;
 
 import lombok.Data;
 

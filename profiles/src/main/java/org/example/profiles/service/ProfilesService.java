@@ -12,8 +12,6 @@ import org.example.profiles.repositories.ProfileWorkerRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 
 @Service
 public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase {
@@ -33,7 +31,6 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
     @Transactional(readOnly = true)
     public void getMyProfile(GetProfileRequest request, StreamObserver<GetProfileResponse> responseObserver) {
         Long userId = request.getUserId();
-        List<String> roles = request.getRolesList();
 
         ProfileUser user = profileUserRepository.findByUserId(userId) .orElseThrow(() -> new StatusRuntimeException(
                 Status.NOT_FOUND.withDescription("Profile not found for user " + userId)
@@ -41,32 +38,31 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
 
 
         com.example.generated.ProfileUser protoUser = com.example.generated.ProfileUser.newBuilder()
-                .setFullname(user.getFullName() == null ? "" : user.getFullName())
+                .setFullname(user.getFullname() == null ? "" : user.getFullname())
                 .setBio(user.getBio() == null ? "" : user.getBio())
                 .build();
 
-        com.example.generated.ProfileWorker protoWorker = null;
+        ProfileWorker protoWorker = null;
 
-        if(roles.contains("ROLE_WORKER")){
-            protoWorker = profileWorkerRepository.findById(userId)
-                    .map(worker -> com.example.generated.ProfileWorker.newBuilder()
-                            .setUserId(worker.getUserId())
-                            .setDegreeTitle(worker.getDegreeTitle() == null ? "" : worker.getDegreeTitle())
-                            .setUnitName(worker.getUnitName() == null ? "" : worker.getUnitName())
-                            .build()
-                    )
-                    .orElse(null);
+        if(user.getWorker() != null) {
+            org.example.profiles.entities.ProfileWorker worker = profileWorkerRepository.findByUserId(userId).orElseThrow(() -> new StatusRuntimeException(
+                    Status.NOT_FOUND.withDescription("Profile not found for user " + userId)
+            ));
+
+            protoWorker = ProfileWorker.newBuilder()
+                    .setDegreeTitle(worker.getDegreeTitle())
+                    .setUnitName(worker.getUnitName())
+                    .build();
         }
 
-        com.example.generated.ProfileAdmin protoAdmin = null;
-        if (roles.contains("ROLE_ADMIN")) {
-            protoAdmin = profileAdminRepository.findById(userId)
-                    .map(admin -> com.example.generated.ProfileAdmin.newBuilder()
-                            .setUserId(admin.getUserId())
-                            .setUnitName(admin.getUnitName() == null ? "" : admin.getUnitName())
-                            .build()
-                    )
-                    .orElse(null);
+
+        ProfileAdmin protoAdmin = null;
+        if (user.getAdmin() != null) {
+            org.example.profiles.entities.ProfileAdmin admin = profileAdminRepository.findByUserId(userId).orElseThrow(() -> new StatusRuntimeException(
+                    Status.NOT_FOUND.withDescription("Profile not found for user " + userId)
+            ));
+
+            protoAdmin = ProfileAdmin.newBuilder().setUnitName(admin.getUnitName()).build();
         }
 
         ProfileView.Builder viewBuilder = ProfileView.newBuilder()
@@ -82,4 +78,125 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
+
+    @Override
+    @Transactional
+    public void updateMyProfile(UpdateMyProfileRequest request, StreamObserver<UpdateMyProfileResponse> responseObserver) {
+        Long userId = request.getUserId();
+
+
+        var userProfile = profileUserRepository.findByUserId(userId).orElseThrow(() -> new StatusRuntimeException(
+                Status.NOT_FOUND.withDescription("Profile not found for user " + userId)));
+
+        var user = request.getUser();
+        var entity = profileUserRepository.findByUserId(userId).orElseThrow();
+
+        entity.setFullname(user.getFullname() == null ? "" : user.getFullname());
+        entity.setBio(user.getBio() == null ? "" : user.getBio());
+        profileUserRepository.save(entity);
+
+        com.example.generated.ProfileUser protoUser = com.example.generated.ProfileUser.newBuilder()
+                    .setFullname(entity.getFullname())
+                    .setBio(entity.getBio())
+                    .build();
+
+
+
+        ProfileWorker protoWorker = null;
+
+        if(userProfile.getWorker() != null) {
+            var worker = request.getWorker();
+            var entity2 = profileWorkerRepository.findByUserId(userId).orElseThrow(() -> new StatusRuntimeException(
+                    Status.NOT_FOUND.withDescription("Profile not found for user " + userId)
+            ));
+
+            entity2.setDegreeTitle(worker.getDegreeTitle() == null ? "" : worker.getDegreeTitle());
+            entity2.setUnitName(worker.getUnitName() == null ? "" : worker.getUnitName());
+            profileWorkerRepository.save(entity2);
+
+            protoWorker = ProfileWorker.newBuilder()
+                    .setDegreeTitle(entity2.getDegreeTitle())
+                    .setUnitName(entity2.getUnitName())
+                    .build();
+        }
+
+
+        ProfileAdmin protoAdmin = null;
+
+        if(userProfile.getAdmin() != null) {
+            var admin = request.getAdmin();
+            var entity3 = profileAdminRepository.findByUserId(userId).orElseThrow(() -> new StatusRuntimeException(
+                    Status.NOT_FOUND.withDescription("Profile not found for user " + userId)
+            ));
+
+            entity3.setUnitName(admin.getUnitName() == null ? "" : admin.getUnitName());
+            profileAdminRepository.save(entity3);
+
+            protoAdmin = ProfileAdmin.newBuilder().setUnitName(entity3.getUnitName()).build();
+        }
+
+        ProfileView.Builder viewBuilder = ProfileView.newBuilder()
+                .setUser(protoUser);
+
+        if (protoWorker != null) viewBuilder.setWorker(protoWorker);
+        if (protoAdmin != null) viewBuilder.setAdmin(protoAdmin);
+
+        ApiResponse apiResponse = ApiResponse.newBuilder().setCode(200).setMessage("Update this!!").build();
+
+        UpdateMyProfileResponse response = UpdateMyProfileResponse.newBuilder().setResponse(apiResponse).setProfile(viewBuilder.build()).build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+
+    }
+
+    @Override
+    public void seeSomeoneProfile(SeeSomeoneProfileRequest request, StreamObserver<GetProfileResponse> responseObserver) {
+        Long userId = request.getUserId();
+
+        ProfileUser user = profileUserRepository.findByUserId(userId).orElseThrow();
+
+        com.example.generated.ProfileUser protoUser = com.example.generated.ProfileUser.newBuilder()
+                .setFullname(user.getFullname())
+                .setBio(user.getBio())
+                .build();
+
+
+        ProfileWorker protoWorker = null;
+
+        if(user.getWorker() != null) {
+            org.example.profiles.entities.ProfileWorker worker = profileWorkerRepository.findByUserId(userId).orElseThrow(() -> new StatusRuntimeException(
+                    Status.NOT_FOUND.withDescription("Profile not found for user " + userId)
+            ));
+
+            protoWorker = ProfileWorker.newBuilder()
+                    .setDegreeTitle(worker.getDegreeTitle())
+                    .setUnitName(worker.getUnitName())
+                    .build();
+        }
+
+
+        ProfileAdmin protoAdmin = null;
+        if (user.getAdmin() != null) {
+            org.example.profiles.entities.ProfileAdmin admin = profileAdminRepository.findByUserId(userId).orElseThrow(() -> new StatusRuntimeException(
+                    Status.NOT_FOUND.withDescription("Profile not found for user " + userId)
+            ));
+
+            protoAdmin = ProfileAdmin.newBuilder().setUnitName(admin.getUnitName()).build();
+        }
+
+        ProfileView.Builder viewBuilder = ProfileView.newBuilder()
+                .setUser(protoUser);
+
+        if (protoWorker != null) viewBuilder.setWorker(protoWorker);
+        if (protoAdmin != null) viewBuilder.setAdmin(protoAdmin);
+
+        ApiResponse apiResponse = ApiResponse.newBuilder().setCode(200).setMessage("Get this!!").build();
+
+        GetProfileResponse response = GetProfileResponse.newBuilder().setProfile(viewBuilder.build()).setResponse(apiResponse).build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
 }

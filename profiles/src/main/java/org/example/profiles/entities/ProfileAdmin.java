@@ -16,7 +16,7 @@ public class ProfileAdmin {
     private String unitName;
 
     private Instant createdAt = Instant.now();
-    private Instant updatedAt;
+    private Instant updatedAt = Instant.now();
 
     @MapsId
     @OneToOne(fetch = FetchType.LAZY)

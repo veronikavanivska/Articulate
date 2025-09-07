@@ -2,7 +2,6 @@ package org.example.auth.server;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import org.example.auth.helpers.TokenHelper;
 import org.example.auth.services.AuthService;
 import org.springframework.stereotype.Component;
 

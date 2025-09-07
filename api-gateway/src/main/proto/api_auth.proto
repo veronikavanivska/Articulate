@@ -1,5 +1,6 @@
 syntax = "proto3";
 import "google/protobuf/empty.proto";
+import "common.proto";
 package com.example.generated;
 
 option java_multiple_files = true;
@@ -64,10 +65,7 @@ message DisableUserRequest {
 message LogoutRequest{
   uint64 userId = 1;
 }
-message ApiResponse{
-  uint32 code = 1;
-  string message = 2;
-}
+
 
 enum RoleName {
   ROLE_USER = 0;
