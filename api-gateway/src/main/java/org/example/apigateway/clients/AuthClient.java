@@ -22,9 +22,6 @@ public class AuthClient {
         return stub.register(req);
     }
 
-    public static void init(Channel channel) {
-        stub = AuthServiceGrpc.newBlockingStub(channel);
-    }
 
     public static LoginResponse login(String email, String password) {
         LoginRequest req = LoginRequest.newBuilder()
@@ -70,7 +67,7 @@ public class AuthClient {
         return stub.deleteUser(req);
     }
 
-    public static ApiResponse assignRole(Long userId, org.example.apigateway.requests.RoleName roleName) {
+    public static ApiResponse assignRole(Long userId, org.example.apigateway.requests.auth.RoleName roleName) {
         AssignRoleRequest req = AssignRoleRequest.newBuilder()
                 .setUserId(userId)
                 .setRoleName(RoleMapper.map(roleName))
@@ -79,7 +76,7 @@ public class AuthClient {
         return stub.assignRole(req);
     }
 
-    public static ApiResponse revokeRole(Long userId, org.example.apigateway.requests.RoleName roleName) {
+    public static ApiResponse revokeRole(Long userId, org.example.apigateway.requests.auth.RoleName roleName) {
         RevokeRoleRequest req = RevokeRoleRequest.newBuilder()
                 .setUserId(userId)
                 .setRoleName(RoleMapper.map(roleName))
@@ -102,4 +99,9 @@ public class AuthClient {
                 .build();
         return stub.logout(req);
     }
+
+    public static void init(Channel channel) {
+        stub = AuthServiceGrpc.newBlockingStub(channel);
+    }
+
 }

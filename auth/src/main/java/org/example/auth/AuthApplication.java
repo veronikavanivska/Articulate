@@ -1,6 +1,5 @@
 package org.example.auth;
 
-import org.example.auth.helpers.TokenHelper;
 import org.example.auth.server.GrpcServer;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -12,9 +11,6 @@ public class AuthApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(AuthApplication.class, args);
-
-
-
     }
 
     @Bean

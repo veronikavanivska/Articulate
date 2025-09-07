@@ -1,7 +1,6 @@
 package org.example.auth.services;
 
 import com.example.generated.*;
-import com.google.protobuf.Api;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -9,8 +8,6 @@ import org.example.auth.entities.RefreshTokens;
 import org.example.auth.helpers.*;
 import org.example.auth.repositories.RefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.cache.CacheProperties;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.example.auth.entities.Role;
@@ -29,6 +26,7 @@ import java.util.List;
 @Service
 public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
 
+
     @Value("${refresh.duration}")
     private long refreshDuration;
 
@@ -37,11 +35,12 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
     private final CheckInput checkInput;
     private final BCrypt bcrypt;
     private final UserRepository userRepository;
-    private RefreshTokenRepository refreshTokenRepository;
+    private final AuthEventsPublisher authEventsPublisher;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final RoleRepository roleRepository;
     private final JwtUtil jwtUtil;
 
-    public AuthService(StringRedisTemplate redisTemplate,CheckInput checkInput, BCrypt bcrypt, UserRepository userRepository, RoleRepository roleRepository, JwtUtil jwtUtil, RefreshTokenRepository refreshTokenRepository) {
+    public AuthService(StringRedisTemplate redisTemplate, CheckInput checkInput, BCrypt bcrypt, UserRepository userRepository, RoleRepository roleRepository, JwtUtil jwtUtil, RefreshTokenRepository refreshTokenRepository, AuthEventsPublisher authEventsPublisher) {
         this.checkInput = checkInput;
         this.bcrypt = bcrypt;
         this.userRepository = userRepository;
@@ -49,6 +48,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
         this.jwtUtil = jwtUtil;
         this.refreshTokenRepository = refreshTokenRepository;
         this.redisTemplate = redisTemplate;
+        this.authEventsPublisher = authEventsPublisher;
     }
 
     @Override
@@ -84,6 +84,7 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
         user.getRoles().add(userRole);
 
         userRepository.save(user);
+        authEventsPublisher.userRegistered(user.getId(), email);
 
         ApiResponse apiResponse = ApiResponse.newBuilder().setCode(200).setMessage("User registered and created(standard role user)").build();
         responseObserver.onNext(apiResponse);
@@ -243,6 +244,8 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
             redisTemplate.delete("usr:ver:" + userId);
             userRepository.delete(user);
 
+            authEventsPublisher.userDeleted(userId);
+
             ApiResponse apiResponse = ApiResponse.newBuilder().setCode(200).setMessage("User deleted").build();
             responseObserver.onNext(apiResponse);
             responseObserver.onCompleted();
@@ -277,9 +280,12 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
             user.incrementTokenVersion();
             userRepository.save(user);
 
+            authEventsPublisher.roleAssigned(userId,role.getName().name());
+
             refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now());
             redisTemplate.opsForValue().set("usr:ver:" + user.getId(), String.valueOf(user.getTokenVersion()));
         }
+
 
         ApiResponse resp = ApiResponse.newBuilder()
                 .setCode(200)
@@ -324,6 +330,8 @@ public class AuthService extends AuthServiceGrpc.AuthServiceImplBase {
         if(removed) {
             user.incrementTokenVersion();
             userRepository.save(user);
+
+            authEventsPublisher.roleRevoked(userId,role.getName().name());
 
             refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now());
             redisTemplate.opsForValue().set("usr:ver:" + user.getId(), String.valueOf(user.getTokenVersion()));

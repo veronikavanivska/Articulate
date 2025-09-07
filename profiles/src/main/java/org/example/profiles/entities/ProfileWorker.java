@@ -16,8 +16,8 @@ public class ProfileWorker {
     private String degreeTitle;
     private String unitName;
 
-    private Instant createdAt;
-    private Instant updatedAt;
+    private Instant createdAt = Instant.now();
+    private Instant updatedAt = Instant.now();
 
     @MapsId
     @OneToOne(fetch = FetchType.LAZY)
