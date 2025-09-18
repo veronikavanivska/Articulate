@@ -1,0 +1,23 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+package com.example.generated;
+
+option java_multiple_files = true;
+
+
+message ImportMEiNRequest{
+  bytes file = 1;
+  string filename = 2;
+  string label = 3;
+  int64 imported_by = 4;
+  bool activate_after = 5;
+}
+
+message ImportMEiNReply {
+  int64 version_id       = 1;
+  bool  already_imported = 2;
+}
+
+service MEiNImport{
+  rpc ImportFile(ImportMEiNRequest) returns (ImportMEiNReply);
+}

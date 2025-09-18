@@ -38,7 +38,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/auth/registration" , "/auth/login", "/auth/refresh").permitAll()
-                        .requestMatchers("/auth/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/auth/admin/**", "/article/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/article/worker/**").hasRole("WORKER")
                         .anyRequest().authenticated()
                 ).oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt
