@@ -11,6 +11,7 @@ import org.example.article.repositories.DisciplineRepository;
 import org.example.article.repositories.PublicationRepository;
 import org.example.article.repositories.PublicationTypeRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
@@ -93,7 +94,7 @@ public class AricleService extends ArticleServiceGrpc.ArticleServiceImplBase {
         if (backfromnorm(request.getIssn()).isBlank() && backfromnorm(request.getEissn()).isBlank()){
             responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Either ISSN or eISSN must be provided").asRuntimeException());
             return;
-        };
+        }
 
         CommuteResult result = commutePoints.commute(request.getTypeId(),request.getDisciplineId(),request.getIssn(),request.getEissn(),request.getPublicationYear());
 
@@ -178,6 +179,71 @@ public class AricleService extends ArticleServiceGrpc.ArticleServiceImplBase {
         responseObserver.onCompleted();
 
     }
+
+    @Override
+    @Transactional
+    public void getPublication(GetPublicationRequest request, StreamObserver<PublicationView> responseObserver) {
+
+        Publication publication = publicationRepository.findWithAllRelations(request.getId()).orElseThrow();
+
+        if(!publication.getAuthorId().equals(request.getUserId())){
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("This is not yours publication, you cannot see it, ha-ha-ha").asRuntimeException());
+            return;
+        }
+
+        RefItem type = RefItem.newBuilder()
+                .setId(publication.getType().getId())
+                .setName(publication.getType().getName())
+                .build();
+
+        RefItem discipline = RefItem.newBuilder()
+                .setId(publication.getDiscipline().getId())
+                .setName(publication.getDiscipline().getName())
+                .build();
+
+        CycleItem cycle = CycleItem.newBuilder()
+                .setName(publication.getCycle().getName())
+                .setIsActive(publication.getCycle().isActive())
+                .setId(publication.getCycle().getId())
+                .setYearFrom(publication.getCycle().getYearFrom())
+                .setYearTo(publication.getCycle().getYearTo())
+                .build();
+
+        PublicationView.Builder b = PublicationView.newBuilder()
+                .setId(publication.getId())
+                .setOwnerId(publication.getAuthorId())
+                .setTitle(publication.getTitle())
+                .setDoi(backfromnorm(publication.getDoi()))
+                .setIssn(backfromnorm(publication.getIssn()))
+                .setEissn(backfromnorm(publication.getEissn()))
+                .setJournalTitle(publication.getJournalTitle())
+                .setPublicationYear(publication.getPublicationYear())
+                .setMeinPoints(publication.getMeinPoints())
+                .setMeinVersionId(publication.getMeinVersionId())
+                .setMeinJournalId(publication.getMeinJournalId())
+                .setCycle(cycle)
+                .setType(type)
+                .setDiscipline(discipline);
+
+
+        publication.getCoauthors().stream()
+                .sorted(java.util.Comparator.comparingInt(PublicationCoauthor::getPosition))
+                .forEach(c -> b.addCoauthors(
+                        Coauthor.newBuilder()
+                                .setPosition(c.getPosition())
+                                .setFullName(backfromnorm(c.getFullName()))
+                                .build()
+                ));
+
+
+        PublicationView publicationView = b.build();
+        responseObserver.onNext(publicationView);
+        responseObserver.onCompleted();
+    }
+
+
+
     private static   String normalize(String value) {
         return (value == null || value.isBlank()) ? null : value.trim();
     }
@@ -185,5 +251,6 @@ public class AricleService extends ArticleServiceGrpc.ArticleServiceImplBase {
     private static String backfromnorm(String s) {
         return s == null ? "" : s;
     }
+
 
 }

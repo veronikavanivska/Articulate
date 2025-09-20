@@ -242,9 +242,7 @@ service ArticleService{
 
   //read
   rpc AdminListPublications(ListAdminPublicationRequest) returns (ListPublicationsResponse);
-  rpc AdminGetPublication(GetPublicationRequest) returns (PublicationView);
-
-
+  //admin też w getPublication może odczytywać
   //disciplines
   rpc AdminListDisciplines(AdminListDisciplinesRequest) returns (ListDisciplinesResponse);
   rpc AdminCreateDiscipline(CreateDisciplineRequest) returns (RefItem);

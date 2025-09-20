@@ -2,12 +2,24 @@ package org.example.article.repositories;
 
 import org.example.article.entities.Publication;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 @Repository
 public interface PublicationRepository extends JpaRepository<Publication, Long> {
 
     boolean existsByTitle(String title);
     boolean existsByAuthorId(Long id);
-
+    @Query("""
+          select distinct p from Publication p
+          left join fetch p.type
+          left join fetch p.discipline
+          left join fetch p.cycle
+          left join fetch p.coauthors
+          where p.id = :id
+    """)
+    Optional<Publication> findWithAllRelations(@Param("id") Long id);
 }
