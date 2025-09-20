@@ -1,10 +1,11 @@
 syntax = "proto3";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 package com.example.generated;
 
 option java_multiple_files = true;
 
-
+//For admins
 message ImportMEiNRequest{
     bytes file = 1;
     string filename = 2;
@@ -17,7 +18,263 @@ message ImportMEiNReply {
   int64 version_id       = 1;
   bool  already_imported = 2;
 }
+//publications
+message ListAdminPublicationRequest{
+  int64 ownerId = 1;
+  int32 typeId = 2;
+  int32 disciplineId = 3;
+  int32 cycleId = 4;
 
-service MEiNImport{
+  // paginacja
+  int32 page = 5;
+  int32 size = 6;
+  string sortBy = 7;
+  string sortDir = 8;
+
+}
+
+
+//disciplines
+message AdminListDisciplinesRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string sortDir = 3;  // "ASC"|"DESC"
+}
+
+message CreateDisciplineRequest{
+  string disciplineName = 1;
+}
+
+message UpdateDisciplineRequest{
+  int64 id = 1;
+}
+
+message DeleteDisciplineRequest{
+  int64 id = 1;
+}
+
+//eval-cycle
+message AdminListCyclesRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string sortDir = 3;
+}
+
+message CreateCycleRequest {
+  string name = 1;
+  int32 yearFrom = 2;
+  int32 yearTo = 3;
+  bool isActive = 4;
+}
+
+message UpdateCycleRequest {
+  int64 id = 1;
+  string name = 2;
+  int32 yearFrom = 3;
+  int32 yearTo = 4;
+  bool isActive = 5;
+}
+
+message DeleteCycleRequest{
+  int64 id = 1;
+}
+//publicationtype
+
+message AdminListTypesRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string sortDir = 3;  // "ASC"|"DESC"
+}
+
+message CreateTypeRequest {
+  string name = 1;
+}
+
+message UpdateTypeRequest {
+  int64 id = 1;
+  string name = 2;
+}
+
+message DeleteTypeRequest {
+  int64 id = 1;
+
+}
+
+//For worker
+message CreatePublicationRequest{
+  int64 userId = 1;
+
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+
+  string title = 4;
+
+  string doi = 5;
+  string issn = 6;
+  string eissn = 7;
+  string journalTitle = 8;
+  int32 publicationYear = 9;
+
+  repeated string coauthors = 10;
+}
+
+message GetPublicationRequest{
+  int64 id = 1;
+  int64 userId = 2; // worker: weryfikacja własności; admin: ignorowane
+}
+
+message ListPublicationsRequest {
+  int64 userId = 1;
+
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  int64 cycleId = 4;
+  int32 year = 5;
+
+  // paginacja
+  int32 page = 6;          // 0-based
+  int32 size = 7;          // np. 20
+  string sortBy = 8;       // "createdAt","publicationYear","meinPoints"
+  string sortDir = 9;      // "ASC"|"DESC"
+
+}
+
+message UpdatePublicationRequest{
+  int64 id = 1;
+  int64 userId = 2;
+
+  string title = 5;
+  string doi = 6;
+  int32 disciplineId = 4;
+  string issn = 7;
+  string eissn = 8;
+  string journalTitle = 9;
+  int32 publicationYear = 10;
+  int32 typeId = 3;
+
+  repeated string replaceCoauthors = 11;
+
+  bool recomputeMein = 12;
+}
+
+message DeletePublicationRequest {
+  int64 id = 1;
+  int64 userId = 2;
+}
+
+
+//Responses
+message PublicationView{
+  int64 id = 1;
+  int64 ownerId = 2;
+
+
+  RefItem type = 3;
+  RefItem discipline = 4;
+  CycleItem cycle = 5;
+
+  string title = 6;
+  string doi = 7;
+  string issn = 8;
+  string eissn = 9;
+  string journalTitle = 10;
+  int32 publicationYear = 11;
+
+  int32 meinPoints = 12;
+  int64 meinVersionId = 13;
+  int64 meinJournalId = 14;
+
+  repeated Coauthor coauthors = 15;
+}
+
+message Coauthor{
+  int32 position = 1;
+  string fullName = 2;
+}
+message RefItem {
+  int64 id = 1;
+  string name = 2;
+}
+
+message ListPublicationsResponse {
+  repeated PublicationView items = 1;
+  PageMeta page = 2;
+}
+
+message PageMeta {
+  int32 page = 1;
+  int32 size = 2;
+  int64 totalItems = 3;
+  int32 totalPages = 4;
+}
+
+message ListTypesResponse {
+  repeated RefItem items = 1;
+  PageMeta page = 2;
+}
+message ListDisciplinesResponse {
+  repeated RefItem items = 1;
+  PageMeta page = 2;
+}
+message ListCyclesResponse {
+  repeated CycleItem items = 1;
+  PageMeta page = 2;
+}
+
+message CycleItem {
+  int64 id = 1;
+  string name = 2;
+  int32 yearFrom = 3;
+  int32 yearTo = 4;
+  bool isActive = 5;
+}
+
+message ApiResponse {
+  int32 code = 1;
+  string message = 2;
+}
+
+//TODO: Think about edit articles for admins
+service ArticleService{
+
+  //admin
   rpc ImportFile(ImportMEiNRequest) returns (ImportMEiNReply);
+
+  //read
+  rpc AdminListPublications(ListAdminPublicationRequest) returns (ListPublicationsResponse);
+  rpc AdminGetPublication(GetPublicationRequest) returns (PublicationView);
+
+
+  //disciplines
+  rpc AdminListDisciplines(AdminListDisciplinesRequest) returns (ListDisciplinesResponse);
+  rpc AdminCreateDiscipline(CreateDisciplineRequest) returns (RefItem);
+  rpc AdminUpdateDiscipline(UpdateDisciplineRequest) returns (RefItem);
+  rpc AdminDeleteDiscipline(DeleteDisciplineRequest) returns (ApiResponse);
+
+  //types
+  rpc AdminListPublicationTypes(AdminListTypesRequest) returns (ListTypesResponse);
+  rpc AdminCreatePublicationType(CreateTypeRequest) returns (RefItem);
+  rpc AdminUpdatePublicationType(UpdateTypeRequest) returns (RefItem);
+  rpc AdminDeletePublicationType(DeleteTypeRequest) returns (ApiResponse);
+
+  //cycle
+  rpc AdminListEvalCycles(AdminListCyclesRequest) returns (ListCyclesResponse);
+  rpc AdminCreateEvalCycle(CreateCycleRequest) returns (CycleItem);
+  rpc AdminUpdateEvalCycle(UpdateCycleRequest) returns (CycleItem);
+  rpc AdminDeleteEvalCycle(DeleteCycleRequest) returns (ApiResponse);
+
+
+  //worker
+  rpc CreatePublication(CreatePublicationRequest) returns (PublicationView);
+  rpc GetPublication(GetPublicationRequest) returns (PublicationView);
+  rpc ListMyPublications(ListPublicationsRequest) returns (ListPublicationsResponse);
+  rpc UpdatePublication(UpdatePublicationRequest) returns (PublicationView);
+  rpc DeletePublication(DeletePublicationRequest) returns (ApiResponse);
+
+
+  // dla dropdown
+  rpc ListPublicationTypes(google.protobuf.Empty) returns (ListTypesResponse);
+  rpc ListDisciplines(google.protobuf.Empty) returns (ListDisciplinesResponse);
+  rpc ListEvalCycles(google.protobuf.Empty) returns (ListCyclesResponse);
+
 }
