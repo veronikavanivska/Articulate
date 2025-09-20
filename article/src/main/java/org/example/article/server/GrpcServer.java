@@ -2,14 +2,14 @@ package org.example.article.server;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import org.example.article.service.MEiNImportService;
+import org.example.article.service.AricleService;
 import org.springframework.stereotype.Component;
 
 @Component
 public class GrpcServer {
-    private final MEiNImportService meinImportService;
+    private final AricleService meinImportService;
 
-    public GrpcServer(MEiNImportService meinImportService) {
+    public GrpcServer(AricleService meinImportService) {
         this.meinImportService = meinImportService;
     }
 
