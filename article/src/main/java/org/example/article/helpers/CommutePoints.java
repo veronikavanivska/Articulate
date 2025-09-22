@@ -25,7 +25,7 @@ public class CommutePoints {
         this.meinJournalCodeRepository = meinJournalCodeRepository;
     }
 
-    public  CommuteResult commute(String joutnalTitle, Long typeId, Long disciplineId,
+    public CommuteResult commute(String joutnalTitle, Long typeId, Long disciplineId,
                                  String issnRaw, String eissnRaw, int year){
 
         var cycle = evalCycleRepository.findByYear(year)

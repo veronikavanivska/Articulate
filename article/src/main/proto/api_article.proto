@@ -125,18 +125,17 @@ message GetPublicationRequest{
 }
 
 message ListPublicationsRequest {
-  int64 userId = 1;
 
+  int64 userId = 1;
   int64 typeId = 2;
   int64 disciplineId = 3;
   int64 cycleId = 4;
-  int32 year = 5;
 
   // paginacja
-  int32 page = 6;          // 0-based
-  int32 size = 7;          // np. 20
-  string sortBy = 8;       // "createdAt","publicationYear","meinPoints"
-  string sortDir = 9;      // "ASC"|"DESC"
+  int32 page = 5;          // 0-based
+  int32 size = 6;          // np. 20
+  string sortBy = 7;       // "createdAt","publicationYear","meinPoints"
+  string sortDir = 8;      // "ASC"|"DESC"
 
 }
 

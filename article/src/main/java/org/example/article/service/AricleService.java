@@ -8,9 +8,15 @@ import org.example.article.entities.CommuteResult;
 import org.example.article.entities.Publication;
 import org.example.article.entities.PublicationCoauthor;
 import org.example.article.helpers.CommutePoints;
+import org.example.article.helpers.PublicationSpecification;
 import org.example.article.repositories.DisciplineRepository;
 import org.example.article.repositories.PublicationRepository;
 import org.example.article.repositories.PublicationTypeRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
@@ -74,15 +80,20 @@ public class AricleService extends ArticleServiceGrpc.ArticleServiceImplBase {
     }
 
     /**
-    * Worker functions
+     * Worker functions
      * <p>
      * 1) createPublication
+     * </p><p>
      * 2) getPublication
+     * </p>
+     * <p>
      * 3) updatePublication
+     * </p> <p>
      * 4) DeletePublication
+     * </p> <p>
+     * 5) ListMyPublications(with filters and sorting)
      * </p>
     */
-
     @Override
     public void createPublication(CreatePublicationRequest request, StreamObserver<PublicationView> responseObserver) {
         if(publicationRepository.existsByAuthorId(request.getUserId())&&
@@ -285,6 +296,65 @@ public class AricleService extends ArticleServiceGrpc.ArticleServiceImplBase {
 
     @Override
     public void listMyPublications(ListPublicationsRequest request, StreamObserver<ListPublicationsResponse> responseObserver) {
+        doList(responseObserver , request.getUserId() , request.getTypeId(), request.getDisciplineId(), request.getCycleId(),
+                request.getPage(), request.getSize(), request.getSortBy() , request.getSortDir());
+    }
+
+
+    @Override
+    public void adminListPublications(ListAdminPublicationRequest request, StreamObserver<ListPublicationsResponse> responseObserver) {
+        Long authorId = request.getOwnerId() > 0 ? request.getOwnerId() : null;
+        doList(responseObserver , authorId , request.getTypeId(), request.getDisciplineId(), request.getCycleId(),
+                request.getPage(), request.getSize(), request.getSortBy() , request.getSortDir());
+    }
+
+
+
+    /**
+     *  Private function for ListPublication
+     */
+    private void doList(StreamObserver<ListPublicationsResponse> responseObserver, long authorId, long typeId, long disciplineId, long cycleId,
+                        int page, int size, String sortBy, String sortDir){
+
+        int pg = Math.max(0, page);
+        int sz = size > 0 ? Math.min(size, 100) : 20;
+
+        String sortProposition = switch(sortBy){
+            case "publicationYear" -> "publicationYear";
+            case "meinPoints"      -> "meinPoints";
+            case "createdAt"       -> "createdAt";
+            default                -> "createdAt";
+        };
+
+        boolean desc = !"ASC".equalsIgnoreCase(sortDir);
+        Pageable pageable = PageRequest.of(pg, sz, desc ? Sort.by(sortProposition).descending() : Sort.by(sortProposition).ascending());
+
+        Specification<Publication> spec = PublicationSpecification.list(
+                authorId,
+                typeId       > 0 ? typeId       : null,
+                disciplineId > 0 ? disciplineId : null,
+                cycleId      > 0 ? cycleId      : null
+        );
+
+        Page<Publication> pages = publicationRepository.findAll(spec, pageable);
+
+
+        PageMeta meta = PageMeta.newBuilder()
+                .setPage(pages.getNumber())
+                .setSize(pages.getSize())
+                .setTotalItems(pages.getTotalElements())
+                .setTotalPages(pages.getTotalPages())
+                .build();
+
+        ListPublicationsResponse.Builder resp = ListPublicationsResponse.newBuilder()
+                .setPage(meta);
+
+        for (Publication p : pages.getContent()) {
+            resp.addItems(entityToProto(p));
+        }
+
+        responseObserver.onNext(resp.build());
+        responseObserver.onCompleted();
 
     }
 }

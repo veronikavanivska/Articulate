@@ -8,8 +8,9 @@ import org.example.article.entities.Publication;
 import org.example.article.entities.PublicationCoauthor;
 import org.springframework.stereotype.Component;
 
-@Component
-public class Mapper {
+
+public final class Mapper {
+    private Mapper() {}
 
     public static PublicationView entityToProto(Publication publication) {
 
