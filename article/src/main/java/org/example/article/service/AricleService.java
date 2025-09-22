@@ -7,6 +7,7 @@ import org.example.article.ETL.ETLService;
 import org.example.article.entities.CommuteResult;
 import org.example.article.entities.Publication;
 import org.example.article.entities.PublicationCoauthor;
+import org.example.article.helpers.CommutePoints;
 import org.example.article.repositories.DisciplineRepository;
 import org.example.article.repositories.PublicationRepository;
 import org.example.article.repositories.PublicationTypeRepository;
@@ -15,7 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import static org.example.article.helpers.Mapper.*;
 
 @Service
 public class AricleService extends ArticleServiceGrpc.ArticleServiceImplBase {
@@ -33,6 +38,11 @@ public class AricleService extends ArticleServiceGrpc.ArticleServiceImplBase {
         this.disciplineRepository = disciplineRepository;
         this.publicationRepository = publicationRepository;
     }
+
+    //TODO: think about etl functions i also have to implement
+    /**
+     * ETL import
+     */
     @Override
     public void importFile(ImportMEiNRequest request, StreamObserver<ImportMEiNReply> responseObserver) {
 
@@ -62,6 +72,16 @@ public class AricleService extends ArticleServiceGrpc.ArticleServiceImplBase {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+    * Worker functions
+     * <p>
+     * 1) createPublication
+     * 2) getPublication
+     * 3) updatePublication
+     * 4) DeletePublication
+     * </p>
+    */
 
     @Override
     public void createPublication(CreatePublicationRequest request, StreamObserver<PublicationView> responseObserver) {
@@ -96,7 +116,7 @@ public class AricleService extends ArticleServiceGrpc.ArticleServiceImplBase {
             return;
         }
 
-        CommuteResult result = commutePoints.commute(request.getTypeId(),request.getDisciplineId(),request.getIssn(),request.getEissn(),request.getPublicationYear());
+        CommuteResult result = commutePoints.commute(request.getJournalTitle(),request.getTypeId(),request.getDisciplineId(),request.getIssn(),request.getEissn(),request.getPublicationYear());
 
         Publication publication = Publication.builder()
                 .authorId(request.getUserId())
@@ -127,54 +147,9 @@ public class AricleService extends ArticleServiceGrpc.ArticleServiceImplBase {
             publication.getCoauthors().addAll(authors);
         }
 
-        Publication saved =  publicationRepository.save(publication);
+        publicationRepository.save(publication);
 
-        RefItem type = RefItem.newBuilder()
-                .setId(saved.getType().getId())
-                .setName(saved.getType().getName())
-                .build();
-
-        RefItem discipline = RefItem.newBuilder()
-                .setId(saved.getDiscipline().getId())
-                .setName(saved.getDiscipline().getName())
-                .build();
-
-        CycleItem cycle = CycleItem.newBuilder()
-                .setName(saved.getCycle().getName())
-                .setIsActive(saved.getCycle().isActive())
-                .setId(saved.getCycle().getId())
-                .setYearFrom(saved.getCycle().getYearFrom())
-                .setYearTo(saved.getCycle().getYearTo())
-                .build();
-
-        PublicationView.Builder b = PublicationView.newBuilder()
-                .setId(saved.getId())
-                .setOwnerId(saved.getAuthorId())
-                .setTitle(saved.getTitle())
-                .setDoi(backfromnorm(saved.getDoi()))
-                .setIssn(backfromnorm(saved.getIssn()))
-                .setEissn(backfromnorm(saved.getEissn()))
-                .setJournalTitle(saved.getJournalTitle())
-                .setPublicationYear(saved.getPublicationYear())
-                .setMeinPoints(saved.getMeinPoints())
-                .setMeinVersionId(saved.getMeinVersionId())
-                .setMeinJournalId(saved.getMeinJournalId())
-                .setCycle(cycle)
-                .setType(type)
-                .setDiscipline(discipline);
-
-
-            saved.getCoauthors().stream()
-                    .sorted(java.util.Comparator.comparingInt(PublicationCoauthor::getPosition))
-                    .forEach(c -> b.addCoauthors(
-                            Coauthor.newBuilder()
-                                    .setPosition(c.getPosition())
-                                    .setFullName(backfromnorm(c.getFullName()))
-                                    .build()
-                    ));
-
-
-        PublicationView publicationView = b.build();
+        PublicationView publicationView = entityToProto(publication);
         responseObserver.onNext(publicationView);
         responseObserver.onCompleted();
 
@@ -192,65 +167,124 @@ public class AricleService extends ArticleServiceGrpc.ArticleServiceImplBase {
             return;
         }
 
-        RefItem type = RefItem.newBuilder()
-                .setId(publication.getType().getId())
-                .setName(publication.getType().getName())
-                .build();
-
-        RefItem discipline = RefItem.newBuilder()
-                .setId(publication.getDiscipline().getId())
-                .setName(publication.getDiscipline().getName())
-                .build();
-
-        CycleItem cycle = CycleItem.newBuilder()
-                .setName(publication.getCycle().getName())
-                .setIsActive(publication.getCycle().isActive())
-                .setId(publication.getCycle().getId())
-                .setYearFrom(publication.getCycle().getYearFrom())
-                .setYearTo(publication.getCycle().getYearTo())
-                .build();
-
-        PublicationView.Builder b = PublicationView.newBuilder()
-                .setId(publication.getId())
-                .setOwnerId(publication.getAuthorId())
-                .setTitle(publication.getTitle())
-                .setDoi(backfromnorm(publication.getDoi()))
-                .setIssn(backfromnorm(publication.getIssn()))
-                .setEissn(backfromnorm(publication.getEissn()))
-                .setJournalTitle(publication.getJournalTitle())
-                .setPublicationYear(publication.getPublicationYear())
-                .setMeinPoints(publication.getMeinPoints())
-                .setMeinVersionId(publication.getMeinVersionId())
-                .setMeinJournalId(publication.getMeinJournalId())
-                .setCycle(cycle)
-                .setType(type)
-                .setDiscipline(discipline);
-
-
-        publication.getCoauthors().stream()
-                .sorted(java.util.Comparator.comparingInt(PublicationCoauthor::getPosition))
-                .forEach(c -> b.addCoauthors(
-                        Coauthor.newBuilder()
-                                .setPosition(c.getPosition())
-                                .setFullName(backfromnorm(c.getFullName()))
-                                .build()
-                ));
-
-
-        PublicationView publicationView = b.build();
+        PublicationView publicationView = entityToProto(publication);
         responseObserver.onNext(publicationView);
         responseObserver.onCompleted();
     }
 
+    @Override
+    @Transactional
+    public void updatePublication(UpdatePublicationRequest request, StreamObserver<PublicationView> responseObserver) {
+
+        boolean changeForCommute = false;
+
+        Publication publication = publicationRepository.findWithAllRelations(request.getId()).orElseThrow();
+        if(!publication.getAuthorId().equals(request.getUserId())){
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("This is not yours publication, you cannot see it, ha-ha-ha").asRuntimeException());
+            return;
+        }
+
+        Set<String> paths = new HashSet<>(request.getUpdateMask().getPathsList());
+
+        if (paths.contains("typeId"))
+        {
+            publication.setType(publicationTypeRepository.findById(request.getTypeId()).orElseThrow());
+            changeForCommute = true;
+        }
+        if (paths.contains("disciplineId")){
+            publication.setDiscipline(disciplineRepository.findById(request.getDisciplineId()).orElseThrow());
+            changeForCommute = true;
+        }
+        if (paths.contains("title")) {
+            String v = (request.getTitle());
+            if(v == null || v.isEmpty()) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("Type and Discipline must be provided").asRuntimeException());
+            return;}
+            publication.setTitle(v);
+        }
+
+        if (paths.contains("doi"))           publication.setDoi(normalize(request.getDoi()));
+        if (paths.contains("issn")) {
+            publication.setIssn(normalize(request.getIssn()));
+            changeForCommute = true;
+        }
+        if (paths.contains("eissn")) {
+            publication.setEissn(normalize(request.getEissn()));
+            changeForCommute = true;
+        }
+        if (paths.contains("journalTitle"))  {
+            publication.setJournalTitle(request.getJournalTitle());
+            changeForCommute = true;
+        }
+        if (paths.contains("publicationYear")){
+            publication.setPublicationYear(request.getPublicationYear());
+            changeForCommute = true;
+        }
+
+        if (paths.contains("coauthors")) {
+                List<PublicationCoauthor> authors = new ArrayList<>(request.getReplaceCoauthorsCount());
+                for (int i = 0; i < request.getReplaceCoauthorsCount(); i++) {
+                    authors.add(PublicationCoauthor.builder()
+                            .publication(publication)
+                            .position(i + 1)
+                            .fullName(request.getReplaceCoauthors(i))
+                            .build());
+                }
+                publication.getCoauthors().clear();
+                publication.getCoauthors().addAll(authors);
+        }
 
 
-    private static   String normalize(String value) {
-        return (value == null || value.isBlank()) ? null : value.trim();
+        if(changeForCommute){
+            CommuteResult result = commutePoints.commute(publication.getJournalTitle(),publication.getType().getId(),publication.getDiscipline().getId(),publication.getIssn(),publication.getEissn(),publication.getPublicationYear());
+
+            if (result.meinJournal() == null || result.meinVersion() == null) {
+                responseObserver.onError(Status.INVALID_ARGUMENT
+                        .withDescription("ISSN/eISSN/title/year/discipline do not match an active MEiN journal.")
+                        .asRuntimeException());
+                return;
+            }
+
+            publication.setMeinPoints(result.points());
+            publication.setCycle(result.cycle());
+            publication.setMeinJournalId(result.meinJournal().getId() );
+            publication.setMeinVersionId(result.meinVersion().getId());
+        }
+
+         publicationRepository.save(publication);
+
+
+        PublicationView publicationView = entityToProto(publication);
+        responseObserver.onNext(publicationView);
+        responseObserver.onCompleted();
+
     }
 
-    private static String backfromnorm(String s) {
-        return s == null ? "" : s;
+    @Override
+    public void deletePublication(DeletePublicationRequest request, StreamObserver<ApiResponse> responseObserver) {
+
+
+        Publication publication = publicationRepository.findById(request.getId()).orElseThrow(() -> new IllegalArgumentException("Publication not found"));
+
+        if(!publication.getAuthorId().equals(request.getUserId())){
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("This is not yours publication, you cannot delete it, ha-ha-ha").asRuntimeException());
+            return;
+        }
+
+        publicationRepository.delete(publication);
+
+        ApiResponse response = ApiResponse.newBuilder().setCode(200).setMessage("Deleted").build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+
     }
 
+    @Override
+    public void listMyPublications(ListPublicationsRequest request, StreamObserver<ListPublicationsResponse> responseObserver) {
 
+    }
 }

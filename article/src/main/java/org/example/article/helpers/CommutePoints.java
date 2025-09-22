@@ -1,4 +1,4 @@
-package org.example.article.service;
+package org.example.article.helpers;
 
 import org.example.article.ETL.IssnUtil;
 import org.example.article.entities.CommuteResult;
@@ -25,7 +25,7 @@ public class CommutePoints {
         this.meinJournalCodeRepository = meinJournalCodeRepository;
     }
 
-    public  CommuteResult commute(Long typeId, Long disciplineId,
+    public  CommuteResult commute(String joutnalTitle, Long typeId, Long disciplineId,
                                  String issnRaw, String eissnRaw, int year){
 
         var cycle = evalCycleRepository.findByYear(year)
@@ -33,6 +33,7 @@ public class CommutePoints {
 
         var type = publicationTypeRepository.findById(typeId).orElseThrow();
         var discipline = disciplineRepository.findById(disciplineId).orElseThrow();
+
 
         boolean isArticle = "ARTICLE".equalsIgnoreCase(type.getName());
         if(!isArticle){
@@ -42,7 +43,18 @@ public class CommutePoints {
         String issn = IssnUtil.normalize(issnRaw);
         String eissn = IssnUtil.normalize(eissnRaw);
 
-        Optional<MeinJournal> match = meinJournalRepository.findActiveByIssnOrEissn(issn, eissn);
+        if (issn == null && eissn == null) {
+            return new CommuteResult(cycle, null, null, 0, false);
+        }
+
+        boolean ok = meinJournalRepository.existsByIssnAndEissn(issn, eissn);
+
+        if (!ok) {
+            return new CommuteResult(cycle, null, null, 0, false);
+        }
+
+
+        Optional<MeinJournal> match = meinJournalRepository.findActiveByIssnOrEissnAndTitle(issn, eissn,joutnalTitle);
         if (match.isEmpty()) {
             return new CommuteResult(cycle, null, null, 0, false);
         }

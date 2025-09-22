@@ -1,6 +1,7 @@
 syntax = "proto3";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
 package com.example.generated;
 
 option java_multiple_files = true;
@@ -143,18 +144,19 @@ message UpdatePublicationRequest{
   int64 id = 1;
   int64 userId = 2;
 
+
+  int64 typeId = 3;
+  int64 disciplineId = 4;
   string title = 5;
   string doi = 6;
-  int32 disciplineId = 4;
   string issn = 7;
   string eissn = 8;
   string journalTitle = 9;
   int32 publicationYear = 10;
-  int32 typeId = 3;
 
   repeated string replaceCoauthors = 11;
+  google.protobuf.FieldMask update_mask = 12;
 
-  bool recomputeMein = 12;
 }
 
 message DeletePublicationRequest {
