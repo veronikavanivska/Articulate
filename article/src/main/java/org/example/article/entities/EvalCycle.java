@@ -2,6 +2,7 @@ package org.example.article.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.example.article.entities.MEiN.MeinVersion;
 
 @Data
 @Entity
@@ -22,4 +23,8 @@ public class EvalCycle {
 
     @Column(nullable = false)
     private boolean isActive = false;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "mein_version_id")
+    private MeinVersion meinVersion;
 }
