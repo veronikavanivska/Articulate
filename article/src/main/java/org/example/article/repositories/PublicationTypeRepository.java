@@ -12,4 +12,5 @@ public interface PublicationTypeRepository extends JpaRepository<PublicationType
     Optional<PublicationType> findByNameIgnoreCase(String name);
 
 
+    boolean existsByName(String name);
 }

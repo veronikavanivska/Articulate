@@ -1,7 +1,10 @@
 package org.example.article.repositories;
 
 import org.example.article.entities.MEiN.MeinJournal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -34,6 +37,25 @@ public interface MeinJournalRepository extends JpaRepository<MeinJournal, Long> 
                          AND (:eissn is null OR m.eissn  = :eissn OR m.eissn2 = :eissn)
                                 )
     """)
-   boolean existsByIssnAndEissn(@Param("issn") String issn,
+    boolean existsByIssnAndEissn(@Param("issn") String issn,
                                 @Param("eissn") String eissn);
+
+
+    @Query(value = """
+              SELECT COUNT(DISTINCT COALESCE(NULLIF(uid,''), issn, eissn, issn2, eissn2))
+              FROM mein_journal
+              WHERE version_id = :versionId
+              """, nativeQuery = true)
+    long countJournals(@Param("versionId") long versionId);
+
+    @Query("""
+  SELECT COUNT(DISTINCT m.uid)
+  FROM MeinJournal m
+  WHERE m.version.id = :versionId
+    AND m.uid IS NOT NULL
+""")
+    long countDistinctUid(@Param("versionId") long versionId);
+
+    Optional<MeinJournal> findByIdAndVersion_Id(Long id, Long versionId);
+    Page<MeinJournal> findByVersion_Id(Long versionId, Pageable pageable);
 }
