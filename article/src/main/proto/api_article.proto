@@ -19,6 +19,115 @@ message ImportMEiNReply {
   int64 version_id       = 1;
   bool  already_imported = 2;
 }
+
+
+message AdminListMeinVersionsRequest {
+  int32 page=1;
+  int32 size=2;
+  string sortDir=3;
+}
+
+message MeinVersionItem {
+  int64 id=1;
+  string label=2;
+  string sourceFilename=3;
+  int64 importedBy=5;
+  google.protobuf.Timestamp importedAt=6;
+  bool isActive=7;
+  int64 journals=8;
+  int64 journalCodes=9;
+}
+
+message AdminListMeinVersionsResponse {
+  repeated MeinVersionItem items=1;
+  PageMeta page=2;
+}
+
+message AdminGetMeinVersionRequest {
+  int64 version_id=1;
+}
+message AdminGetMeinVersionResponse {
+  MeinVersionItem version=1;
+  int64 distinctIssn   = 2;
+  int64 distinctEissn  = 3;
+  int64 distinctCodes  = 4;
+}
+
+// Słownik kodów (do filtrów, dropdownów)
+message CodeRef {
+  string code = 1; string name = 2;
+}
+
+// Pozycja z listy MEiN (lekka, wystarcza do tabeli)
+message MeinJournalItem {
+  int64 id      = 1;
+  string uid    = 2;
+  string title = 3;
+  string issn   = 4;
+  string eissn  = 5;
+  int32 points  = 6;
+}
+
+message OneMeinJournalItem {
+  int64 id      = 1;
+  string uid    = 2;
+  string title1 = 3;
+  string title2 = 4;
+  string issn   = 5;
+  string issn2   = 6;
+  string eissn  = 7;
+  string eissn2  = 8;
+  int32 points  = 9;
+  repeated CodeRef codes = 10; // dołączane tylko gdy includeCodes=true
+}
+
+message AdminListMeinJournalsRequest {
+  int64 version_id = 1;         // 0 => użyj aktywnej
+  int32 page = 6;               // 0-based
+  int32 size = 7;               // domyślnie 20, max 100
+  string sortBy = 8;            // "title"|"points"|"uid" (domyślnie "title")
+  string sortDir = 9;           // "ASC"|"DESC" (domyślnie ASC)
+
+}
+message AdminListMeinJournalsResponse {
+  repeated MeinJournalItem items = 1;
+  PageMeta page = 2;
+}
+
+message AdminGetActiveMeinVersionResponse{
+  MeinVersionItem version = 1;
+}
+
+message AdminGetMeinJournalRequest {
+  int64 version_id = 1;
+  int64 journal_id = 2;
+}
+
+message AdminGetMeinJournalResponse {
+   OneMeinJournalItem item = 1;
+
+}
+
+message ActivateMeinVersionRequest{
+  int64 version_id = 1;
+}
+
+message DeactivateMeinVersionRequest{
+  int64 version_id = 1;
+}
+message DeleteMeinVersionRequest {
+  int64 version_id = 1;
+}
+
+message AdminRecalcCycleScoresRequest {
+  int64 cycle_id = 1;
+}
+
+message AdminRecalcCycleScoresResponse {
+  int32 updated_publications = 1;
+  int32 unmatched_publications = 2;
+}
+
 //publications
 message ListAdminPublicationRequest{
   int64 ownerId = 1;
@@ -39,7 +148,7 @@ message ListAdminPublicationRequest{
 message AdminListDisciplinesRequest {
   int32 page = 1;
   int32 size = 2;
-  string sortDir = 3;  // "ASC"|"DESC"
+  string sortDir = 3;
 }
 
 message CreateDisciplineRequest{
@@ -48,6 +157,7 @@ message CreateDisciplineRequest{
 
 message UpdateDisciplineRequest{
   int64 id = 1;
+  string disciplineName = 2;
 }
 
 message DeleteDisciplineRequest{
@@ -74,6 +184,8 @@ message UpdateCycleRequest {
   int32 yearFrom = 3;
   int32 yearTo = 4;
   bool isActive = 5;
+  int64 meinVersionId = 6;
+  google.protobuf.FieldMask update_mask = 7;
 }
 
 message DeleteCycleRequest{
@@ -209,17 +321,28 @@ message PageMeta {
   int32 totalPages = 4;
 }
 
-message ListTypesResponse {
+message AdminListTypesResponse {
   repeated RefItem items = 1;
   PageMeta page = 2;
+}
+message AdminListDisciplinesResponse {
+  repeated RefItem items = 1;
+  PageMeta page = 2;
+}
+message AdminListCyclesResponse {
+  repeated CycleItem items = 1;
+  PageMeta page = 2;
+}
+message ListTypesResponse {
+  repeated RefItem items = 1;
+
 }
 message ListDisciplinesResponse {
   repeated RefItem items = 1;
-  PageMeta page = 2;
+
 }
 message ListCyclesResponse {
   repeated CycleItem items = 1;
-  PageMeta page = 2;
 }
 
 message CycleItem {
@@ -228,6 +351,7 @@ message CycleItem {
   int32 yearFrom = 3;
   int32 yearTo = 4;
   bool isActive = 5;
+  int64 meinVersionId =6;
 }
 
 message ApiResponse {
@@ -235,45 +359,56 @@ message ApiResponse {
   string message = 2;
 }
 
-//TODO: Think about edit articles for admins
-service ArticleService{
 
-  //admin
-  rpc ImportFile(ImportMEiNRequest) returns (ImportMEiNReply);
-
-  //read
-  rpc AdminListPublications(ListAdminPublicationRequest) returns (ListPublicationsResponse);
-  //admin też w getPublication może odczytywać
-  //disciplines
-  rpc AdminListDisciplines(AdminListDisciplinesRequest) returns (ListDisciplinesResponse);
-  rpc AdminCreateDiscipline(CreateDisciplineRequest) returns (RefItem);
-  rpc AdminUpdateDiscipline(UpdateDisciplineRequest) returns (RefItem);
-  rpc AdminDeleteDiscipline(DeleteDisciplineRequest) returns (ApiResponse);
-
-  //types
-  rpc AdminListPublicationTypes(AdminListTypesRequest) returns (ListTypesResponse);
-  rpc AdminCreatePublicationType(CreateTypeRequest) returns (RefItem);
-  rpc AdminUpdatePublicationType(UpdateTypeRequest) returns (RefItem);
-  rpc AdminDeletePublicationType(DeleteTypeRequest) returns (ApiResponse);
-
-  //cycle
-  rpc AdminListEvalCycles(AdminListCyclesRequest) returns (ListCyclesResponse);
-  rpc AdminCreateEvalCycle(CreateCycleRequest) returns (CycleItem);
-  rpc AdminUpdateEvalCycle(UpdateCycleRequest) returns (CycleItem);
-  rpc AdminDeleteEvalCycle(DeleteCycleRequest) returns (ApiResponse);
-
-
-  //worker
+service WorkerArticleService{
   rpc CreatePublication(CreatePublicationRequest) returns (PublicationView);
   rpc GetPublication(GetPublicationRequest) returns (PublicationView);
   rpc ListMyPublications(ListPublicationsRequest) returns (ListPublicationsResponse);
   rpc UpdatePublication(UpdatePublicationRequest) returns (PublicationView);
   rpc DeletePublication(DeletePublicationRequest) returns (ApiResponse);
+}
 
+//TODO: Think about edit articles for admins
+service AdminArticleService{
+  rpc AdminListPublications(ListAdminPublicationRequest) returns (ListPublicationsResponse);
+  rpc AdminGetPublication(GetPublicationRequest) returns (PublicationView);
 
+  //disciplines
+  rpc AdminListDisciplines(AdminListDisciplinesRequest) returns (AdminListDisciplinesResponse);
+  rpc AdminCreateDiscipline(CreateDisciplineRequest) returns (RefItem);
+  rpc AdminUpdateDiscipline(UpdateDisciplineRequest) returns (RefItem);
+  rpc AdminDeleteDiscipline(DeleteDisciplineRequest) returns (ApiResponse);
+
+  //types
+  rpc AdminListPublicationTypes(AdminListTypesRequest) returns (AdminListTypesResponse);
+  rpc AdminCreatePublicationType(CreateTypeRequest) returns (RefItem);
+  rpc AdminUpdatePublicationType(UpdateTypeRequest) returns (RefItem);
+  rpc AdminDeletePublicationType(DeleteTypeRequest) returns (ApiResponse);
+
+  //cycle
+  rpc AdminListEvalCycles(AdminListCyclesRequest) returns (AdminListCyclesResponse);
+  rpc AdminCreateEvalCycle(CreateCycleRequest) returns (CycleItem);
+  rpc AdminUpdateEvalCycle(UpdateCycleRequest) returns (CycleItem);
+  rpc AdminDeleteEvalCycle(DeleteCycleRequest) returns (ApiResponse);
+
+}
+
+service ArticleService{
   // dla dropdown
   rpc ListPublicationTypes(google.protobuf.Empty) returns (ListTypesResponse);
   rpc ListDisciplines(google.protobuf.Empty) returns (ListDisciplinesResponse);
   rpc ListEvalCycles(google.protobuf.Empty) returns (ListCyclesResponse);
+}
 
+service ETLArticleService{
+  rpc ImportFile(ImportMEiNRequest) returns (ImportMEiNReply);
+  rpc AdminListMeinVersions(AdminListMeinVersionsRequest) returns (AdminListMeinVersionsResponse);
+  rpc AdminGetActiveMeinVersion(google.protobuf.Empty) returns (AdminGetActiveMeinVersionResponse);
+  rpc AdminGetMeinVersion(AdminGetMeinVersionRequest) returns (AdminGetMeinVersionResponse);
+  rpc AdminListMeinJournals(AdminListMeinJournalsRequest) returns (AdminListMeinJournalsResponse);
+  rpc AdminGetMeinJournal(AdminGetMeinJournalRequest) returns (AdminGetMeinJournalResponse);
+  rpc AdminActivateMeinVersion(ActivateMeinVersionRequest) returns (ApiResponse);
+  rpc AdminDeactivateMeinVersion(DeactivateMeinVersionRequest) returns (ApiResponse);
+  rpc AdminDeleteMeinVersion(DeleteMeinVersionRequest) returns (ApiResponse);
+  rpc AdminRecalculateCycleScores(AdminRecalcCycleScoresRequest) returns (AdminRecalcCycleScoresResponse);
 }
