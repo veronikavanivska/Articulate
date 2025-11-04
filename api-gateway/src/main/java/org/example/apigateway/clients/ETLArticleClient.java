@@ -58,7 +58,7 @@ public class ETLArticleClient {
         return stub.adminGetMeinVersion(request);
     }
 
-    public static AdminListMeinJournalsResponse adminListMeinJournals(long versionId,int page, int size, String sortDir){
+    public static AdminListMeinJournalsResponse adminListMeinJournals(Long versionId, Integer page, Integer size, String sortDir) {
         AdminListMeinJournalsRequest request = AdminListMeinJournalsRequest.newBuilder()
                 .setVersionId(versionId)
                 .setPage(page)
