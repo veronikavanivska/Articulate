@@ -13,7 +13,7 @@ RUN --mount=type=cache,id=maven-cache,target=/root/.m2/repository \
     mvn clean package -DskipTests -B
 
 
-FROM openjdk:17-alpine
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
