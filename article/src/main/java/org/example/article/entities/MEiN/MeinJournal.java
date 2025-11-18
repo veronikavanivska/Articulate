@@ -2,6 +2,8 @@ package org.example.article.entities.MEiN;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Data
 @Entity
@@ -13,6 +15,7 @@ public class MeinJournal {
 
     @ManyToOne(fetch=FetchType.LAZY, optional=false)
     @JoinColumn(name="version_id", nullable=false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private MeinVersion version;
 
     private Integer lp;

@@ -5,6 +5,7 @@ import com.google.protobuf.Empty;
 import com.google.protobuf.Timestamp;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import jakarta.persistence.EntityManager;
 import org.example.article.ETL.ETLService;
 import org.example.article.entities.CommuteResult;
 import org.example.article.entities.EvalCycle;
@@ -20,6 +21,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClient;
 
 import java.time.Instant;
@@ -37,12 +41,14 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
     private final MeinVersionRepository meinVersionRepository;
     private final MeinJournalRepository meinJournalRepository;
     private final MeinJournalCodeRepository meinJournalCodeRepository;
+    private final EntityManager entityManager;
+    private final TransactionTemplate tx;
 
-    public ETLArticleService(ETLService ETLService, CommutePoints commutePoints, PublicationRepository publicationRepository, RestClient.Builder builder, EvalCycleRepository evalCycleRepository, MeinVersionRepository meinVersionRepository, MeinJournalRepository meinJournalRepository, MeinJournalCodeRepository meinJournalCodeRepository) {
+    public ETLArticleService(ETLService ETLService, PlatformTransactionManager txManager, EntityManager entityManager , CommutePoints commutePoints, PublicationRepository publicationRepository, RestClient.Builder builder, EvalCycleRepository evalCycleRepository, MeinVersionRepository meinVersionRepository, MeinJournalRepository meinJournalRepository, MeinJournalCodeRepository meinJournalCodeRepository) {
         this.ETLService = ETLService;
-
+        this.tx = new TransactionTemplate(txManager);
         this.commutePoints = commutePoints;
-
+        this.entityManager = entityManager;
         this.publicationRepository = publicationRepository;
         this.evalCycleRepository = evalCycleRepository;
         this.meinVersionRepository = meinVersionRepository;
@@ -252,6 +258,7 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
 
 
     @Override
+    @Transactional
     public void adminDeleteMeinVersion(DeleteMeinVersionRequest request, StreamObserver<ApiResponse> responseObserver) {
         Long versionId = request.getVersionId();
 
@@ -262,8 +269,23 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
             return;
         }
 
-        meinVersionRepository.deleteById(versionId);
+        MeinVersion meinVersion = meinVersionRepository.findById(versionId).orElseThrow(() -> new RuntimeException("There is no this mein version"));
+    
+//        entityManager.createNativeQuery("SET LOCAL synchronous_commit = off").executeUpdate();
+//        meinJournalCodeRepository.deleteCodesByVersion(versionId);
+//        meinJournalRepository.deleteJournalsByVersion(versionId);
+//
+//        meinVersionRepository.deleteById(versionId);
+//        meinVersionRepository.flush();
+        tx.executeWithoutResult(status -> {
+            entityManager.createNativeQuery("SET LOCAL synchronous_commit = off").executeUpdate();
 
+            meinJournalCodeRepository.deleteCodesByVersion(versionId);   // @Modifying
+            meinJournalRepository.deleteJournalsByVersion(versionId);    // @Modifying
+
+            meinVersionRepository.deleteById(versionId);
+            meinVersionRepository.flush();
+        });
         ApiResponse response = ApiResponse.newBuilder()
                 .setCode(200)
                 .setMessage("Successfully deleted ")
@@ -327,7 +349,7 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
     public void adminListMeinJournals(AdminListMeinJournalsRequest request, StreamObserver<AdminListMeinJournalsResponse> responseObserver) {
         Long versionId = request.getVersionId();
 
-        if(!meinVersionRepository.existsById(versionId)){
+        if (!meinVersionRepository.existsById(versionId)) {
             responseObserver.onError(Status.NOT_FOUND.withDescription("Not found the mein version").asRuntimeException());
             return;
         }
@@ -354,9 +376,9 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
 
         for (MeinJournal mj : page.getContent()) {
             String title = mj.getTitle1() != null ? mj.getTitle1() : nvl(mj.getTitle2());
-            String issn  = mj.getIssn()   != null ? mj.getIssn()   : nvl(mj.getIssn2());
-            String eissn = mj.getEissn()  != null ? mj.getEissn()  : nvl(mj.getEissn2());
-            int points   = mj.getPoints() != null ? mj.getPoints() : 0;
+            String issn = mj.getIssn() != null ? mj.getIssn() : nvl(mj.getIssn2());
+            String eissn = mj.getEissn() != null ? mj.getEissn() : nvl(mj.getEissn2());
+            int points = mj.getPoints() != null ? mj.getPoints() : 0;
 
             response.addItems(MeinJournalItem.newBuilder()
                     .setId(mj.getId())
@@ -373,7 +395,6 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
 
 
     }
-
     @Override
     public void adminRecalculateCycleScores(AdminRecalcCycleScoresRequest request, StreamObserver<AdminRecalcCycleScoresResponse> responseObserver) {
         Long cycleId = request.getCycleId();

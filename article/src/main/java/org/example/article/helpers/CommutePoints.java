@@ -30,6 +30,10 @@ public class CommutePoints {
 
         var cycle = evalCycleRepository.findByYear(year)
                 .orElseThrow(() -> new IllegalArgumentException("No eval cycle for year " + year));
+        if (cycle.getMeinVersion() == null || cycle.getMeinVersion().getId() == null) {
+            throw new IllegalArgumentException("Eval cycle has no MEiN version");
+        }
+        Long versionId = cycle.getMeinVersion().getId();
 
         var type = publicationTypeRepository.findById(typeId).orElseThrow();
         var discipline = disciplineRepository.findById(disciplineId).orElseThrow();
@@ -47,21 +51,21 @@ public class CommutePoints {
             return new CommuteResult(cycle, null, null, 0, false);
         }
 
-        boolean ok = meinJournalRepository.existsByIssnAndEissn(issn, eissn);
+        boolean ok = meinJournalRepository.existsByIssnAndEissn(versionId,issn, eissn);
 
         if (!ok) {
             return new CommuteResult(cycle, null, null, 0, false);
         }
 
 
-        Optional<MeinJournal> match = meinJournalRepository.findActiveByIssnOrEissnAndTitle(issn, eissn,joutnalTitle);
+        Optional<MeinJournal> match = meinJournalRepository.findByVersionAndIssnOrEissnAndTitle(versionId,issn, eissn,joutnalTitle);
         if (match.isEmpty()) {
             return new CommuteResult(cycle, null, null, 0, false);
         }
 
         var journal = match.get();
 
-        boolean isOnJournal = meinJournalCodeRepository.existsActiveMatch(journal.getId(),disciplineId);
+        boolean isOnJournal = meinJournalCodeRepository.existsMatchInVersion(journal.getId(),disciplineId,versionId);
         if(!isOnJournal){
             throw new IllegalArgumentException(
                     "Wybrana dyscyplina („" + discipline.getName() + "”) nie jest powiązana z tym czasopismem w aktywnej liście MEiN.");

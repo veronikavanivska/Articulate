@@ -55,7 +55,8 @@ message AdminGetMeinVersionResponse {
 
 // Słownik kodów (do filtrów, dropdownów)
 message CodeRef {
-  string code = 1; string name = 2;
+  string code = 1;
+  string name = 2;
 }
 
 // Pozycja z listy MEiN (lekka, wystarcza do tabeli)
@@ -85,7 +86,6 @@ message AdminListMeinJournalsRequest {
   int64 version_id = 1;         // 0 => użyj aktywnej
   int32 page = 6;               // 0-based
   int32 size = 7;               // domyślnie 20, max 100
-  string sortBy = 8;            // "title"|"points"|"uid" (domyślnie "title")
   string sortDir = 9;           // "ASC"|"DESC" (domyślnie ASC)
 
 }

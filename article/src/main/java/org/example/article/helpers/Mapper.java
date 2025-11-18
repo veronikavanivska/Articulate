@@ -30,6 +30,7 @@ public final class Mapper {
                 .setId(publication.getCycle().getId())
                 .setYearFrom(publication.getCycle().getYearFrom())
                 .setYearTo(publication.getCycle().getYearTo())
+                .setMeinVersionId(publication.getCycle().getMeinVersion().getId())
                 .build();
 
         PublicationView.Builder b = PublicationView.newBuilder()
