@@ -1,0 +1,1 @@
+ALTER TABLE monographic ADD COLUMN   cycle_id         BIGINT NOT NULL REFERENCES eval_cycle(id);
