@@ -1,14 +1,9 @@
-package org.example.article.entities.MEiN;
+package org.example.article.entities.MEiN.article;
 
-import com.google.type.DateTime;
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
-import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @Data
 @Entity

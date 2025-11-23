@@ -2,7 +2,7 @@ package org.example.article.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.example.article.entities.MEiN.MeinCode;
+import org.example.article.entities.MEiN.article.MeinCode;
 
 @Entity
 @Data

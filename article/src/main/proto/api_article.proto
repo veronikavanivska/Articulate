@@ -6,6 +6,8 @@ package com.example.generated;
 
 option java_multiple_files = true;
 
+
+
 //For admins
 message ImportMEiNRequest{
     bytes file = 1;
@@ -185,7 +187,9 @@ message UpdateCycleRequest {
   int32 yearTo = 4;
   bool isActive = 5;
   int64 meinVersionId = 6;
-  google.protobuf.FieldMask update_mask = 7;
+  int64 monoVersionId =7;
+
+  google.protobuf.FieldMask update_mask = 8;
 }
 
 message DeleteCycleRequest{
@@ -352,6 +356,7 @@ message CycleItem {
   int32 yearTo = 4;
   bool isActive = 5;
   int64 meinVersionId =6;
+  int64 monoVersionId =7;
 }
 
 message ApiResponse {
@@ -400,6 +405,9 @@ service ArticleService{
   rpc ListEvalCycles(google.protobuf.Empty) returns (ListCyclesResponse);
 }
 
+service ETLMonoService{
+  rpc ImportFile(ImportMEiNRequest) returns (ImportMEiNReply);
+}
 service ETLArticleService{
   rpc ImportFile(ImportMEiNRequest) returns (ImportMEiNReply);
   rpc AdminListMeinVersions(AdminListMeinVersionsRequest) returns (AdminListMeinVersionsResponse);

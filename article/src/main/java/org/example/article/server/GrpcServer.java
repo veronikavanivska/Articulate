@@ -2,10 +2,8 @@ package org.example.article.server;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import org.example.article.service.AdminArticleService;
-import org.example.article.service.ArticleService;
-import org.example.article.service.ETLArticleService;
-import org.example.article.service.WorkerArticleService;
+import org.example.article.ETL.MonoETLService;
+import org.example.article.service.*;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,12 +12,14 @@ public class GrpcServer {
     private final ETLArticleService etlArticleService;
     private final AdminArticleService adminArticleService;
     private final WorkerArticleService workerArticleService;
+    private final ELTMonoService monoETLService;
 
-    public GrpcServer(ArticleService meinImportService, ETLArticleService etlArticleService, AdminArticleService adminArticleService, WorkerArticleService workerArticleService) {
+    public GrpcServer(ArticleService meinImportService, ETLArticleService etlArticleService, AdminArticleService adminArticleService, WorkerArticleService workerArticleService, ELTMonoService monoETLService) {
         this.adminArticleService = adminArticleService;
         this.etlArticleService = etlArticleService;
         this.workerArticleService = workerArticleService;
         this.meinImportService = meinImportService;
+        this.monoETLService = monoETLService;
     }
 
     public void start() {
@@ -32,6 +32,7 @@ public class GrpcServer {
                     .addService(etlArticleService)
                     .addService(adminArticleService)
                     .addService(workerArticleService)
+                    .addService(monoETLService)
                     .build();
 
             server.start();

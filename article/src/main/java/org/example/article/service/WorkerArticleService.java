@@ -94,7 +94,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
 
         CommuteResult result = commutePoints.commute(request.getJournalTitle(),request.getTypeId(),request.getDisciplineId(),request.getIssn(),request.getEissn(),request.getPublicationYear());
 
-        Publication publication = Publication.builder()
+        Publication.PublicationBuilder builder = Publication.builder()
                 .authorId(request.getUserId())
                 .type(publicationTypeRepository.findById(request.getTypeId()).orElseThrow())
                 .title(request.getTitle())
@@ -105,10 +105,21 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
                 .publicationYear(request.getPublicationYear())
                 .cycle(result.cycle())
                 .discipline(disciplineRepository.findById(request.getDisciplineId()).orElseThrow())
-                .meinPoints(result.points())
-                .meinVersionId(result.meinVersion().getId())
-                .meinJournalId(result.meinJournal().getId())
-                .build();
+                .meinPoints(result.points());
+
+        // jeżeli mamy pełne dopasowanie do wykazu MEiN – zapisujemy ID-ki
+        if (!result.offList()
+                && result.meinVersion() != null
+                && result.meinJournal() != null) {
+            builder.meinVersionId(result.meinVersion().getId());
+            builder.meinJournalId(result.meinJournal().getId());
+        } else {
+            // off-list: punkty są, ale brak powiązania z tabelą MEiN
+            builder.meinVersionId(null);
+            builder.meinJournalId(null);
+        }
+
+        Publication publication = builder.build();
 
         if (request.getCoauthorsCount() > 0) {
             List<PublicationCoauthor> authors = new ArrayList<>(request.getCoauthorsCount());
@@ -165,7 +176,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
 
         if (paths.contains("typeId"))
         {
-            publication.setType(publicationTypeRepository.findById(request.getTypeId()).orElseThrow());
+            publication.setType(publicationTypeRepository.findById(request.getTypeId()).orElseThrow(() -> new RuntimeException("Type id not found")));
             changeForCommute = true;
         }
         if (paths.contains("disciplineId")){

@@ -68,7 +68,7 @@ public class WorkerArticleClient {
                                              String journalTitle, Integer publicationYear, List<String> replaceCoauthors){
         UpdatePublicationRequest.Builder req = UpdatePublicationRequest.newBuilder()
                 .setId(id)
-                .setUserId(userId);  // your proto has userId = 2
+                .setUserId(userId);
 
         FieldMask.Builder mask = FieldMask.newBuilder();
 

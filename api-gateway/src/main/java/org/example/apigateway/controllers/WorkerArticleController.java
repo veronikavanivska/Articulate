@@ -174,6 +174,7 @@ public class WorkerArticleController {
             publicationViewResponse.setOwnerId(view.getOwnerId());
             publicationViewResponse.setTitle(view.getTitle());
 
+            publicationView.add(publicationViewResponse);
         }
 
         PageMeta pageMeta = new PageMeta();
@@ -243,7 +244,7 @@ public class WorkerArticleController {
 
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerArticleClient.deletePublication(userId, publicationId);
+        var response = WorkerArticleClient.deletePublication( publicationId, userId);
 
         ApiResponse apiResponse = new ApiResponse();
 

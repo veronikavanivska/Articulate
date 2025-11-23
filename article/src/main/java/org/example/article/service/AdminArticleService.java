@@ -1,17 +1,15 @@
 package org.example.article.service;
 
 import com.example.generated.*;
-import com.google.protobuf.Empty;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import org.example.article.ETL.ETLService;
 import org.example.article.entities.Discipline;
 import org.example.article.entities.EvalCycle;
-import org.example.article.entities.MEiN.MeinVersion;
+import org.example.article.entities.MEiN.article.MeinVersion;
+import org.example.article.entities.MEiN.monographs.MeinMonoVersion;
 import org.example.article.entities.Publication;
 import org.example.article.entities.PublicationType;
-import org.example.article.helpers.CommutePoints;
 import org.example.article.helpers.PublicationSpecification;
 import org.example.article.repositories.*;
 import org.springframework.data.domain.Page;
@@ -21,10 +19,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static org.example.article.helpers.Mapper.entityToProto;
@@ -37,9 +33,10 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
     private final PublicationRepository publicationRepository;
     private final EvalCycleRepository evalCycleRepository;
     private final MeinVersionRepository meinVersionRepository;
+    private final MeinMonoVersionRepository meinMonoVersionRepository;
 
 
-    public AdminArticleService( PublicationTypeRepository publicationTypeRepository,  DisciplineRepository disciplineRepository, PublicationRepository publicationRepository, EvalCycleRepository evalCycleRepository, MeinVersionRepository meinVersionRepository) {
+    public AdminArticleService(PublicationTypeRepository publicationTypeRepository, DisciplineRepository disciplineRepository, PublicationRepository publicationRepository, EvalCycleRepository evalCycleRepository, MeinVersionRepository meinVersionRepository, MeinMonoVersionRepository meinMonoVersionRepository) {
 
         this.publicationTypeRepository = publicationTypeRepository;
 
@@ -47,7 +44,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         this.publicationRepository = publicationRepository;
         this.evalCycleRepository = evalCycleRepository;
         this.meinVersionRepository = meinVersionRepository;
-
+        this.meinMonoVersionRepository = meinMonoVersionRepository;
     }
 
     @Override
@@ -341,6 +338,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         int yearTo = cycle.getYearTo();
         boolean isActive   = cycle.isActive();
         Long meinVersionId = (cycle.getMeinVersion() != null ? cycle.getMeinVersion().getId() : null);
+        Long monoVersionId = (cycle.getMeinMonoVersion() != null ? cycle.getMeinVersion().getId() : null);
 
         if (paths.contains("name"))     evalName = request.getName();
         if (paths.contains("yearFrom"))  yearFrom = request.getYearFrom();
@@ -349,6 +347,10 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         if (paths.contains("meinVersionId")) {
             long raw = request.getMeinVersionId();
             meinVersionId = (raw > 0 ? raw : null);
+        }
+        if (paths.contains("monoVersionId")) {
+            long raw = request.getMonoVersionId();
+            monoVersionId = (raw > 0 ? raw : null);
         }
 
         if (paths.contains("name")) {
@@ -391,6 +393,13 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                 return;
             }
         }
+        if(paths.contains("monoVersionId" )&& monoVersionId != null){
+            if (!meinMonoVersionRepository.existsById(monoVersionId)) {
+                responseObserver.onError(Status.INVALID_ARGUMENT
+                        .withDescription("monoVersionId not found: " + meinVersionId).asRuntimeException());
+                return;
+            }
+        }
 
         if(paths.contains("name"))      cycle.setName(evalName);
         if (paths.contains("yearFrom")) cycle.setYearFrom(yearFrom);
@@ -402,6 +411,14 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
             } else {
                 MeinVersion mv = meinVersionRepository.findById(meinVersionId).orElseThrow(() -> new RuntimeException("Mein Version not found"));
                 cycle.setMeinVersion(mv);
+            }
+        }
+        if (paths.contains("monoVersionId")) {
+            if (monoVersionId == null) {
+                cycle.setMeinMonoVersion(null);
+            } else {
+                MeinMonoVersion mmv = meinMonoVersionRepository.findById(monoVersionId).orElseThrow(() -> new RuntimeException("Mein Version not found"));
+                cycle.setMeinMonoVersion(mmv);
             }
         }
 
@@ -417,7 +434,8 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                 .setYearFrom(cycle.getYearFrom())
                 .setYearTo(cycle.getYearTo())
                 .setIsActive(cycle.isActive())
-                .setMeinVersionId((cycle.getMeinVersion().getId() == null ? 0 : cycle.getMeinVersion().getId()))
+                .setMeinVersionId(cycle.getMeinVersion().getId() == null ? 0 : cycle.getMeinVersion().getId())
+                .setMonoVersionId(cycle.getMeinMonoVersion().getId() == null ? 0 : cycle.getMeinMonoVersion().getId())
                 .build();
 
         responseObserver.onNext(response);

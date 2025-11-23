@@ -1,4 +1,4 @@
-package org.example.article.entities.MEiN;
+package org.example.article.entities.MEiN.article;
 
 import jakarta.persistence.*;
 import lombok.Data;

@@ -2,7 +2,8 @@ package org.example.article.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.example.article.entities.MEiN.MeinVersion;
+import org.example.article.entities.MEiN.article.MeinVersion;
+import org.example.article.entities.MEiN.monographs.MeinMonoVersion;
 
 @Data
 @Entity
@@ -27,4 +28,10 @@ public class EvalCycle {
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "mein_version_id")
     private MeinVersion meinVersion;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "mein_monograph_version_id")
+    private MeinMonoVersion meinMonoVersion;
+
 }
+

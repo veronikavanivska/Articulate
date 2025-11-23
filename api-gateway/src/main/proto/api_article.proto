@@ -396,6 +396,9 @@ service ArticleService{
   rpc ListDisciplines(google.protobuf.Empty) returns (ListDisciplinesResponse);
   rpc ListEvalCycles(google.protobuf.Empty) returns (ListCyclesResponse);
 }
+service ETLMonoService{
+  rpc ImportFile(ImportMEiNRequest) returns (ImportMEiNReply);
+}
 
 service ETLArticleService{
   rpc ImportFile(ImportMEiNRequest) returns (ImportMEiNReply);

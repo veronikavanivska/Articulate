@@ -1,6 +1,6 @@
 package org.example.article.repositories;
 
-import org.example.article.entities.MEiN.MeinJournalCode;
+import org.example.article.entities.MEiN.article.MeinJournalCode;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

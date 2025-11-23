@@ -24,14 +24,21 @@ public final class Mapper {
                 .setName(publication.getDiscipline().getName())
                 .build();
 
-        CycleItem cycle = CycleItem.newBuilder()
+        CycleItem.Builder cycle = CycleItem.newBuilder()
                 .setName(publication.getCycle().getName())
                 .setIsActive(publication.getCycle().isActive())
                 .setId(publication.getCycle().getId())
                 .setYearFrom(publication.getCycle().getYearFrom())
-                .setYearTo(publication.getCycle().getYearTo())
-                .setMeinVersionId(publication.getCycle().getMeinVersion().getId())
-                .build();
+                .setYearTo(publication.getCycle().getYearTo());
+
+        if(publication.getCycle().getMeinVersion().getId() != null) {
+             cycle.setMeinVersionId(publication.getCycle().getMeinVersion().getId());
+        }
+        if(publication.getCycle().getMeinMonoVersion().getId() != null) {
+            cycle.setMonoVersionId(publication.getCycle().getMeinMonoVersion().getId());
+        }
+
+        cycle.build();
 
         PublicationView.Builder b = PublicationView.newBuilder()
                 .setId(publication.getId())
@@ -43,12 +50,17 @@ public final class Mapper {
                 .setJournalTitle(publication.getJournalTitle())
                 .setPublicationYear(publication.getPublicationYear())
                 .setMeinPoints(publication.getMeinPoints())
-                .setMeinVersionId(publication.getMeinVersionId())
-                .setMeinJournalId(publication.getMeinJournalId())
                 .setCycle(cycle)
                 .setType(type)
                 .setDiscipline(discipline);
 
+
+        if (publication.getMeinVersionId() != null) {
+            b.setMeinVersionId(publication.getMeinVersionId());  // tu już Long -> long działa
+        }
+        if (publication.getMeinJournalId() != null) {
+            b.setMeinJournalId(publication.getMeinJournalId());
+        }
 
         publication.getCoauthors().stream()
                 .sorted(java.util.Comparator.comparingInt(PublicationCoauthor::getPosition))
