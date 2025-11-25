@@ -64,12 +64,14 @@ public final class Mapper {
 
         publication.getCoauthors().stream()
                 .sorted(java.util.Comparator.comparingInt(PublicationCoauthor::getPosition))
-                .forEach(c -> b.addCoauthors(
-                        Coauthor.newBuilder()
-                                .setPosition(c.getPosition())
-                                .setFullName(backfromnorm(c.getFullName()))
-                                .build()
-                ));
+                .forEach(c -> {
+                    Coauthor.Builder cb = Coauthor.newBuilder()
+                            .setPosition(c.getPosition())
+                            .setFullName(backfromnorm(c.getFullName()));
+                    if (c.getUserId() != null) cb.setUserId(c.getUserId());
+
+                    b.addCoauthors(cb.build());
+                });
 
 
         PublicationView publicationView = b.build();

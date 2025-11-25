@@ -220,6 +220,7 @@ message DeleteTypeRequest {
 //For worker
 message CreatePublicationRequest{
   int64 userId = 1;
+  string userFullName = 17;
 
   int64 typeId = 2;
   int64 disciplineId = 3;
@@ -232,7 +233,7 @@ message CreatePublicationRequest{
   string journalTitle = 8;
   int32 publicationYear = 9;
 
-  repeated string coauthors = 10;
+  repeated CoauthorInput coauthors = 10;
 }
 
 message GetPublicationRequest{
@@ -258,6 +259,7 @@ message ListPublicationsRequest {
 message UpdatePublicationRequest{
   int64 id = 1;
   int64 userId = 2;
+  string fullName = 17;
 
 
   int64 typeId = 3;
@@ -269,7 +271,7 @@ message UpdatePublicationRequest{
   string journalTitle = 9;
   int32 publicationYear = 10;
 
-  repeated string replaceCoauthors = 11;
+  repeated CoauthorInput replaceCoauthors = 11;
   google.protobuf.FieldMask update_mask = 12;
 
 }
@@ -304,9 +306,16 @@ message PublicationView{
   repeated Coauthor coauthors = 15;
 }
 
+message CoauthorInput{
+  string fullName = 1;
+  int64 userId = 2;
+}
+
 message Coauthor{
   int32 position = 1;
   string fullName = 2;
+  int64 userId = 4;
+
 }
 message RefItem {
   int64 id = 1;

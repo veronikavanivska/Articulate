@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.example.article.helpers.Mapper.*;
 
@@ -34,13 +31,15 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
     private final CommutePoints commutePoints;
     private final DisciplineRepository disciplineRepository;
     private final PublicationRepository publicationRepository;
+    private final PublicationCoauthorRepository publicationCoauthorRepository;
 
 
-    public WorkerArticleService( PublicationTypeRepository publicationTypeRepository, CommutePoints commutePoints, DisciplineRepository disciplineRepository, PublicationRepository publicationRepository ) {
+    public WorkerArticleService(PublicationTypeRepository publicationTypeRepository, CommutePoints commutePoints, DisciplineRepository disciplineRepository, PublicationRepository publicationRepository, PublicationCoauthorRepository publicationCoauthorRepository) {
         this.publicationTypeRepository = publicationTypeRepository;
         this.commutePoints = commutePoints;
         this.disciplineRepository = disciplineRepository;
         this.publicationRepository = publicationRepository;
+        this.publicationCoauthorRepository = publicationCoauthorRepository;
     }
 
 
@@ -59,6 +58,8 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
      * 5) ListMyPublications(with filters and sorting)
      * </p>
      */
+
+    //TODO: JWT has to have the full name or i will need to somehow get the name
     @Override
     public void createPublication(CreatePublicationRequest request, StreamObserver<PublicationView> responseObserver) {
         if(publicationRepository.existsByAuthorId(request.getUserId())&&
@@ -121,20 +122,38 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
 
         Publication publication = builder.build();
 
-        if (request.getCoauthorsCount() > 0) {
+        publicationRepository.save(publication);
+
+        int pos = 1;
+
+        PublicationCoauthor main = new PublicationCoauthor();
+        main.setPublication(publication);
+        main.setPosition(pos++);
+        main.setUserId(request.getUserId());
+        main.setInternal(true);
+        main.setFullName(request.getUserFullName()); // or null if you choose Option C
+        publicationCoauthorRepository.save(main);
+
+
+        for (CoauthorInput c : request.getCoauthorsList()) {
             List<PublicationCoauthor> authors = new ArrayList<>(request.getCoauthorsCount());
-            for (int i = 0; i < request.getCoauthorsCount(); i++) {
-                authors.add(PublicationCoauthor.builder()
-                        .publication(publication)
-                        .position(i + 1)
-                        .fullName(request.getCoauthors(i))
-                        .build());
+            PublicationCoauthor co = new PublicationCoauthor();
+            co.setPublication(publication);
+            co.setPosition(pos++);
+            co.setFullName(c.getFullName());
+            if (c.getUserId() > 0) {
+                co.setUserId(c.getUserId());
+                co.setInternal(true);
+            } else {
+                co.setInternal(false);
             }
-            publication.getCoauthors().clear();
-            publication.getCoauthors().addAll(authors);
+
+            publicationCoauthorRepository.save(co);
         }
 
-        publicationRepository.save(publication);
+        List<PublicationCoauthor> coauthors =
+                publicationCoauthorRepository.findByPublicationIdOrderByPosition((publication.getId()));
+        publication.setCoauthors(coauthors);
 
         PublicationView publicationView = entityToProto(publication);
         responseObserver.onNext(publicationView);
@@ -165,7 +184,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
 
         boolean changeForCommute = false;
 
-        Publication publication = publicationRepository.findWithAllRelations(request.getId()).orElseThrow();
+        Publication publication = publicationRepository.findWithAllRelations(request.getId()).orElseThrow(() -> new RuntimeException("Publication not found"));
         if(!publication.getAuthorId().equals(request.getUserId())){
             responseObserver.onError(Status.INVALID_ARGUMENT
                     .withDescription("This is not yours publication, you cannot see it, ha-ha-ha").asRuntimeException());
@@ -210,38 +229,90 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
             changeForCommute = true;
         }
 
-        if (paths.contains("coauthors")) {
-            List<PublicationCoauthor> authors = new ArrayList<>(request.getReplaceCoauthorsCount());
-            for (int i = 0; i < request.getReplaceCoauthorsCount(); i++) {
-                authors.add(PublicationCoauthor.builder()
-                        .publication(publication)
-                        .position(i + 1)
-                        .fullName(request.getReplaceCoauthors(i))
-                        .build());
+        if (paths.contains("replaceCoauthors")) {
+            List<PublicationCoauthor> existing =
+                    publicationCoauthorRepository.findByPublicationIdOrderByPosition(publication.getId());
+
+            // find main coauthor (userId == authorId), if any
+            PublicationCoauthor main = existing.stream()
+                    .filter(c -> Objects.equals(c.getUserId(), publication.getAuthorId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (main == null) {
+                main = new PublicationCoauthor();
+                main.setPublication(publication);
+                main.setUserId(publication.getAuthorId());
+                main.setInternal(true);
+                main.setFullName(request.getFullName());
             }
-            publication.getCoauthors().clear();
-            publication.getCoauthors().addAll(authors);
+
+              PublicationCoauthor finalMain = main;
+
+            List<PublicationCoauthor> toDelete = existing.stream()
+                    .filter(c -> c != finalMain)
+                    .toList();
+            if (!toDelete.isEmpty()) {
+                publicationCoauthorRepository.deleteAll(toDelete);
+            }
+
+            int pos = 1;
+
+            // re-save main author as position 1
+            main.setPosition(pos++);
+            publicationCoauthorRepository.save(main);
+
+            // add new coauthors from request (these are "extra" authors, not including main)
+            for (CoauthorInput c : request.getReplaceCoauthorsList()) {
+                PublicationCoauthor co = new PublicationCoauthor();
+                co.setPublication(publication);
+                co.setPosition(pos++);
+                co.setFullName(c.getFullName());
+                if (c.getUserId() > 0) {
+                    co.setUserId(c.getUserId());
+                    co.setInternal(true);
+                } else {
+                    co.setInternal(false);
+                }
+                publicationCoauthorRepository.save(co);
+            }
         }
 
 
-        if(changeForCommute){
-            CommuteResult result = commutePoints.commute(publication.getJournalTitle(),publication.getType().getId(),publication.getDiscipline().getId(),publication.getIssn(),publication.getEissn(),publication.getPublicationYear());
 
-            if (result.meinJournal() == null || result.meinVersion() == null) {
-                responseObserver.onError(Status.INVALID_ARGUMENT
-                        .withDescription("ISSN/eISSN/title/year/discipline do not match an active MEiN journal.")
-                        .asRuntimeException());
-                return;
-            }
+        if (changeForCommute) {
+            CommuteResult result = commutePoints.commute(
+                    publication.getJournalTitle(),
+                    publication.getType().getId(),
+                    publication.getDiscipline().getId(),
+                    publication.getIssn(),
+                    publication.getEissn(),
+                    publication.getPublicationYear()
+            );
 
+            // Always update points & cycle
             publication.setMeinPoints(result.points());
             publication.setCycle(result.cycle());
-            publication.setMeinJournalId(result.meinJournal().getId() );
-            publication.setMeinVersionId(result.meinVersion().getId());
+
+            // Only link to MEiN tables when we have a full match
+            if (!result.offList()
+                    && result.meinJournal() != null
+                    && result.meinVersion() != null) {
+
+                publication.setMeinJournalId(result.meinJournal().getId());
+                publication.setMeinVersionId(result.meinVersion().getId());
+            } else {
+                // off-list or incomplete match -> clear MEiN IDs
+                publication.setMeinJournalId(null);
+                publication.setMeinVersionId(null);
+            }
         }
 
         publicationRepository.save(publication);
 
+        List<PublicationCoauthor> updatedCoauthors =
+                publicationCoauthorRepository.findByPublicationIdOrderByPosition(publication.getId());
+        publication.setCoauthors(updatedCoauthors);
 
         PublicationView publicationView = entityToProto(publication);
         responseObserver.onNext(publicationView);

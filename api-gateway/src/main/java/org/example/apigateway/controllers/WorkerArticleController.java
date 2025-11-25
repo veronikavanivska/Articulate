@@ -14,6 +14,7 @@ import org.example.apigateway.requests.articles.CreatePublicationRequest;
 import java.util.ArrayList;
 import java.util.List;
 
+//TODO: need to replace the authors and need to add the mapper for response
 @RestController
 @RequestMapping("/article")
 public class WorkerArticleController {

@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
+
+//TODO: add discipline
 public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase {
 
     private final ProfileUserRepository profileUserRepository;
