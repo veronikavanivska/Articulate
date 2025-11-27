@@ -18,5 +18,5 @@ public class CreatePublicationRequest {
     private String eissn;
     private String journalTitle;
     private int publicationYear;
-    private List<String> coauthors;
+    private List<Coauthors> coauthors;
 }

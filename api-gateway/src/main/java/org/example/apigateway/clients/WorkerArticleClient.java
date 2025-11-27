@@ -5,8 +5,10 @@ import com.example.generated.*;
 import com.google.protobuf.FieldMask;
 import io.grpc.Channel;
 import org.example.apigateway.Client;
+import org.example.apigateway.requests.articles.Coauthors;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Client(host = "${article.server.host}",
@@ -18,7 +20,20 @@ public class WorkerArticleClient {
 
     public static PublicationView createPublication(long userId, long typeId, long disciplineId, String title, String doi,
                                              String issn, String eissn, String journalTitle, int publicationYear,
-                                             List<String> coauthors){
+                                             List<Coauthors> coauthors){
+
+        List<CoauthorInput> coauthorInputs = new ArrayList<>();
+
+        for(Coauthors coauthor: coauthors){
+            CoauthorInput input = CoauthorInput.newBuilder()
+                    .setUserId(coauthor.getUserId())
+                    .setFullName(coauthor.getFullName())
+                    .build();
+
+            coauthorInputs.add(input);
+        }
+
+
         CreatePublicationRequest request = CreatePublicationRequest.newBuilder()
                 .setUserId(userId)
                 .setTypeId(typeId)
@@ -29,7 +44,7 @@ public class WorkerArticleClient {
                 .setIssn(issn)
                 .setEissn(eissn)
                 .setJournalTitle(journalTitle)
-                .addAllCoauthors(coauthors)
+                .addAllCoauthors(coauthorInputs)
                 .build();
 
         return stub.createPublication(request);
@@ -65,7 +80,9 @@ public class WorkerArticleClient {
 
     public static PublicationView updatePublication(long id, long userId, Long typeId, Long disciplineId,
                                              String title, String doi, String issn, String eissn,
-                                             String journalTitle, Integer publicationYear, List<String> replaceCoauthors){
+                                             String journalTitle, Integer publicationYear, List<Coauthors> replaceCoauthors){
+
+
         UpdatePublicationRequest.Builder req = UpdatePublicationRequest.newBuilder()
                 .setId(id)
                 .setUserId(userId);
@@ -105,7 +122,18 @@ public class WorkerArticleClient {
             mask.addPaths("publicationYear");
         }
         if (replaceCoauthors != null) {
-            req.addAllReplaceCoauthors(replaceCoauthors);
+            List<CoauthorInput> coauthorInputs = new ArrayList<>();
+
+            for(Coauthors coauthor: replaceCoauthors){
+                CoauthorInput input = CoauthorInput.newBuilder()
+                        .setUserId(coauthor.getUserId())
+                        .setFullName(coauthor.getFullName())
+                        .build();
+
+                coauthorInputs.add(input);
+            }
+
+            req.addAllReplaceCoauthors(coauthorInputs);
             mask.addPaths("replaceCoauthors");
         }
 

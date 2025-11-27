@@ -220,7 +220,7 @@ message DeleteTypeRequest {
 //For worker
 message CreatePublicationRequest{
   int64 userId = 1;
-  string userFullName = 17;
+  //string userFullName = 17;
 
   int64 typeId = 2;
   int64 disciplineId = 3;
@@ -259,8 +259,6 @@ message ListPublicationsRequest {
 message UpdatePublicationRequest{
   int64 id = 1;
   int64 userId = 2;
-  string fullName = 17;
-
 
   int64 typeId = 3;
   int64 disciplineId = 4;

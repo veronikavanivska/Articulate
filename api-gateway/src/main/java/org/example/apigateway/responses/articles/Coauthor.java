@@ -6,4 +6,5 @@ import lombok.Data;
 public class Coauthor {
     private int position;
     private String fullName;
+    private long userId;
 }

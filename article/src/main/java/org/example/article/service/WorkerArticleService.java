@@ -59,7 +59,6 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
      * </p>
      */
 
-    //TODO: JWT has to have the full name or i will need to somehow get the name
     @Override
     public void createPublication(CreatePublicationRequest request, StreamObserver<PublicationView> responseObserver) {
         if(publicationRepository.existsByAuthorId(request.getUserId())&&
@@ -93,6 +92,18 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
             return;
         }
 
+        Optional<CoauthorInput> ownerEntryOpt = request.getCoauthorsList().stream()
+                .filter(c -> c.getUserId() == request.getUserId())
+                .findFirst();
+
+        if (ownerEntryOpt.isEmpty()) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("You must include yourself in the coauthors list")
+                    .asRuntimeException());
+            return;
+        }
+
+
         CommuteResult result = commutePoints.commute(request.getJournalTitle(),request.getTypeId(),request.getDisciplineId(),request.getIssn(),request.getEissn(),request.getPublicationYear());
 
         Publication.PublicationBuilder builder = Publication.builder()
@@ -108,14 +119,13 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
                 .discipline(disciplineRepository.findById(request.getDisciplineId()).orElseThrow())
                 .meinPoints(result.points());
 
-        // jeżeli mamy pełne dopasowanie do wykazu MEiN – zapisujemy ID-ki
+
         if (!result.offList()
                 && result.meinVersion() != null
                 && result.meinJournal() != null) {
             builder.meinVersionId(result.meinVersion().getId());
             builder.meinJournalId(result.meinJournal().getId());
         } else {
-            // off-list: punkty są, ale brak powiązania z tabelą MEiN
             builder.meinVersionId(null);
             builder.meinJournalId(null);
         }
@@ -124,6 +134,9 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
 
         publicationRepository.save(publication);
 
+
+        CoauthorInput ownerEntry = ownerEntryOpt.get();
+
         int pos = 1;
 
         PublicationCoauthor main = new PublicationCoauthor();
@@ -131,16 +144,20 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
         main.setPosition(pos++);
         main.setUserId(request.getUserId());
         main.setInternal(true);
-        main.setFullName(request.getUserFullName()); // or null if you choose Option C
+        main.setFullName(ownerEntry.getFullName());
         publicationCoauthorRepository.save(main);
 
-
         for (CoauthorInput c : request.getCoauthorsList()) {
-            List<PublicationCoauthor> authors = new ArrayList<>(request.getCoauthorsCount());
+            if (c.getUserId() == request.getUserId()
+                    && Objects.equals(c.getFullName(), ownerEntry.getFullName())) {
+                continue;
+            }
+
             PublicationCoauthor co = new PublicationCoauthor();
             co.setPublication(publication);
             co.setPosition(pos++);
             co.setFullName(c.getFullName());
+
             if (c.getUserId() > 0) {
                 co.setUserId(c.getUserId());
                 co.setInternal(true);
@@ -152,8 +169,9 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
         }
 
         List<PublicationCoauthor> coauthors =
-                publicationCoauthorRepository.findByPublicationIdOrderByPosition((publication.getId()));
+                publicationCoauthorRepository.findByPublicationIdOrderByPosition(publication.getId());
         publication.setCoauthors(coauthors);
+
 
         PublicationView publicationView = entityToProto(publication);
         responseObserver.onNext(publicationView);
@@ -230,52 +248,61 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
         }
 
         if (paths.contains("replaceCoauthors")) {
-            List<PublicationCoauthor> existing =
-                    publicationCoauthorRepository.findByPublicationIdOrderByPosition(publication.getId());
+            long ownerId = publication.getAuthorId();
 
-            // find main coauthor (userId == authorId), if any
-            PublicationCoauthor main = existing.stream()
-                    .filter(c -> Objects.equals(c.getUserId(), publication.getAuthorId()))
-                    .findFirst()
-                    .orElse(null);
+            List<CoauthorInput> inputs = request.getReplaceCoauthorsList();
 
-            if (main == null) {
-                main = new PublicationCoauthor();
-                main.setPublication(publication);
-                main.setUserId(publication.getAuthorId());
-                main.setInternal(true);
-                main.setFullName(request.getFullName());
+            Optional<CoauthorInput> ownerEntryOpt = inputs.stream()
+                    .filter(c -> c.getUserId() == ownerId)
+                    .findFirst();
+
+            if (ownerEntryOpt.isEmpty()) {
+                responseObserver.onError(
+                        Status.INVALID_ARGUMENT
+                                .withDescription("You must include yourself in coauthors when updating")
+                                .asRuntimeException()
+                );
+                return;
             }
 
-              PublicationCoauthor finalMain = main;
+            CoauthorInput ownerEntry = ownerEntryOpt.get();
 
-            List<PublicationCoauthor> toDelete = existing.stream()
-                    .filter(c -> c != finalMain)
-                    .toList();
-            if (!toDelete.isEmpty()) {
-                publicationCoauthorRepository.deleteAll(toDelete);
-            }
+            publicationCoauthorRepository.deleteByPublicationId(publication.getId());
 
+            List<PublicationCoauthor> newCoauthors = new ArrayList<>();
             int pos = 1;
 
-            // re-save main author as position 1
+            PublicationCoauthor main = new PublicationCoauthor();
+            main.setPublication(publication);
             main.setPosition(pos++);
-            publicationCoauthorRepository.save(main);
+            main.setUserId(ownerId);
+            main.setInternal(true);
+            main.setFullName(ownerEntry.getFullName());
+            newCoauthors.add(main);
 
-            // add new coauthors from request (these are "extra" authors, not including main)
-            for (CoauthorInput c : request.getReplaceCoauthorsList()) {
+            for (CoauthorInput c : inputs) {
+                if (c.getUserId() == ownerId &&
+                        Objects.equals(c.getFullName(), ownerEntry.getFullName())) {
+                    continue;
+                }
+
                 PublicationCoauthor co = new PublicationCoauthor();
                 co.setPublication(publication);
                 co.setPosition(pos++);
                 co.setFullName(c.getFullName());
+
                 if (c.getUserId() > 0) {
                     co.setUserId(c.getUserId());
                     co.setInternal(true);
                 } else {
                     co.setInternal(false);
                 }
-                publicationCoauthorRepository.save(co);
+
+                newCoauthors.add(co);
             }
+
+            publicationCoauthorRepository.saveAll(newCoauthors);
+            publication.setCoauthors(newCoauthors);
         }
 
 
@@ -290,11 +317,9 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
                     publication.getPublicationYear()
             );
 
-            // Always update points & cycle
             publication.setMeinPoints(result.points());
             publication.setCycle(result.cycle());
 
-            // Only link to MEiN tables when we have a full match
             if (!result.offList()
                     && result.meinJournal() != null
                     && result.meinVersion() != null) {
@@ -302,7 +327,6 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
                 publication.setMeinJournalId(result.meinJournal().getId());
                 publication.setMeinVersionId(result.meinVersion().getId());
             } else {
-                // off-list or incomplete match -> clear MEiN IDs
                 publication.setMeinJournalId(null);
                 publication.setMeinVersionId(null);
             }

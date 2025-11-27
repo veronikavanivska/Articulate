@@ -15,5 +15,5 @@ public class UpdatePublicationRequest {
     private String eissn;
     private String journalTitle;
     private Integer publicationYear;
-    private List<String> replaceCoauthors;
+    private List<Coauthors> replaceCoauthors;
 }
