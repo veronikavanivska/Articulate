@@ -2,6 +2,8 @@ package org.example.article.helpers;
 
 import com.example.generated.*;
 import org.example.article.entities.MEiN.monographs.MonographAuthor;
+import org.example.article.entities.MEiN.monographs.MonographChapter;
+import org.example.article.entities.MEiN.monographs.MonographChapterAuthor;
 import org.example.article.entities.MEiN.monographs.Monographic;
 import org.example.article.entities.Publication;
 import org.example.article.entities.PublicationCoauthor;
@@ -139,6 +141,70 @@ public final class Mapper {
 
         return monographView;
 
+    }
+
+    public static ChapterView entityToProtoChapter(MonographChapter monographChapter) {
+        RefItem type = RefItem.newBuilder()
+                .setId(monographChapter.getType().getId())
+                .setName(monographChapter.getType().getName())
+                .build();
+
+        RefItem discipline = RefItem.newBuilder()
+                .setId(monographChapter.getDiscipline().getId())
+                .setName(monographChapter.getDiscipline().getName())
+                .build();
+
+        CycleItem.Builder cycle = CycleItem.newBuilder()
+                .setName(monographChapter.getCycle().getName())
+                .setIsActive(monographChapter.getCycle().isActive())
+                .setId(monographChapter.getCycle().getId())
+                .setYearFrom(monographChapter.getCycle().getYearFrom())
+                .setYearTo(monographChapter.getCycle().getYearTo());
+
+        if(monographChapter.getCycle().getMeinVersion().getId() != null) {
+            cycle.setMeinVersionId(monographChapter.getCycle().getMeinVersion().getId());
+        }
+        if(monographChapter.getCycle().getMeinMonoVersion().getId() != null) {
+            cycle.setMonoVersionId(monographChapter.getCycle().getMeinMonoVersion().getId());
+        }
+
+        cycle.build();
+
+        ChapterView.Builder b = ChapterView.newBuilder()
+                .setId(monographChapter.getId())
+                .setAuthorId(monographChapter.getAuthorId())
+                .setMonograficChapterTitle(monographChapter.getMonograficChapterTitle())
+                .setDoi(backfromnorm(monographChapter.getDoi()))
+                .setIsbn(backfromnorm(monographChapter.getIsbn()))
+                .setPoints(monographChapter.getMeinPoints())
+                .setMonograficTitle(monographChapter.getMonograficTitle())
+                .setMonographPublisher(monographChapter.getMonographChapterPublisher())
+                .setCycle(cycle)
+                .setType(type)
+                .setDiscipline(discipline);
+
+        if (monographChapter.getMeinMonoPublisherId() != null) {
+            b.setMeinMonoPublisherId(monographChapter.getMeinMonoPublisherId());
+        }
+        if (monographChapter.getMeinMonoId() != null) {
+            b.setMeinMonoId(monographChapter.getMeinMonoId());
+        }
+
+        monographChapter.getCoauthors().stream()
+                .sorted(java.util.Comparator.comparingInt(MonographChapterAuthor::getPosition))
+                .forEach(c -> {
+                    Coauthor.Builder cb = Coauthor.newBuilder()
+                            .setPosition(c.getPosition())
+                            .setFullName(backfromnorm(c.getFullName()));
+                    if (c.getUserId() != null) cb.setUserId(c.getUserId());
+
+                    b.addCoauthor(cb.build());
+                });
+
+
+        ChapterView chapterView = b.build();
+
+        return chapterView;
     }
 
     public static  String normalize(String value) {

@@ -3,6 +3,7 @@ package org.example.article.helpers;
 import org.example.article.ETL.IssnUtil;
 import org.example.article.entities.CommuteResultArticle;
 import org.example.article.entities.CommuteResultMono;
+import org.example.article.entities.CommuteResultMonoChapter;
 import org.example.article.entities.MEiN.article.MeinJournal;
 import org.example.article.entities.MEiN.monographs.MeinMonoPublisher;
 import org.example.article.entities.PublicationType;
@@ -32,9 +33,11 @@ public class CommutePoints {
 
     final int OFF_LIST__ARTICLE_POINTS = 5;
     final int OFF_LIST_MONO_POINTS = 20;
+    final int OFF_LIST_MONO_CHAPTER_POINTS = 5;
+    final double CHAPTER_MULTIPLIER = 0.25;
 
     public CommuteResultArticle commuteArticle(String joutnalTitle, Long typeId, Long disciplineId,
-                                               String issnRaw, String eissnRaw, int year){
+                                               String issnRaw, String eissnRaw, int year) {
 
         var cycle = evalCycleRepository.findByYear(year)
                 .orElseThrow(() -> new IllegalArgumentException("No eval cycle for year " + year));
@@ -48,7 +51,7 @@ public class CommutePoints {
 
 
         boolean isArticle = "ARTICLE".equalsIgnoreCase(type.getName());
-        if(!isArticle){
+        if (!isArticle) {
             return new CommuteResultArticle(cycle, null, null, 0, false);
         }
 
@@ -59,32 +62,32 @@ public class CommutePoints {
             return new CommuteResultArticle(cycle, null, null, 0, false);
         }
 
-        boolean ok = meinJournalRepository.existsByIssnAndEissn(versionId,issn, eissn);
+        boolean ok = meinJournalRepository.existsByIssnAndEissn(versionId, issn, eissn);
 
         if (!ok) {
             return new CommuteResultArticle(cycle, null, null, 0, true);
         }
 
 
-        Optional<MeinJournal> match = meinJournalRepository.findByVersionAndIssnOrEissnAndTitle(versionId,issn, eissn,joutnalTitle);
+        Optional<MeinJournal> match = meinJournalRepository.findByVersionAndIssnOrEissnAndTitle(versionId, issn, eissn, joutnalTitle);
         if (match.isEmpty()) {
             return new CommuteResultArticle(cycle, null, null, OFF_LIST__ARTICLE_POINTS, true);
         }
 
         var journal = match.get();
 
-        boolean isOnJournal = meinJournalCodeRepository.existsMatchInVersion(journal.getId(),disciplineId,versionId);
-        if(!isOnJournal){
+        boolean isOnJournal = meinJournalCodeRepository.existsMatchInVersion(journal.getId(), disciplineId, versionId);
+        if (!isOnJournal) {
             return new CommuteResultArticle(cycle, null, null, OFF_LIST__ARTICLE_POINTS, true);
         }
-        return new CommuteResultArticle(cycle,journal.getVersion(), journal, journal.getPoints(), false);
+        return new CommuteResultArticle(cycle, journal.getVersion(), journal, journal.getPoints(), false);
 
     }
 
-    public CommuteResultMono commuteMono(String monographyPublisher,Long typeId, int year){
+    public CommuteResultMono commuteMono(String monographyPublisher, Long typeId, int year) {
         var cycle = evalCycleRepository.findByYear(year)
                 .orElseThrow(() -> new IllegalArgumentException("No eval cycle for year " + year));
-        if(cycle.getMeinMonoVersion() == null || cycle.getMeinMonoVersion().getId() == null) {
+        if (cycle.getMeinMonoVersion() == null || cycle.getMeinMonoVersion().getId() == null) {
             throw new IllegalArgumentException("Eval cycle has no MEiN mono version");
         }
 
@@ -94,23 +97,54 @@ public class CommutePoints {
 
         boolean monography = "MONOGRAPH".equalsIgnoreCase(type.getName());
 
-        if(!monography){
+        if (!monography) {
             return new CommuteResultMono(cycle, null, null, 0, false);
         }
 
-        Optional<MeinMonoPublisher> meinMonoPublisher = meinMonoPublisherRepository.findByVersionIdAndTitle(versionId,monographyPublisher);
-        if(meinMonoPublisher.isEmpty()){
+        Optional<MeinMonoPublisher> meinMonoPublisher = meinMonoPublisherRepository.findByVersionIdAndTitle(versionId, monographyPublisher);
+        if (meinMonoPublisher.isEmpty()) {
             return new CommuteResultMono(cycle, null, null, OFF_LIST_MONO_POINTS, true);
         }
 
         var publisher = meinMonoPublisher.get();
 
         boolean isOnPublisher = meinMonoPublisherRepository.existsMatchInVersion(versionId, publisher.getId());
-        if(!isOnPublisher){
+        if (!isOnPublisher) {
             return new CommuteResultMono(cycle, null, null, OFF_LIST_MONO_POINTS, true);
         }
-        return new CommuteResultMono(cycle,publisher.getVersion(), publisher, publisher.getPoints() , false );
+        return new CommuteResultMono(cycle, publisher.getVersion(), publisher, publisher.getPoints(), false);
     }
 
-    //public CommuteResultChapter commuteChapter(){}
+    public CommuteResultMonoChapter commuteChapter(String monographyPublisher,Long typeId, int year){
+        var cycle = evalCycleRepository.findByYear(year)
+                .orElseThrow(() -> new IllegalArgumentException("No eval cycle for year " + year));
+        if(cycle.getMeinMonoVersion() == null || cycle.getMeinMonoVersion().getId() == null) {
+            throw new IllegalArgumentException("Eval cycle has no MEiN mono version");
+        }
+        Long versionId = cycle.getMeinMonoVersion().getId();
+
+        PublicationType type = publicationTypeRepository.findById(typeId).orElseThrow(() -> new IllegalArgumentException("No publication type for type " + typeId));
+
+        boolean monographChapter = "CHAPTER".equalsIgnoreCase(type.getName());
+
+        if(!monographChapter){
+            return new CommuteResultMonoChapter(cycle, null, null, 0, false);
+        }
+
+        Optional<MeinMonoPublisher> meinMonoPublisher = meinMonoPublisherRepository.findByVersionIdAndTitle(versionId,monographyPublisher);
+        if(meinMonoPublisher.isEmpty()){
+            return new CommuteResultMonoChapter(cycle, null, null, OFF_LIST_MONO_CHAPTER_POINTS, true);
+        }
+
+        var publisher = meinMonoPublisher.get();
+
+        boolean isOnPublisher = meinMonoPublisherRepository.existsMatchInVersion(versionId, publisher.getId());
+        if(!isOnPublisher){
+            return new CommuteResultMonoChapter(cycle, null, null, OFF_LIST_MONO_CHAPTER_POINTS, true);
+        }
+
+        return new CommuteResultMonoChapter(cycle,publisher.getVersion(), publisher, publisher.getPoints() * CHAPTER_MULTIPLIER , false );
+
+
+    }
 }

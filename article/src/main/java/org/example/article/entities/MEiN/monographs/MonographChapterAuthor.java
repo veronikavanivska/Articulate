@@ -20,4 +20,8 @@ public class MonographChapterAuthor {
 
     @Column(nullable = false)
     private String fullName;
+
+    private Long userId;
+
+    private boolean isInternal;
 }

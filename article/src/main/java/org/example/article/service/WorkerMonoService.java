@@ -3,19 +3,15 @@ package org.example.article.service;
 import com.example.generated.*;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import org.example.article.entities.CommuteResultArticle;
-import org.example.article.entities.CommuteResultMono;
+import org.example.article.entities.*;
 import org.example.article.entities.MEiN.monographs.MonographAuthor;
+import org.example.article.entities.MEiN.monographs.MonographChapter;
+import org.example.article.entities.MEiN.monographs.MonographChapterAuthor;
 import org.example.article.entities.MEiN.monographs.Monographic;
-import org.example.article.entities.Publication;
-import org.example.article.entities.PublicationCoauthor;
+import org.example.article.helpers.ChapterSpecification;
 import org.example.article.helpers.CommutePoints;
 import org.example.article.helpers.MonographSpecification;
-import org.example.article.helpers.PublicationSpecification;
-import org.example.article.repositories.DisciplineRepository;
-import org.example.article.repositories.MonographAuthorRepository;
-import org.example.article.repositories.MonographicRepository;
-import org.example.article.repositories.PublicationTypeRepository;
+import org.example.article.repositories.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,14 +35,18 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
     private final DisciplineRepository disciplineRepository;
     private final MonographAuthorRepository monographAuthorRepository;
     private final OpenLibraryIsbnService openLibraryIsbnService;
+    private final MonographChapterRepository monographChapterRepository;
+    private final MonographChapterAuthorRepository monographChapterAuthorRepository;
 
-    public WorkerMonoService(MonographicRepository monographicRepository, OpenLibraryIsbnService openLibraryIsbnService, CommutePoints commutePoints, PublicationTypeRepository publicationTypeRepository, DisciplineRepository disciplineRepository, MonographAuthorRepository monographAuthorRepository) {
+    public WorkerMonoService(MonographicRepository monographicRepository, OpenLibraryIsbnService openLibraryIsbnService, CommutePoints commutePoints, PublicationTypeRepository publicationTypeRepository, DisciplineRepository disciplineRepository, MonographAuthorRepository monographAuthorRepository, MonographChapterRepository monographChapterRepository, MonographChapterAuthorRepository monographChapterAuthorRepository) {
         this.monographicRepository = monographicRepository;
         this.commutePoints = commutePoints;
         this.publicationTypeRepository = publicationTypeRepository;
         this.disciplineRepository = disciplineRepository;
         this.monographAuthorRepository = monographAuthorRepository;
         this.openLibraryIsbnService = openLibraryIsbnService;
+        this.monographChapterRepository = monographChapterRepository;
+        this.monographChapterAuthorRepository = monographChapterAuthorRepository;
     }
 
     @Override
@@ -193,7 +193,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
 //    repeated CoauthorInput input = 9;
     @Override
     public void createChapter(CreateChapterRequest request, StreamObserver<ChapterView> responseObserver) {
-        if (monographicRepository.existsByAuthorId(request.getUserId()) && monographicRepository.existsByTitle(request.getTitle())) {
+        if (monographChapterRepository.existsByAuthorId(request.getUserId()) && monographicRepository.existsByTitle(request.getMonographChapterTitle())) {
             responseObserver.onError(Status.INVALID_ARGUMENT
                     .withDescription("You already added this monograph").asRuntimeException());
             return;
@@ -203,11 +203,22 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
             throw Status.INVALID_ARGUMENT.withDescription("At least one author (including owner) must be provided").asRuntimeException();
         }
 
-        if (request.getTitle().isBlank()) {
+        if (request.getMonographChapterTitle().isBlank()) {
             responseObserver.onError(Status.INVALID_ARGUMENT
-                    .withDescription("Title must be provided").asRuntimeException());
+                    .withDescription("Chapter title must be provided").asRuntimeException());
             return;
         }
+        if (request.getMonographTitle().isBlank()) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("Title of monograph must be provided").asRuntimeException());
+            return;
+        }
+        if (request.getMonographPublisherTitle().isBlank()) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("Publisher of monograph must be provided").asRuntimeException());
+            return;
+        }
+
         if (request.getTypeId() <= 0 || request.getDisciplineId() <= 0) {
             responseObserver.onError(Status.INVALID_ARGUMENT
                     .withDescription("Type and Discipline must be provided").asRuntimeException());
@@ -219,6 +230,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
                     .withDescription("Publication year is not valid").asRuntimeException());
             return;
         }
+
         Optional<CoauthorInput> ownerEntryOpt = request.getInputList().stream()
                 .filter(c -> c.getUserId() == request.getUserId())
                 .findFirst();
@@ -230,35 +242,19 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
             return;
         }
 
-//        if (request.getIsbn() != null && !request.getIsbn().isBlank()) {
-//            boolean ok = openLibraryIsbnService.publisherMatches(
-//                    request.getIsbn(),
-//                    request.getMonograficPublisherTitle()
-//            );
-//
-//            if (!ok) {
-//                responseObserver.onError(
-//                        Status.INVALID_ARGUMENT
-//                                .withDescription("ISBN publisher does not match provided publisher title")
-//                                .asRuntimeException()
-//                );
-//                return;
-//            }
-//        }
+        CommuteResultMonoChapter result = commutePoints.commuteChapter(request.getMonographPublisherTitle(), request.getTypeId(), request.getPublicationYear());
 
-        CommuteResultMono result = commutePoints.commuteMono(request.getMonograficPublisherTitle(), request.getTypeId(), request.getPublicationYear());
-
-
-        Monographic.MonographicBuilder builder = Monographic.builder()
+        MonographChapter.MonographChapterBuilder builder = MonographChapter.builder()
                 .authorId(request.getUserId())
                 .type(publicationTypeRepository.findById(request.getTypeId()).orElseThrow(() -> new RuntimeException("Publication type not found")))
                 .discipline(disciplineRepository.findById(request.getDisciplineId()).orElseThrow(() -> new RuntimeException("Discipline not found")))
                 .cycle(result.cycle())
-                .title(request.getTitle())
+                .monograficChapterTitle(request.getMonographChapterTitle())
                 .doi(request.getDoi())
                 .isbn(normalizeIsbn13Strict(request.getIsbn()))
                 .publicationYear(request.getPublicationYear())
-                .monograficTitle(request.getMonograficPublisherTitle())
+                .monograficTitle(request.getMonographTitle())
+                .monographChapterPublisher(request.getMonographPublisherTitle())
                 .meinPoints(result.points());
 
         if (!result.offList()
@@ -271,22 +267,22 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
             builder.meinMonoId(null);
         }
 
-        Monographic monograph = builder.build();
+        MonographChapter monographChapter = builder.build();
 
-        monographicRepository.save(monograph);
+        monographChapterRepository.save(monographChapter);
 
 
         CoauthorInput ownerEntry = ownerEntryOpt.get();
 
         int pos = 1;
 
-        MonographAuthor main = new MonographAuthor();
-        main.setMonograph(monograph);
+        MonographChapterAuthor main = new MonographChapterAuthor();
+        main.setMonographChapter(monographChapter);
         main.setPosition(pos++);
         main.setUserId(request.getUserId());
         main.setInternal(true);
         main.setFullName(ownerEntry.getFullName());
-        monographAuthorRepository.save(main);
+        monographChapterAuthorRepository.save(main);
 
 
         for (CoauthorInput c : request.getInputList()) {
@@ -295,8 +291,8 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
                 continue;
             }
 
-            MonographAuthor co = new MonographAuthor();
-            co.setMonograph(monograph);
+            MonographChapterAuthor co = new MonographChapterAuthor();
+            co.setMonographChapter(monographChapter);
             co.setPosition(pos++);
             co.setFullName(c.getFullName());
 
@@ -307,18 +303,17 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
                 co.setInternal(false);
             }
 
-            monographAuthorRepository.save(co);
+            monographChapterAuthorRepository.save(co);
         }
 
-        List<MonographAuthor> coauthors =
-                monographAuthorRepository.findByMonographIdOrderByPosition(monograph.getId());
-        monograph.setCoauthors(coauthors);
+        List<MonographChapterAuthor> coauthors =
+                monographChapterAuthorRepository.findByMonographChapterIdOrderByPosition(monographChapter.getId());
+        monographChapter.setCoauthors(coauthors);
 
 
-        MonographView monographView = entityToProtoMonograph(monograph);
-        responseObserver.onNext(monographView);
+        ChapterView chapterView = entityToProtoChapter(monographChapter);
+        responseObserver.onNext(chapterView);
         responseObserver.onCompleted();
-
     }
 
     @Override
@@ -337,6 +332,20 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
         responseObserver.onCompleted();
     }
 
+    @Override
+    public void getChapter(GetChapterRequest request, StreamObserver<ChapterView> responseObserver) {
+        MonographChapter chapter = monographChapterRepository.findWithAllRelations(request.getId()).orElseThrow();
+
+        if (!chapter.getAuthorId().equals(request.getUserId())) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("This is not yours chapter, you cannot see it, ha-ha-ha").asRuntimeException());
+            return;
+        }
+
+        ChapterView chapterView = entityToProtoChapter(chapter);
+        responseObserver.onNext(chapterView);
+        responseObserver.onCompleted();
+    }
 
     @Override
     @Transactional
@@ -363,7 +372,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
             String v = (request.getTitle());
             if (v == null || v.isEmpty()) {
                 responseObserver.onError(Status.INVALID_ARGUMENT
-                        .withDescription("Type and Discipline must be provided").asRuntimeException());
+                        .withDescription("Title be provided").asRuntimeException());
                 return;
             }
             monographic.setTitle(v);
@@ -475,8 +484,153 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
     }
 
     @Override
+    public void updateChapter(UpdateChapterRequest request, StreamObserver<ChapterView> responseObserver) {
+        boolean changeForCommute = false;
+
+        MonographChapter chapter = monographChapterRepository.findWithAllRelations(request.getId()).orElseThrow(() -> new RuntimeException("Chapter not found"));
+        if (!chapter.getAuthorId().equals(request.getUserId())) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("This is not yours chapter, you cannot see it, ha-ha-ha").asRuntimeException());
+            return;
+        }
+
+        Set<String> paths = new HashSet<>(request.getUpdateMask().getPathsList());
+
+        if (paths.contains("typeId")) {
+            chapter.setType(publicationTypeRepository.findById(request.getTypeId()).orElseThrow(() -> new RuntimeException("Type id not found")));
+            changeForCommute = true;
+        }
+        if (paths.contains("disciplineId")) {
+            chapter.setDiscipline(disciplineRepository.findById(request.getDisciplineId()).orElseThrow());
+        }
+        if (paths.contains("monograficChapterTitle")) {
+            String v = (request.getMonograficChapterTitle());
+            if (v == null || v.isEmpty()) {
+                responseObserver.onError(Status.INVALID_ARGUMENT
+                        .withDescription("Title be provided").asRuntimeException());
+                return;
+            }
+            chapter.setMonograficChapterTitle(v);
+        }
+
+        if (paths.contains("doi")) chapter.setDoi(normalize(request.getDoi()));
+        if (paths.contains("isbn")) {
+            chapter.setIsbn(normalizeIsbn13Strict(request.getIsbn()));
+        }
+
+        if (paths.contains("monograficTitle")) {
+            chapter.setMonograficTitle(request.getMonograficTitle());
+        }
+
+        if (paths.contains("monographPublisher")) {
+            chapter.setMonographChapterPublisher(request.getMonographPublisher());
+            changeForCommute = true;
+        }
+
+        if (paths.contains("publicationYear")) {
+            chapter.setPublicationYear(request.getPublicationYear());
+            changeForCommute = true;
+        }
+
+        if (paths.contains("replaceCoauthors")) {
+            long ownerId = chapter.getAuthorId();
+
+            List<CoauthorInput> inputs = request.getReplaceCoauthorsList();
+
+            Optional<CoauthorInput> ownerEntryOpt = inputs.stream()
+                    .filter(c -> c.getUserId() == ownerId)
+                    .findFirst();
+
+            if (ownerEntryOpt.isEmpty()) {
+                responseObserver.onError(
+                        Status.INVALID_ARGUMENT
+                                .withDescription("You must include yourself in coauthors when updating")
+                                .asRuntimeException()
+                );
+                return;
+            }
+
+            CoauthorInput ownerEntry = ownerEntryOpt.get();
+
+            monographChapterAuthorRepository.deleteByMonographChapterId(chapter.getId());
+
+            List<MonographChapterAuthor> newCoauthors = new ArrayList<>();
+            int pos = 1;
+
+            MonographChapterAuthor main = new MonographChapterAuthor();
+            main.setMonographChapter(chapter);
+            main.setPosition(pos++);
+            main.setUserId(ownerId);
+            main.setInternal(true);
+            main.setFullName(ownerEntry.getFullName());
+            newCoauthors.add(main);
+
+            for (CoauthorInput c : inputs) {
+                if (c.getUserId() == ownerId &&
+                        Objects.equals(c.getFullName(), ownerEntry.getFullName())) {
+                    continue;
+                }
+
+                MonographChapterAuthor co = new MonographChapterAuthor();
+                co.setMonographChapter(chapter);
+                co.setPosition(pos++);
+                co.setFullName(c.getFullName());
+
+                if (c.getUserId() > 0) {
+                    co.setUserId(c.getUserId());
+                    co.setInternal(true);
+                } else {
+                    co.setInternal(false);
+                }
+
+                newCoauthors.add(co);
+            }
+
+            monographChapterAuthorRepository.saveAll(newCoauthors);
+            chapter.setCoauthors(newCoauthors);
+        }
+
+        if (changeForCommute) {
+            CommuteResultMonoChapter result = commutePoints.commuteChapter(
+                    chapter.getMonographChapterPublisher(),
+                    chapter.getType().getId(),
+                    chapter.getPublicationYear()
+            );
+
+            chapter.setMeinPoints(result.points());
+            chapter.setCycle(result.cycle());
+
+            if (!result.offList()
+                    && result.meinMonoPublisher() != null
+                    && result.meinMonoVersion() != null) {
+                chapter.setMeinMonoPublisherId(result.meinMonoPublisher().getId());
+                chapter.setMeinMonoId(result.meinMonoVersion().getId());
+            } else {
+                chapter.setMeinMonoPublisherId(null);
+                chapter.setMeinMonoId(null);
+            }
+        }
+
+        monographChapterRepository.save(chapter);
+
+        List<MonographChapterAuthor> updatedCoauthors =
+                monographChapterAuthorRepository.findByMonographChapterIdOrderByPosition(chapter.getId());
+        chapter.setCoauthors(updatedCoauthors);
+
+        ChapterView chapterView = entityToProtoChapter(chapter);
+        responseObserver.onNext(chapterView);
+        responseObserver.onCompleted();
+    }
+
+    @Override
     public void listMyMonographs(ListMonographsRequest request, StreamObserver<ListMonographsResponse> responseObserver) {
         doList(responseObserver, request.getUserId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(),
+                request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());
+    }
+
+    @Override
+    public void listMyChapters(ListChaptersRequest request, StreamObserver<ListChaptersResponse> responseObserver) {
+        doListChapter(responseObserver, request.getUserId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(),
                 request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());
     }
 
@@ -505,7 +659,6 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
 
         Page<Monographic> pages = monographicRepository.findAll(spec, pageable);
 
-
         PageMeta meta = PageMeta.newBuilder()
                 .setPage(pages.getNumber())
                 .setSize(pages.getSize())
@@ -523,6 +676,50 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
         responseObserver.onNext(resp.build());
         responseObserver.onCompleted();
     }
+
+    private void doListChapter(StreamObserver<ListChaptersResponse> responseObserver, Long authorId, long typeId, long disciplineId, long cycleId,
+                        int page, int size, String sortBy, String sortDir) {
+
+        int pg = Math.max(0, page);
+        int sz = size > 0 ? Math.min(size, 100) : 20;
+
+        String sortProposition = switch (sortBy) {
+            case "publicationYear" -> "publicationYear";
+            case "meinPoints" -> "meinPoints";
+            case "createdAt" -> "crqeatedAt";
+            default -> "createdAt";
+        };
+
+        boolean desc = !"ASC".equalsIgnoreCase(sortDir);
+        Pageable pageable = PageRequest.of(pg, sz, desc ? Sort.by(sortProposition).descending() : Sort.by(sortProposition).ascending());
+
+        Specification<MonographChapter> spec = ChapterSpecification.list(
+                authorId,
+                typeId > 0 ? typeId : null,
+                disciplineId > 0 ? disciplineId : null,
+                cycleId > 0 ? cycleId : null
+        );
+
+        Page<MonographChapter> pages = monographChapterRepository.findAll(spec, pageable);
+
+        PageMeta meta = PageMeta.newBuilder()
+                .setPage(pages.getNumber())
+                .setSize(pages.getSize())
+                .setTotalItems(pages.getTotalElements())
+                .setTotalPages(pages.getTotalPages())
+                .build();
+
+        ListChaptersResponse.Builder resp = ListChaptersResponse.newBuilder()
+                .setPageMeta(meta);
+
+        for (MonographChapter m : pages.getContent()) {
+            resp.addChapterView(entityToProtoChapter(m));
+        }
+
+        responseObserver.onNext(resp.build());
+        responseObserver.onCompleted();
+    }
+
 
     @Override
     public void deleteMonograph(DeleteMonographRequest request, StreamObserver<ApiResponse> responseObserver) {
@@ -543,6 +740,23 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
         responseObserver.onCompleted();
     }
 
+    @Override
+    public void deleteChapter(DeleteChapterRequest request, StreamObserver<ApiResponse> responseObserver) {
+        MonographChapter chapter = monographChapterRepository.findById(request.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Chapter not found"));
 
+        if (!chapter.getAuthorId().equals(request.getUserId())) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("This is not yours chapter, you cannot delete it, ha-ha-ha").asRuntimeException());
+            return;
+        }
+
+        monographChapterRepository.deleteById(chapter.getId());
+
+        ApiResponse response = ApiResponse.newBuilder().setCode(200).setMessage("Deleted").build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
 }
 

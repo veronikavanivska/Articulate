@@ -49,8 +49,9 @@ public class MonographChapter {
     private String isbn;
     private String  monograficTitle;
     private String  monograficChapterTitle;
+    private String  monographChapterPublisher;
     private Integer publicationYear;
-    private Integer meinPoints;
+    private Double meinPoints;
 
     private Long meinMonoPublisherId;
     private Long meinMonoId;

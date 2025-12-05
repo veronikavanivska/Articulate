@@ -474,9 +474,10 @@ message ChapterView{
 
   string monograficChapterTitle = 6;
   string monograficTitle = 14;
+  string monographPublisher = 15;
   string doi = 7;
   string isbn = 8;
-  int32 points = 9;
+  double points = 9;
   int64 meinMonoPublisherId = 10;
   int64 meinMonoId = 11;
 
@@ -505,17 +506,19 @@ message ListChaptersResponse{
 }
 
 message UpdateChapterRequest{
+  int64 id = 16;
   int64 userId = 1;
 
   int64 typeId = 2;
   int64 disciplineId = 3;
   string monograficChapterTitle = 4;
   string monograficTitle = 13;
+  string monographPublisher = 15;
   string doi = 5;
   string isbn = 6;
   int32 publicationYear = 7;
 
-  repeated CoauthorInput input = 9;
+  repeated CoauthorInput replaceCoauthors = 9;
   google.protobuf.FieldMask update_mask = 12;
 }
 
