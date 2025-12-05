@@ -1,18 +1,16 @@
 package org.example.article.helpers;
 
-import com.example.generated.Coauthor;
-import com.example.generated.CycleItem;
-import com.example.generated.PublicationView;
-import com.example.generated.RefItem;
+import com.example.generated.*;
+import org.example.article.entities.MEiN.monographs.MonographAuthor;
+import org.example.article.entities.MEiN.monographs.Monographic;
 import org.example.article.entities.Publication;
 import org.example.article.entities.PublicationCoauthor;
-import org.springframework.stereotype.Component;
 
 
 public final class Mapper {
     private Mapper() {}
 
-    public static PublicationView entityToProto(Publication publication) {
+    public static PublicationView entityToProtoArticle(Publication publication) {
 
         RefItem type = RefItem.newBuilder()
                 .setId(publication.getType().getId())
@@ -56,7 +54,7 @@ public final class Mapper {
 
 
         if (publication.getMeinVersionId() != null) {
-            b.setMeinVersionId(publication.getMeinVersionId());  // tu już Long -> long działa
+            b.setMeinVersionId(publication.getMeinVersionId());
         }
         if (publication.getMeinJournalId() != null) {
             b.setMeinJournalId(publication.getMeinJournalId());
@@ -77,6 +75,70 @@ public final class Mapper {
         PublicationView publicationView = b.build();
 
         return publicationView;
+    }
+
+    public static MonographView entityToProtoMonograph(Monographic monograph) {
+        RefItem type = RefItem.newBuilder()
+                .setId(monograph.getType().getId())
+                .setName(monograph.getType().getName())
+                .build();
+
+        RefItem discipline = RefItem.newBuilder()
+                .setId(monograph.getDiscipline().getId())
+                .setName(monograph.getDiscipline().getName())
+                .build();
+
+        CycleItem.Builder cycle = CycleItem.newBuilder()
+                .setName(monograph.getCycle().getName())
+                .setIsActive(monograph.getCycle().isActive())
+                .setId(monograph.getCycle().getId())
+                .setYearFrom(monograph.getCycle().getYearFrom())
+                .setYearTo(monograph.getCycle().getYearTo());
+
+        if(monograph.getCycle().getMeinVersion().getId() != null) {
+            cycle.setMeinVersionId(monograph.getCycle().getMeinVersion().getId());
+        }
+        if(monograph.getCycle().getMeinMonoVersion().getId() != null) {
+            cycle.setMonoVersionId(monograph.getCycle().getMeinMonoVersion().getId());
+        }
+
+        cycle.build();
+
+        MonographView.Builder b = MonographView.newBuilder()
+                .setId(monograph.getId())
+                .setAuthorId(monograph.getAuthorId())
+                .setTitle(monograph.getTitle())
+                .setDoi(backfromnorm(monograph.getDoi()))
+                .setIsbn(backfromnorm(monograph.getIsbn()))
+                .setPoints(monograph.getMeinPoints())
+                .setMonograficTitle(monograph.getMonograficTitle())
+                .setCycle(cycle)
+                .setType(type)
+                .setDiscipline(discipline);
+
+        if (monograph.getMeinMonoPublisherId() != null) {
+            b.setMeinMonoPublisherId(monograph.getMeinMonoPublisherId());
+        }
+        if (monograph.getMeinMonoId() != null) {
+            b.setMeinMonoId(monograph.getMeinMonoId());
+        }
+
+        monograph.getCoauthors().stream()
+                .sorted(java.util.Comparator.comparingInt(MonographAuthor::getPosition))
+                .forEach(c -> {
+                    Coauthor.Builder cb = Coauthor.newBuilder()
+                            .setPosition(c.getPosition())
+                            .setFullName(backfromnorm(c.getFullName()));
+                    if (c.getUserId() != null) cb.setUserId(c.getUserId());
+
+                    b.addCoauthor(cb.build());
+                });
+
+
+        MonographView monographView = b.build();
+
+        return monographView;
+
     }
 
     public static  String normalize(String value) {

@@ -3,8 +3,7 @@ package org.example.article.service;
 import com.example.generated.*;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import org.example.article.ETL.ETLService;
-import org.example.article.entities.CommuteResult;
+import org.example.article.entities.CommuteResultArticle;
 import org.example.article.entities.Publication;
 import org.example.article.entities.PublicationCoauthor;
 import org.example.article.helpers.CommutePoints;
@@ -17,7 +16,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
 
 import java.util.*;
 
@@ -104,7 +102,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
         }
 
 
-        CommuteResult result = commutePoints.commute(request.getJournalTitle(),request.getTypeId(),request.getDisciplineId(),request.getIssn(),request.getEissn(),request.getPublicationYear());
+        CommuteResultArticle result = commutePoints.commuteArticle(request.getJournalTitle(),request.getTypeId(),request.getDisciplineId(),request.getIssn(),request.getEissn(),request.getPublicationYear());
 
         Publication.PublicationBuilder builder = Publication.builder()
                 .authorId(request.getUserId())
@@ -173,7 +171,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
         publication.setCoauthors(coauthors);
 
 
-        PublicationView publicationView = entityToProto(publication);
+        PublicationView publicationView = entityToProtoArticle(publication);
         responseObserver.onNext(publicationView);
         responseObserver.onCompleted();
 
@@ -191,7 +189,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
             return;
         }
 
-        PublicationView publicationView = entityToProto(publication);
+        PublicationView publicationView = entityToProtoArticle(publication);
         responseObserver.onNext(publicationView);
         responseObserver.onCompleted();
     }
@@ -308,7 +306,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
 
 
         if (changeForCommute) {
-            CommuteResult result = commutePoints.commute(
+            CommuteResultArticle result = commutePoints.commuteArticle(
                     publication.getJournalTitle(),
                     publication.getType().getId(),
                     publication.getDiscipline().getId(),
@@ -338,7 +336,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
                 publicationCoauthorRepository.findByPublicationIdOrderByPosition(publication.getId());
         publication.setCoauthors(updatedCoauthors);
 
-        PublicationView publicationView = entityToProto(publication);
+        PublicationView publicationView = entityToProtoArticle(publication);
         responseObserver.onNext(publicationView);
         responseObserver.onCompleted();
 
@@ -346,8 +344,6 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
 
     @Override
     public void deletePublication(DeletePublicationRequest request, StreamObserver<ApiResponse> responseObserver) {
-
-
         Publication publication = publicationRepository.findById(request.getId()).orElseThrow(() -> new IllegalArgumentException("Publication not found"));
 
         if(!publication.getAuthorId().equals(request.getUserId())){
@@ -408,7 +404,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
                 .setPage(meta);
 
         for (Publication p : pages.getContent()) {
-            resp.addItems(entityToProto(p));
+            resp.addItems(entityToProtoArticle(p));
         }
 
         responseObserver.onNext(resp.build());

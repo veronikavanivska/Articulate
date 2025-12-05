@@ -50,6 +50,7 @@ public class Monographic {
 
     private String doi;
     private String isbn;
+    private String title;
     private String  monograficTitle;
     private Integer publicationYear;
     private Integer meinPoints;

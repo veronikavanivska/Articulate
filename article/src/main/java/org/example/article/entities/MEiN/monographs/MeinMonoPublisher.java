@@ -18,7 +18,7 @@ public class MeinMonoPublisher {
     @ManyToOne(fetch=FetchType.LAZY, optional=false)
     @JoinColumn(name="version_id", nullable=false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    private MeinVersion version;
+    private MeinMonoVersion version;
 
     private int lp;
     private String uid;

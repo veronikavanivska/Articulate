@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.example.article.helpers.Mapper.entityToProto;
+import static org.example.article.helpers.Mapper.entityToProtoArticle;
 
 @Service
 public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleServiceImplBase {
@@ -58,7 +58,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
     public void adminGetPublication(GetPublicationRequest request, StreamObserver<PublicationView> responseObserver) {
         Publication publication = publicationRepository.findWithAllRelations(request.getId()).orElseThrow();
 
-        PublicationView publicationView = entityToProto(publication);
+        PublicationView publicationView = entityToProtoArticle(publication);
         responseObserver.onNext(publicationView);
         responseObserver.onCompleted();
     }
@@ -568,7 +568,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                 .setPage(meta);
 
         for (Publication p : pages.getContent()) {
-            resp.addItems(entityToProto(p));
+            resp.addItems(entityToProtoArticle(p));
         }
 
         responseObserver.onNext(resp.build());

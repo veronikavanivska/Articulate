@@ -367,7 +367,7 @@ public class ArticleService extends ArticleServiceGrpc.ArticleServiceImplBase {
 //        int unmatched = 0;
 //
 //        for (Publication pub : publications) {
-//            CommuteResult result = commutePoints.commute(
+//            CommuteResult result = commutePoints.commuteArticle(
 //                    pub.getJournalTitle(),
 //                    pub.getType().getId(),
 //                    pub.getDiscipline().getId(),
@@ -453,7 +453,7 @@ public class ArticleService extends ArticleServiceGrpc.ArticleServiceImplBase {
 //            return;
 //        }
 //
-//        CommuteResult result = commutePoints.commute(request.getJournalTitle(),request.getTypeId(),request.getDisciplineId(),request.getIssn(),request.getEissn(),request.getPublicationYear());
+//        CommuteResult result = commutePoints.commuteArticle(request.getJournalTitle(),request.getTypeId(),request.getDisciplineId(),request.getIssn(),request.getEissn(),request.getPublicationYear());
 //
 //        Publication publication = Publication.builder()
 //                .authorId(request.getUserId())
@@ -486,7 +486,7 @@ public class ArticleService extends ArticleServiceGrpc.ArticleServiceImplBase {
 //
 //        publicationRepository.save(publication);
 //
-//        PublicationView publicationView = entityToProto(publication);
+//        PublicationView publicationView = entityToProtoArticle(publication);
 //        responseObserver.onNext(publicationView);
 //        responseObserver.onCompleted();
 //
@@ -504,7 +504,7 @@ public class ArticleService extends ArticleServiceGrpc.ArticleServiceImplBase {
 //            return;
 //        }
 //
-//        PublicationView publicationView = entityToProto(publication);
+//        PublicationView publicationView = entityToProtoArticle(publication);
 //        responseObserver.onNext(publicationView);
 //        responseObserver.onCompleted();
 //    }
@@ -575,7 +575,7 @@ public class ArticleService extends ArticleServiceGrpc.ArticleServiceImplBase {
 //
 //
 //        if(changeForCommute){
-//            CommuteResult result = commutePoints.commute(publication.getJournalTitle(),publication.getType().getId(),publication.getDiscipline().getId(),publication.getIssn(),publication.getEissn(),publication.getPublicationYear());
+//            CommuteResult result = commutePoints.commuteArticle(publication.getJournalTitle(),publication.getType().getId(),publication.getDiscipline().getId(),publication.getIssn(),publication.getEissn(),publication.getPublicationYear());
 //
 //            if (result.meinJournal() == null || result.meinVersion() == null) {
 //                responseObserver.onError(Status.INVALID_ARGUMENT
@@ -593,7 +593,7 @@ public class ArticleService extends ArticleServiceGrpc.ArticleServiceImplBase {
 //         publicationRepository.save(publication);
 //
 //
-//        PublicationView publicationView = entityToProto(publication);
+//        PublicationView publicationView = entityToProtoArticle(publication);
 //        responseObserver.onNext(publicationView);
 //        responseObserver.onCompleted();
 //
@@ -640,7 +640,7 @@ public class ArticleService extends ArticleServiceGrpc.ArticleServiceImplBase {
 //    public void adminGetPublication(GetPublicationRequest request, StreamObserver<PublicationView> responseObserver) {
 //        Publication publication = publicationRepository.findWithAllRelations(request.getId()).orElseThrow();
 //
-//        PublicationView publicationView = entityToProto(publication);
+//        PublicationView publicationView = entityToProtoArticle(publication);
 //        responseObserver.onNext(publicationView);
 //        responseObserver.onCompleted();
 //    }
@@ -1184,7 +1184,7 @@ public class ArticleService extends ArticleServiceGrpc.ArticleServiceImplBase {
 //                .setPage(meta);
 //
 //        for (Publication p : pages.getContent()) {
-//            resp.addItems(entityToProto(p));
+//            resp.addItems(entityToProtoArticle(p));
 //        }
 //
 //        responseObserver.onNext(resp.build());

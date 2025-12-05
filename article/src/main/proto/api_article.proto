@@ -238,7 +238,7 @@ message CreatePublicationRequest{
 
 message GetPublicationRequest{
   int64 id = 1;
-  int64 userId = 2; // worker: weryfikacja własności; admin: ignorowane
+  int64 userId = 2;
 }
 
 message ListPublicationsRequest {
@@ -371,6 +371,159 @@ message ApiResponse {
   string message = 2;
 }
 
+message CreateMonographRequest{
+  int64 userId = 1;
+
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  string title = 4;
+  string doi = 5;
+  string isbn = 6;
+  string monograficPublisherTitle = 13;
+  int32 publicationYear = 7;
+
+
+  repeated CoauthorInput input = 9;
+}
+
+message MonographView{
+  int64 id = 1;
+  int64 authorId = 2;
+
+  RefItem type = 3;
+  RefItem discipline = 4;
+  CycleItem cycle = 5;
+
+  string title = 6;
+  string doi = 7;
+  string isbn = 8;
+  int32 points = 9;
+  string monograficTitle = 13;
+  int64 meinMonoPublisherId = 10;
+  int64 meinMonoId = 11;
+
+  repeated Coauthor coauthor = 12;
+}
+
+message GetMonographRequest{
+  int64 id = 1;
+  int64 userId = 2;
+}
+message ListMonographsRequest {
+  int64 userId = 1;
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  int64 cycleId = 4;
+
+  int32 page = 5;          // 0-based
+  int32 size = 6;          // np. 20
+  string sortBy = 7;       // "createdAt","publicationYear","meinPoints"
+  string sortDir = 8;      // "ASC"|"DESC"
+
+}
+message ListMonographsResponse{
+  repeated MonographView monoghraficView = 1;
+  PageMeta pageMeta = 2;
+}
+
+message UpdateMonographRequest{
+  int64 id = 1;
+  int64 userId = 2;
+
+  int64 typeId = 3;
+  int64 disciplineId = 4;
+  string title = 5;
+  string doi = 6;
+  string isbn = 7;
+  string monographPublisherTitle = 9;
+  int32 publicationYear = 10;
+
+  repeated CoauthorInput replaceCoauthors = 11;
+  google.protobuf.FieldMask update_mask = 12;
+
+}
+
+message DeleteMonographRequest{
+  int64 id = 1;
+  int64 userId = 2;
+}
+
+message CreateChapterRequest{
+  int64 userId = 1;
+
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  string monographChapterTitle = 4;
+  string monographTitle = 13;
+  string monographPublisherTitle = 15;
+  string doi = 5;
+  string isbn = 6;
+  int32 publicationYear = 7;
+
+  repeated CoauthorInput input = 9;
+}
+
+
+message ChapterView{
+  int64 id = 1;
+  int64 authorId = 2;
+
+  RefItem type = 3;
+  RefItem discipline = 4;
+  CycleItem cycle = 5;
+
+  string monograficChapterTitle = 6;
+  string monograficTitle = 14;
+  string doi = 7;
+  string isbn = 8;
+  int32 points = 9;
+  int64 meinMonoPublisherId = 10;
+  int64 meinMonoId = 11;
+
+  repeated Coauthor coauthor = 12;
+}
+
+message GetChapterRequest{
+  int64 id = 1;
+  int64 userId = 2;
+}
+message ListChaptersRequest{
+  int64 userId = 1;
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  int64 cycleId = 4;
+
+  int32 page = 5;
+  int32 size = 6;
+  string sortBy = 7;
+  string sortDir = 8;
+}
+
+message ListChaptersResponse{
+  repeated ChapterView chapterView = 1;
+  PageMeta pageMeta = 2;
+}
+
+message UpdateChapterRequest{
+  int64 userId = 1;
+
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  string monograficChapterTitle = 4;
+  string monograficTitle = 13;
+  string doi = 5;
+  string isbn = 6;
+  int32 publicationYear = 7;
+
+  repeated CoauthorInput input = 9;
+  google.protobuf.FieldMask update_mask = 12;
+}
+
+message DeleteChapterRequest{
+  int64 id = 1;
+  int64 userId = 2;
+}
+
 
 service WorkerArticleService{
   rpc CreatePublication(CreatePublicationRequest) returns (PublicationView);
@@ -426,4 +579,30 @@ service ETLArticleService{
   rpc AdminDeactivateMeinVersion(DeactivateMeinVersionRequest) returns (ApiResponse);
   rpc AdminDeleteMeinVersion(DeleteMeinVersionRequest) returns (ApiResponse);
   rpc AdminRecalculateCycleScores(AdminRecalcCycleScoresRequest) returns (AdminRecalcCycleScoresResponse);
+}
+
+service WorkerMonographService {
+  // monographs
+  rpc CreateMonograph(CreateMonographRequest) returns (MonographView);
+  rpc GetMonograph(GetMonographRequest) returns (MonographView);
+  rpc ListMyMonographs(ListMonographsRequest) returns (ListMonographsResponse);
+  rpc UpdateMonograph(UpdateMonographRequest) returns (MonographView);
+  rpc DeleteMonograph(DeleteMonographRequest) returns (ApiResponse);
+
+  // chapters
+  rpc CreateChapter(CreateChapterRequest) returns (ChapterView);
+  rpc GetChapter(GetChapterRequest) returns (ChapterView);
+  rpc ListMyChapters(ListChaptersRequest) returns (ListChaptersResponse);
+  rpc UpdateChapter(UpdateChapterRequest) returns (ChapterView);
+  rpc DeleteChapter(DeleteChapterRequest) returns (ApiResponse);
+}
+
+service AdminMonographService {
+//  // monographs
+//  rpc AdminListMonographs(ListAdminMonographsRequest) returns (ListMonographsResponse);
+//  rpc AdminGetMonograph(GetMonographRequest) returns (MonographView);
+//
+//  // chapters
+//  rpc AdminListChapters(ListAdminChaptersRequest) returns (ListChaptersResponse);
+//  rpc AdminGetChapter(GetChapterRequest) returns (ChapterView);
 }

@@ -7,7 +7,7 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import jakarta.persistence.EntityManager;
 import org.example.article.ETL.ETLService;
-import org.example.article.entities.CommuteResult;
+import org.example.article.entities.CommuteResultArticle;
 import org.example.article.entities.EvalCycle;
 import org.example.article.entities.MEiN.article.MeinCode;
 import org.example.article.entities.MEiN.article.MeinJournal;
@@ -416,7 +416,7 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
         int unmatched = 0;
 
         for (Publication pub : publications) {
-            CommuteResult result = commutePoints.commute(
+            CommuteResultArticle result = commutePoints.commuteArticle(
                     pub.getJournalTitle(),
                     pub.getType().getId(),
                     pub.getDiscipline().getId(),
