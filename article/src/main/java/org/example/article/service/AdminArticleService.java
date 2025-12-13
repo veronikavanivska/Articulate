@@ -4,14 +4,12 @@ import com.example.generated.*;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import org.example.article.entities.Discipline;
-import org.example.article.entities.EvalCycle;
+import org.example.article.entities.*;
 import org.example.article.entities.MEiN.article.MeinVersion;
 import org.example.article.entities.MEiN.monographs.MeinMonoVersion;
-import org.example.article.entities.Publication;
-import org.example.article.entities.PublicationType;
 import org.example.article.helpers.PublicationSpecification;
 import org.example.article.repositories.*;
+import org.example.article.service.Async.AsyncMeinService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,8 +18,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.time.Instant;
+import java.util.*;
 
 import static org.example.article.helpers.Mapper.entityToProtoArticle;
 
@@ -34,9 +32,11 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
     private final EvalCycleRepository evalCycleRepository;
     private final MeinVersionRepository meinVersionRepository;
     private final MeinMonoVersionRepository meinMonoVersionRepository;
+    private final AsyncJobRepository asyncJobRepository;
+    private final AsyncMeinService asyncMeinService;
 
 
-    public AdminArticleService(PublicationTypeRepository publicationTypeRepository, DisciplineRepository disciplineRepository, PublicationRepository publicationRepository, EvalCycleRepository evalCycleRepository, MeinVersionRepository meinVersionRepository, MeinMonoVersionRepository meinMonoVersionRepository) {
+    public AdminArticleService(PublicationTypeRepository publicationTypeRepository, DisciplineRepository disciplineRepository, PublicationRepository publicationRepository, EvalCycleRepository evalCycleRepository, MeinVersionRepository meinVersionRepository, MeinMonoVersionRepository meinMonoVersionRepository, AsyncJobRepository asyncJobRepository, AsyncMeinService asyncMeinService) {
 
         this.publicationTypeRepository = publicationTypeRepository;
 
@@ -45,6 +45,8 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         this.evalCycleRepository = evalCycleRepository;
         this.meinVersionRepository = meinVersionRepository;
         this.meinMonoVersionRepository = meinMonoVersionRepository;
+        this.asyncJobRepository = asyncJobRepository;
+        this.asyncMeinService = asyncMeinService;
     }
 
     @Override
@@ -333,12 +335,15 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
 
         Set<String> paths = new HashSet<>(request.getUpdateMask().getPathsList());
 
+        Long oldMeinVersionId = (cycle.getMeinVersion() != null ? cycle.getMeinVersion().getId() : null);
+        Long oldMonoVersionId = (cycle.getMeinMonoVersion() != null ? cycle.getMeinMonoVersion().getId() : null);
+
         String evalName = cycle.getName();
         int yearFrom = cycle.getYearFrom();
         int yearTo = cycle.getYearTo();
         boolean isActive   = cycle.isActive();
-        Long meinVersionId = (cycle.getMeinVersion() != null ? cycle.getMeinVersion().getId() : null);
-        Long monoVersionId = (cycle.getMeinMonoVersion() != null ? cycle.getMeinVersion().getId() : null);
+        Long newMeinVersionId = oldMeinVersionId;
+        Long newMonoVersionId = oldMonoVersionId;
 
         if (paths.contains("name"))     evalName = request.getName();
         if (paths.contains("yearFrom"))  yearFrom = request.getYearFrom();
@@ -346,11 +351,11 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         if (paths.contains("isActive"))  isActive   = request.getIsActive();
         if (paths.contains("meinVersionId")) {
             long raw = request.getMeinVersionId();
-            meinVersionId = (raw > 0 ? raw : null);
+            newMeinVersionId = (raw > 0 ? raw : null);
         }
         if (paths.contains("monoVersionId")) {
             long raw = request.getMonoVersionId();
-            monoVersionId = (raw > 0 ? raw : null);
+            newMonoVersionId = (raw > 0 ? raw : null);
         }
 
         if (paths.contains("name")) {
@@ -386,17 +391,17 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
 
         }
 
-        if(paths.contains("meinVersionId" )&& meinVersionId != null){
-            if (!meinVersionRepository.existsById(meinVersionId)) {
+        if(paths.contains("meinVersionId" )&& newMeinVersionId != null){
+            if (!meinVersionRepository.existsById(newMeinVersionId)) {
                 responseObserver.onError(Status.INVALID_ARGUMENT
-                        .withDescription("meinVersionId not found: " + meinVersionId).asRuntimeException());
+                        .withDescription("meinVersionId not found: " + newMeinVersionId).asRuntimeException());
                 return;
             }
         }
-        if(paths.contains("monoVersionId" )&& monoVersionId != null){
-            if (!meinMonoVersionRepository.existsById(monoVersionId)) {
+        if(paths.contains("monoVersionId" )&& newMonoVersionId != null){
+            if (!meinMonoVersionRepository.existsById(newMonoVersionId)) {
                 responseObserver.onError(Status.INVALID_ARGUMENT
-                        .withDescription("monoVersionId not found: " + meinVersionId).asRuntimeException());
+                        .withDescription("monoVersionId not found: " + newMonoVersionId).asRuntimeException());
                 return;
             }
         }
@@ -406,18 +411,18 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         if (paths.contains("yearTo"))   cycle.setYearTo(yearTo);
         if (paths.contains("isActive")) cycle.setActive(isActive);
         if (paths.contains("meinVersionId")) {
-            if (meinVersionId == null) {
+            if (newMeinVersionId == null) {
                 cycle.setMeinVersion(null);
             } else {
-                MeinVersion mv = meinVersionRepository.findById(meinVersionId).orElseThrow(() -> new RuntimeException("Mein Version not found"));
+                MeinVersion mv = meinVersionRepository.findById(newMeinVersionId).orElseThrow(() -> new RuntimeException("Mein Version not found"));
                 cycle.setMeinVersion(mv);
             }
         }
         if (paths.contains("monoVersionId")) {
-            if (monoVersionId == null) {
+            if (newMonoVersionId == null) {
                 cycle.setMeinMonoVersion(null);
             } else {
-                MeinMonoVersion mmv = meinMonoVersionRepository.findById(monoVersionId).orElseThrow(() -> new RuntimeException("Mein Version not found"));
+                MeinMonoVersion mmv = meinMonoVersionRepository.findById(newMonoVersionId).orElseThrow(() -> new RuntimeException("Mein Version not found"));
                 cycle.setMeinMonoVersion(mmv);
             }
         }
@@ -428,14 +433,28 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
 
         evalCycleRepository.save(cycle);
 
+        boolean meinVersionChanged = !Objects.equals(oldMeinVersionId, newMeinVersionId);
+        boolean monoVersionChanged = !Objects.equals(oldMonoVersionId, newMonoVersionId);
+
+        if (meinVersionChanged) {
+            scheduleArticleRecalcJob(cycle.getId());
+        }
+
+        if (monoVersionChanged) {
+            scheduleMonoRecalcJob(cycle.getId());
+        }
+
+        Long meinVersionIdOut = (cycle.getMeinVersion() != null ? cycle.getMeinVersion().getId() : null);
+        Long monoVersionIdOut = (cycle.getMeinMonoVersion() != null ? cycle.getMeinMonoVersion().getId() : null);
+
         CycleItem response = CycleItem.newBuilder()
                 .setId(cycle.getId())
                 .setName(cycle.getName())
                 .setYearFrom(cycle.getYearFrom())
                 .setYearTo(cycle.getYearTo())
                 .setIsActive(cycle.isActive())
-                .setMeinVersionId(cycle.getMeinVersion().getId() == null ? 0 : cycle.getMeinVersion().getId())
-                .setMonoVersionId(cycle.getMeinMonoVersion().getId() == null ? 0 : cycle.getMeinMonoVersion().getId())
+                .setMeinVersionId(meinVersionIdOut == null ? 0 : meinVersionIdOut)
+                .setMonoVersionId(monoVersionIdOut == null ? 0 : monoVersionIdOut)
                 .build();
 
         responseObserver.onNext(response);
@@ -575,5 +594,61 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         responseObserver.onCompleted();
 
     }
+
+    private void scheduleArticleRecalcJob(Long cycleId) {
+        String businessKey = "RECALC_CYCLE_SCORES:" + cycleId;
+
+        Optional<AsyncJob> existing = asyncJobRepository.findFirstByTypeAndBusinessKeyAndStatusIn(
+                "RECALC_CYCLE_SCORES",
+                businessKey,
+                List.of(AsyncJob.Status.QUEUED, AsyncJob.Status.RUNNING)
+        );
+
+        if (existing.isPresent()) {
+            // already queued or running – nothing to do
+            return;
+        }
+
+        AsyncJob job = new AsyncJob();
+        job.setType("RECALC_CYCLE_SCORES");
+        job.setBusinessKey(businessKey);
+        job.setStatus(AsyncJob.Status.QUEUED);
+        job.setProgressPercent(0);
+        job.setPhase("Queued");
+        job.setMessage("Waiting to start article cycle recalculation");
+        job.setRequestPayload("{\"cycleId\": " + cycleId + "}");
+        job.setCreatedAt(Instant.now());
+        asyncJobRepository.save(job);
+
+        asyncMeinService.executeRecalcCycleScoresJob(job.getId());
+    }
+
+    private void scheduleMonoRecalcJob(Long cycleId) {
+        String businessKey = "RECALC_MONO_CYCLE_SCORES:" + cycleId;
+
+        Optional<AsyncJob> existing = asyncJobRepository.findFirstByTypeAndBusinessKeyAndStatusIn(
+                "RECALC_MONO_CYCLE_SCORES",
+                businessKey,
+                List.of(AsyncJob.Status.QUEUED, AsyncJob.Status.RUNNING)
+        );
+
+        if (existing.isPresent()) {
+            return;
+        }
+
+        AsyncJob job = new AsyncJob();
+        job.setType("RECALC_MONO_CYCLE_SCORES");
+        job.setBusinessKey(businessKey);
+        job.setStatus(AsyncJob.Status.QUEUED);
+        job.setProgressPercent(0);
+        job.setPhase("Queued");
+        job.setMessage("Waiting to start mono cycle recalculation");
+        job.setRequestPayload("{\"cycleId\": " + cycleId + "}");
+        job.setCreatedAt(Instant.now());
+        asyncJobRepository.save(job);
+
+        asyncMeinService.executeRecalcMonoCycleScoresJob(job.getId());
+    }
+
 
 }

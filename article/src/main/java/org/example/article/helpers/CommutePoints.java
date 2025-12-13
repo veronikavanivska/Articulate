@@ -42,7 +42,7 @@ public class CommutePoints {
         var cycle = evalCycleRepository.findByYear(year)
                 .orElseThrow(() -> new IllegalArgumentException("No eval cycle for year " + year));
         if (cycle.getMeinVersion() == null || cycle.getMeinVersion().getId() == null) {
-            throw new IllegalArgumentException("Eval cycle has no MEiN version");
+            return new CommuteResultArticle(cycle, null, null, 0, false);
         }
         Long versionId = cycle.getMeinVersion().getId();
 
@@ -88,7 +88,7 @@ public class CommutePoints {
         var cycle = evalCycleRepository.findByYear(year)
                 .orElseThrow(() -> new IllegalArgumentException("No eval cycle for year " + year));
         if (cycle.getMeinMonoVersion() == null || cycle.getMeinMonoVersion().getId() == null) {
-            throw new IllegalArgumentException("Eval cycle has no MEiN mono version");
+            return new CommuteResultMono(cycle, null, null, 0, false);
         }
 
         Long versionId = cycle.getMeinMonoVersion().getId();
@@ -119,7 +119,7 @@ public class CommutePoints {
         var cycle = evalCycleRepository.findByYear(year)
                 .orElseThrow(() -> new IllegalArgumentException("No eval cycle for year " + year));
         if(cycle.getMeinMonoVersion() == null || cycle.getMeinMonoVersion().getId() == null) {
-            throw new IllegalArgumentException("Eval cycle has no MEiN mono version");
+            return new CommuteResultMonoChapter(cycle, null, null, 0, false);
         }
         Long versionId = cycle.getMeinMonoVersion().getId();
 

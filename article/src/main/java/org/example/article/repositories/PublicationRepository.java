@@ -35,4 +35,5 @@ public interface PublicationRepository extends JpaRepository<Publication, Long>,
     Page<Publication> findAll(Specification<Publication> spec, Pageable pageable);
 
     List<Publication> findAllByCycle(EvalCycle cycleId);
+    List<Publication> findAllByMeinVersionId(Long meinVersionId);
 }
