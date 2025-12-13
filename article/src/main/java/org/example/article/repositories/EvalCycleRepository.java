@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -35,7 +36,7 @@ public interface EvalCycleRepository extends JpaRepository<EvalCycle, Long> {
     boolean existsOverlappingExcludeId(@Param("id") long id, @Param("from") int yearFrom, @Param("to") int yearTo);
 
 
-
+    List<EvalCycle> findAllByMeinVersionId(Long versionId);
 
     @Modifying
     @Transactional
@@ -51,4 +52,10 @@ public interface EvalCycleRepository extends JpaRepository<EvalCycle, Long> {
       where c.isActive = true and c.id <> :id
     """)
     int deactivateAllExcept(@Param("id") long id);
+
+    @Query("""
+    SELECT c FROM EvalCycle c
+        WHERE c.meinMonoVersion.id = :versionId
+    """)
+    List<EvalCycle> findAllByMeinMonoVersion(@Param("versionId") long versionId);
 }

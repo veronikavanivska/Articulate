@@ -1,5 +1,6 @@
 package org.example.article.repositories;
 
+import org.example.article.entities.EvalCycle;
 import org.example.article.entities.MEiN.monographs.MonographChapter;
 import org.example.article.entities.MEiN.monographs.Monographic;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -30,5 +32,7 @@ public interface MonographChapterRepository extends JpaRepository<MonographChapt
     @EntityGraph(attributePaths = {"type", "discipline", "cycle", "coauthors"})
     Page<MonographChapter> findAll(Specification<MonographChapter> spec, Pageable pageable);
 
+    List<MonographChapter> findAllByCycle(EvalCycle cycle);
 
+    List<MonographChapter> findAllByMeinMonoId(Long meinMonoId);
 }

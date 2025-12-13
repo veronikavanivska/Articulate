@@ -7,27 +7,26 @@ import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import jakarta.persistence.EntityManager;
 import org.example.article.ETL.ETLService;
-import org.example.article.entities.CommuteResultArticle;
-import org.example.article.entities.EvalCycle;
+import org.example.article.entities.AsyncJob;
 import org.example.article.entities.MEiN.article.MeinCode;
 import org.example.article.entities.MEiN.article.MeinJournal;
 import org.example.article.entities.MEiN.article.MeinJournalCode;
 import org.example.article.entities.MEiN.article.MeinVersion;
-import org.example.article.entities.Publication;
 import org.example.article.helpers.CommutePoints;
 import org.example.article.repositories.*;
+import org.example.article.service.Async.AsyncMeinService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClient;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceImplBase {
@@ -37,6 +36,8 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
     private final CommutePoints commutePoints;
 
     private final PublicationRepository publicationRepository;
+    private final AsyncJobRepository asyncJobRepository;
+    private final AsyncMeinService asyncMeinService;
     private final EvalCycleRepository evalCycleRepository;
     private final MeinVersionRepository meinVersionRepository;
     private final MeinJournalRepository meinJournalRepository;
@@ -44,9 +45,11 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
     private final EntityManager entityManager;
     private final TransactionTemplate tx;
 
-    public ETLArticleService(ETLService ETLService, PlatformTransactionManager txManager, EntityManager entityManager , CommutePoints commutePoints, PublicationRepository publicationRepository, RestClient.Builder builder, EvalCycleRepository evalCycleRepository, MeinVersionRepository meinVersionRepository, MeinJournalRepository meinJournalRepository, MeinJournalCodeRepository meinJournalCodeRepository) {
+    public ETLArticleService(ETLService ETLService,AsyncJobRepository asyncJobRepository ,AsyncMeinService asyncMeinService,PlatformTransactionManager txManager, EntityManager entityManager , CommutePoints commutePoints, PublicationRepository publicationRepository, RestClient.Builder builder, EvalCycleRepository evalCycleRepository, MeinVersionRepository meinVersionRepository, MeinJournalRepository meinJournalRepository, MeinJournalCodeRepository meinJournalCodeRepository) {
         this.ETLService = ETLService;
         this.tx = new TransactionTemplate(txManager);
+        this.asyncMeinService = asyncMeinService;
+        this.asyncJobRepository = asyncJobRepository;
         this.commutePoints = commutePoints;
         this.entityManager = entityManager;
         this.publicationRepository = publicationRepository;
@@ -257,44 +260,92 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
     }
 
 
-    @Override
-    @Transactional
-    public void adminDeleteMeinVersion(DeleteMeinVersionRequest request, StreamObserver<ApiResponse> responseObserver) {
-        Long versionId = request.getVersionId();
-
-        if(!meinVersionRepository.existsById(versionId)){
-            responseObserver.onError(Status.NOT_FOUND
-                    .withDescription("No mein version with this id").asRuntimeException());
-
-            return;
-        }
-
-        MeinVersion meinVersion = meinVersionRepository.findById(versionId).orElseThrow(() -> new RuntimeException("There is no this mein version"));
-    
-//        entityManager.createNativeQuery("SET LOCAL synchronous_commit = off").executeUpdate();
-//        meinJournalCodeRepository.deleteCodesByVersion(versionId);
-//        meinJournalRepository.deleteJournalsByVersion(versionId);
+//    @Override
+//    @Transactional
+//    public void adminDeleteMeinVersion(DeleteMeinVersionRequest request, StreamObserver<ApiResponse> responseObserver) {
+//        Long versionId = request.getVersionId();
 //
-//        meinVersionRepository.deleteById(versionId);
-//        meinVersionRepository.flush();
-        tx.executeWithoutResult(status -> {
-            entityManager.createNativeQuery("SET LOCAL synchronous_commit = off").executeUpdate();
+//        if(!meinVersionRepository.existsById(versionId)){
+//            responseObserver.onError(Status.NOT_FOUND
+//                    .withDescription("No mein version with this id").asRuntimeException());
+//
+//            return;
+//        }
+//
+//        MeinVersion meinVersion = meinVersionRepository.findById(versionId).orElseThrow(() -> new RuntimeException("There is no this mein version"));
+//
+////        entityManager.createNativeQuery("SET LOCAL synchronous_commit = off").executeUpdate();
+////        meinJournalCodeRepository.deleteCodesByVersion(versionId);
+////        meinJournalRepository.deleteJournalsByVersion(versionId);
+////
+////        meinVersionRepository.deleteById(versionId);
+////        meinVersionRepository.flush();
+//        tx.executeWithoutResult(status -> {
+//            entityManager.createNativeQuery("SET LOCAL synchronous_commit = off").executeUpdate();
+//
+//            meinJournalCodeRepository.deleteCodesByVersion(versionId);   // @Modifying
+//            meinJournalRepository.deleteJournalsByVersion(versionId);    // @Modifying
+//
+//            meinVersionRepository.deleteById(versionId);
+//            meinVersionRepository.flush();
+//        });
+//        ApiResponse response = ApiResponse.newBuilder()
+//                .setCode(200)
+//                .setMessage("Successfully deleted ")
+//                .build();
+//
+//        responseObserver.onNext(response);
+//        responseObserver.onCompleted();
+//    }
 
-            meinJournalCodeRepository.deleteCodesByVersion(versionId);   // @Modifying
-            meinJournalRepository.deleteJournalsByVersion(versionId);    // @Modifying
+@Override
+public void adminDeleteMeinVersion(DeleteMeinVersionRequest request,
+                                   StreamObserver<DeleteMeinVersionResponse> responseObserver) {
+    Long versionId = request.getVersionId();
 
-            meinVersionRepository.deleteById(versionId);
-            meinVersionRepository.flush();
-        });
-        ApiResponse response = ApiResponse.newBuilder()
-                .setCode(200)
-                .setMessage("Successfully deleted ")
-                .build();
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+    if (!meinVersionRepository.existsById(versionId)) {
+        responseObserver.onError(Status.NOT_FOUND
+                .withDescription("No MEiN article version with this id")
+                .asRuntimeException());
+        return;
     }
 
+    String businessKey = "DELETE_MEIN_VERSION:" + versionId;
+
+    Optional<AsyncJob> existingJobOpt =
+            asyncJobRepository.findFirstByTypeAndBusinessKeyAndStatusIn(
+                    "DELETE_MEIN_VERSION",
+                    businessKey,
+                    List.of(AsyncJob.Status.QUEUED, AsyncJob.Status.RUNNING)
+            );
+
+    AsyncJob job;
+    if (existingJobOpt.isPresent()) {
+        job = existingJobOpt.get();
+    } else {
+        job = new AsyncJob();
+        job.setType("DELETE_MEIN_VERSION");
+        job.setBusinessKey(businessKey);
+        job.setStatus(AsyncJob.Status.QUEUED);
+        job.setProgressPercent(0);
+        job.setPhase("Queued");
+        job.setMessage("Waiting to start MEiN version deletion");
+        job.setRequestPayload("{\"versionId\": " + versionId + "}");
+        job.setCreatedAt(Instant.now());
+        asyncJobRepository.save(job);
+
+        asyncMeinService.executeDeleteMeinVersionJob(job.getId());
+    }
+
+    DeleteMeinVersionResponse response = DeleteMeinVersionResponse.newBuilder()
+            .setJobId(job.getId())
+            .setMessage("MEiN version deletion started or already in progress")
+            .build();
+
+    responseObserver.onNext(response);
+    responseObserver.onCompleted();
+
+}
     @Override
     public void adminGetMeinJournal(AdminGetMeinJournalRequest request, StreamObserver<AdminGetMeinJournalResponse> responseObserver) {
         Long versionId = request.getVersionId();
@@ -395,59 +446,133 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
 
 
     }
+//    @Override
+//    public void adminRecalculateCycleScores(AdminRecalcCycleScoresRequest request, StreamObserver<AdminRecalcCycleScoresResponse> responseObserver) {
+//        Long cycleId = request.getCycleId();
+//
+//        if(!evalCycleRepository.existsById(cycleId)){
+//            responseObserver.onError(Status.NOT_FOUND.withDescription("Not found the cycle").asRuntimeException());
+//            return;
+//        }
+//
+//        EvalCycle evalCycle = evalCycleRepository.findById(cycleId).orElseThrow(()-> new RuntimeException("Not found the cycle"));
+//
+////        if(evalCycle.getMeinVersion() == null){
+////            responseObserver.onError(Status.NOT_FOUND.withDescription("Not found the mein version").asRuntimeException());
+////        }
+//
+//        List<Publication> publications = publicationRepository.findAllByCycle(evalCycle);
+//
+//        int updated = 0;
+//        int unmatched = 0;
+//
+//        for (Publication pub : publications) {
+//            CommuteResultArticle result = commutePoints.commuteArticle(
+//                    pub.getJournalTitle(),
+//                    pub.getType().getId(),
+//                    pub.getDiscipline().getId(),
+//                    pub.getIssn(),
+//                    pub.getEissn(),
+//                    pub.getPublicationYear()
+//            );
+//
+//            if (result == null
+//                    || result.meinJournal() == null
+//                    || result.meinVersion() == null) {
+//                unmatched++;
+//                continue;
+//            }
+//
+//            pub.setCycle(result.cycle());
+//            pub.setMeinPoints(result.points());
+//            pub.setMeinVersionId(result.meinVersion().getId());
+//            pub.setMeinJournalId(result.meinJournal().getId());
+//            pub.setUpdatedAt(Instant.now());
+//
+//            updated++;
+//        }
+//
+//        if (!publications.isEmpty()) {
+//            publicationRepository.saveAll(publications);
+//        }
+//
+//        AdminRecalcCycleScoresResponse response = AdminRecalcCycleScoresResponse.newBuilder()
+//                .setUpdatedPublications(updated)
+//                .setUnmatchedPublications(unmatched)
+//                .build();
+//
+//        responseObserver.onNext(response);
+//        responseObserver.onCompleted();
+//    }
+
     @Override
-    public void adminRecalculateCycleScores(AdminRecalcCycleScoresRequest request, StreamObserver<AdminRecalcCycleScoresResponse> responseObserver) {
+    public void adminRecalculateCycleScores(AdminRecalcCycleScoresRequest request,
+                                            StreamObserver<AdminRecalcCycleScoresResponse> responseObserver) {
         Long cycleId = request.getCycleId();
 
-        if(!evalCycleRepository.existsById(cycleId)){
-            responseObserver.onError(Status.NOT_FOUND.withDescription("Not found the cycle").asRuntimeException());
+        if (!evalCycleRepository.existsById(cycleId)) {
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Not found the cycle")
+                    .asRuntimeException());
             return;
         }
 
-        EvalCycle evalCycle = evalCycleRepository.findById(cycleId).orElseThrow(()-> new RuntimeException("Not found the cycle"));
+        String businessKey = "RECALC_CYCLE_SCORES:" + cycleId;
 
-        if(evalCycle.getMeinVersion() == null){
-            responseObserver.onError(Status.NOT_FOUND.withDescription("Not found the mein version").asRuntimeException());
+        Optional<AsyncJob> existingJobOpt =
+                asyncJobRepository.findFirstByTypeAndBusinessKeyAndStatusIn(
+                        "RECALC_CYCLE_SCORES",
+                        businessKey,
+                        List.of(AsyncJob.Status.QUEUED, AsyncJob.Status.RUNNING)
+                );
+
+        AsyncJob job;
+        if (existingJobOpt.isPresent()) {
+            job = existingJobOpt.get();
+        } else {
+            job = new AsyncJob();
+            job.setType("RECALC_CYCLE_SCORES");
+            job.setBusinessKey(businessKey);
+            job.setStatus(AsyncJob.Status.QUEUED);
+            job.setProgressPercent(0);
+            job.setPhase("Queued");
+            job.setMessage("Waiting to start article recalculation");
+            job.setRequestPayload("{\"cycleId\": " + cycleId + "}");
+            job.setCreatedAt(Instant.now());
+            asyncJobRepository.save(job);
+
+            asyncMeinService.executeRecalcCycleScoresJob(job.getId());
         }
 
-        List<Publication> publications = publicationRepository.findAllByCycle(evalCycle);
+        AdminRecalcCycleScoresResponse response =
+                AdminRecalcCycleScoresResponse.newBuilder()
+                        .setJobId(job.getId())
+                        .setMessage("Article recalculation started or already in progress")
+                        .build();
 
-        int updated = 0;
-        int unmatched = 0;
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
 
-        for (Publication pub : publications) {
-            CommuteResultArticle result = commutePoints.commuteArticle(
-                    pub.getJournalTitle(),
-                    pub.getType().getId(),
-                    pub.getDiscipline().getId(),
-                    pub.getIssn(),
-                    pub.getEissn(),
-                    pub.getPublicationYear()
-            );
 
-            if (result == null
-                    || result.meinJournal() == null
-                    || result.meinVersion() == null) {
-                unmatched++;
-                continue;
-            }
 
-            pub.setCycle(result.cycle());
-            pub.setMeinPoints(result.points());
-            pub.setMeinVersionId(result.meinVersion().getId());
-            pub.setMeinJournalId(result.meinJournal().getId());
-            pub.setUpdatedAt(Instant.now());
+    @Override
+    public void adminGetJobStats(GetJobStatusRequest request,
+                             StreamObserver<GetJobStatusResponse> responseObserver) {
+        Long jobId = request.getJobId();
 
-            updated++;
-        }
+        AsyncJob job = asyncJobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found"));
 
-        if (!publications.isEmpty()) {
-            publicationRepository.saveAll(publications);
-        }
-
-        AdminRecalcCycleScoresResponse response = AdminRecalcCycleScoresResponse.newBuilder()
-                .setUpdatedPublications(updated)
-                .setUnmatchedPublications(unmatched)
+        GetJobStatusResponse response = GetJobStatusResponse.newBuilder()
+                .setJobId(job.getId())
+                .setType(job.getType())
+                .setStatus(job.getStatus().name())
+                .setProgressPercent(Optional.ofNullable(job.getProgressPercent()).orElse(0))
+                .setPhase(Optional.ofNullable(job.getPhase()).orElse(""))
+                .setMessage(Optional.ofNullable(job.getMessage()).orElse(""))
+                .setResultJson(Optional.ofNullable(job.getResultPayload()).orElse(""))
+                .setError(Optional.ofNullable(job.getErrorMessage()).orElse(""))
                 .build();
 
         responseObserver.onNext(response);

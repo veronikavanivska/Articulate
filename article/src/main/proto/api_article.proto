@@ -48,6 +48,7 @@ message AdminListMeinVersionsResponse {
 message AdminGetMeinVersionRequest {
   int64 version_id=1;
 }
+
 message AdminGetMeinVersionResponse {
   MeinVersionItem version=1;
   int64 distinctIssn   = 2;
@@ -89,7 +90,6 @@ message AdminListMeinJournalsRequest {
   int32 page = 6;               // 0-based
   int32 size = 7;               // domyślnie 20, max 100
   string sortDir = 9;           // "ASC"|"DESC" (domyślnie ASC)
-
 }
 message AdminListMeinJournalsResponse {
   repeated MeinJournalItem items = 1;
@@ -126,8 +126,10 @@ message AdminRecalcCycleScoresRequest {
 }
 
 message AdminRecalcCycleScoresResponse {
-  int32 updated_publications = 1;
-  int32 unmatched_publications = 2;
+//  int32 updated_publications = 1;
+//  int32 unmatched_publications = 2;
+  int64 job_id = 1;
+  string message = 2;
 }
 
 //publications
@@ -371,6 +373,10 @@ message ApiResponse {
   string message = 2;
 }
 
+message DeleteMeinVersionResponse {
+  int64 job_id = 1;
+  string message = 2;
+}
 message CreateMonographRequest{
   int64 userId = 1;
 
@@ -527,6 +533,80 @@ message DeleteChapterRequest{
   int64 userId = 2;
 }
 
+message MeinMonoVersionItem {
+  int64 id=1;
+  string label=2;
+  string sourceFilename=3;
+  int64 importedBy=5;
+  google.protobuf.Timestamp importedAt=6;
+  int64 publishers =8;
+}
+
+message MeinMonoPublisherItem {
+  int64 id = 1;
+  string title = 2;
+  double points = 3;
+  int64 version_id = 4;
+  string level = 5;
+}
+
+message AdminListMeinMonoVersionsRequest {
+  int32 page = 1;
+  int32 size = 2;
+  string sortDir = 3;
+}
+
+message AdminListMeinMonoVersionsResponse {
+  repeated MeinMonoVersionItem items = 1;
+  PageMeta page = 2;
+}
+
+message AdminGetMeinMonoVersionRequest {
+  int64 id = 1;
+}
+
+message AdminGetMeinMonoVersionResponse {
+  MeinMonoVersionItem version = 1;
+}
+
+message DeleteMeinMonoVersionRequest {
+  int64 id = 1;
+}
+
+message AdminListMeinMonoPublishersRequest {
+  int64 version_id = 1;   
+  int32 page = 2;
+  int32 size = 3;
+  string sortDir = 9;
+
+}
+
+message AdminListMeinMonoPublishersResponse {
+  repeated MeinMonoPublisherItem items = 1;
+  PageMeta pageMeta = 2;
+}
+
+message AdminGetMeinMonoPublisherRequest {
+  int64 id = 1;
+}
+
+message AdminGetMeinMonoPublisherResponse {
+  MeinMonoPublisherItem publisher = 1;
+}
+
+message AdminRecalcMonoCycleScoresRequest {
+  int64 cycle_id = 1;
+}
+
+message AdminRecalcMonoCycleScoresResponse {
+//  int64 updated_monographs = 1;
+//  int64 updated_chapters = 2;
+//  int64 unmatched_monographs = 3;
+//  int64 unmatched_chapters = 4;
+  int64 job_id = 5;
+  string message = 6;
+}
+
 
 service WorkerArticleService{
   rpc CreatePublication(CreatePublicationRequest) returns (PublicationView);
@@ -567,9 +647,34 @@ service ArticleService{
   rpc ListDisciplines(google.protobuf.Empty) returns (ListDisciplinesResponse);
   rpc ListEvalCycles(google.protobuf.Empty) returns (ListCyclesResponse);
 }
+message GetJobStatusRequest {
+  int64 job_id = 1;
+}
 
+message GetJobStatusResponse {
+  int64 job_id = 1;
+  string type = 2;
+  string status = 3;          // "QUEUED", "RUNNING", "DONE", "FAILED"
+  int32 progress_percent = 4;
+  string phase = 5;
+  string message = 6;
+  string result_json = 7;
+  string error = 8;
+}
+//TODO: think about active mono version to find from active eval cycle
 service ETLMonoService{
   rpc ImportFile(ImportMEiNRequest) returns (ImportMEiNReply);
+  // versions
+  rpc AdminListMeinMonoVersions(AdminListMeinMonoVersionsRequest) returns (AdminListMeinMonoVersionsResponse);
+  rpc AdminGetMeinMonoVersion(AdminGetMeinMonoVersionRequest) returns (AdminGetMeinMonoVersionResponse);
+  rpc AdminDeleteMeinMonoVersion(DeleteMeinMonoVersionRequest) returns (ApiResponse);
+
+  // publishers (equivalent of journals)
+  rpc AdminListMeinMonoPublishers(AdminListMeinMonoPublishersRequest) returns (AdminListMeinMonoPublishersResponse);
+  rpc AdminGetMeinMonoPublisher(AdminGetMeinMonoPublisherRequest) returns (AdminGetMeinMonoPublisherResponse);
+
+  // recalc scores for cycles based on mono list
+  rpc AdminRecalculateMonoCycleScores(AdminRecalcMonoCycleScoresRequest) returns (AdminRecalcMonoCycleScoresResponse);
 }
 service ETLArticleService{
   rpc ImportFile(ImportMEiNRequest) returns (ImportMEiNReply);
@@ -580,8 +685,9 @@ service ETLArticleService{
   rpc AdminGetMeinJournal(AdminGetMeinJournalRequest) returns (AdminGetMeinJournalResponse);
   rpc AdminActivateMeinVersion(ActivateMeinVersionRequest) returns (ApiResponse);
   rpc AdminDeactivateMeinVersion(DeactivateMeinVersionRequest) returns (ApiResponse);
-  rpc AdminDeleteMeinVersion(DeleteMeinVersionRequest) returns (ApiResponse);
+  rpc AdminDeleteMeinVersion(DeleteMeinVersionRequest) returns (DeleteMeinVersionResponse);
   rpc AdminRecalculateCycleScores(AdminRecalcCycleScoresRequest) returns (AdminRecalcCycleScoresResponse);
+  rpc AdminGetJobStats(GetJobStatusRequest) returns (GetJobStatusResponse);
 }
 
 service WorkerMonographService {
@@ -601,7 +707,7 @@ service WorkerMonographService {
 }
 
 service AdminMonographService {
-//  // monographs
+  // monographs
 //  rpc AdminListMonographs(ListAdminMonographsRequest) returns (ListMonographsResponse);
 //  rpc AdminGetMonograph(GetMonographRequest) returns (MonographView);
 //

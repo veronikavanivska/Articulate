@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.example.article.entities.MEiN.article.MeinVersion;
 import org.example.article.entities.MEiN.monographs.MeinMonoVersion;
+import org.hibernate.annotations.OnDelete;
 
 @Data
 @Entity
