@@ -30,6 +30,14 @@ services:
     depends_on:
       - rabbitmq
 
+  slots:
+    build:
+      context: ./slots
+      dockerfile: Dockerfile
+    ports:
+      - "9094:9090"
+    networks:
+      - articulate
 
   auth:
     build:
@@ -89,6 +97,21 @@ services:
     volumes:
       - article_service_postgres:/var/lib/postgresql/data
 
+  slots-postgres:
+    image: postgres
+    container_name: "slots-postgres-articulate"
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345678
+      - POSTGRES_DB=slots
+    networks:
+      - articulate
+      - slots-postgres-n
+    volumes:
+      - slots_service_postgres:/var/lib/postgresql/data
+
 
   redis:
     image: redis:latest
@@ -117,6 +140,7 @@ volumes:
   auth_service_postgres:
   article_service_postgres:
   redis-data:
+  slots_service_postgres:
 
 networks:
   articulate:
@@ -126,4 +150,6 @@ networks:
   auth-postgres-n:
     driver: bridge
   article-postgres-n:
+    driver: bridge
+  slots-postgres-n:
     driver: bridge
