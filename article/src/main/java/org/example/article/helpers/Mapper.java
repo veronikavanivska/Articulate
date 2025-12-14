@@ -31,12 +31,17 @@ public final class Mapper {
                 .setYearFrom(publication.getCycle().getYearFrom())
                 .setYearTo(publication.getCycle().getYearTo());
 
-        if(publication.getCycle().getMeinVersion().getId() != null) {
+        if(publication.getCycle().getMeinVersion() != null) {
              cycle.setMeinVersionId(publication.getCycle().getMeinVersion().getId());
+        }else {
+            cycle.setMeinVersionId(0);
         }
-        if(publication.getCycle().getMeinMonoVersion().getId() != null) {
+        if(publication.getCycle().getMeinMonoVersion() != null) {
             cycle.setMonoVersionId(publication.getCycle().getMeinMonoVersion().getId());
+        }else {
+            cycle.setMonoVersionId(0);
         }
+
 
         cycle.build();
 
@@ -57,9 +62,13 @@ public final class Mapper {
 
         if (publication.getMeinVersionId() != null) {
             b.setMeinVersionId(publication.getMeinVersionId());
+        }else{
+            b.setMeinVersionId(0);
         }
         if (publication.getMeinJournalId() != null) {
             b.setMeinJournalId(publication.getMeinJournalId());
+        }else{
+            b.setMeinJournalId(0);
         }
 
         publication.getCoauthors().stream()

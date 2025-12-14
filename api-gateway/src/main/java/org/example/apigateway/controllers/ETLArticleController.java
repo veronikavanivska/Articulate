@@ -2,6 +2,7 @@ package org.example.apigateway.controllers;
 
 
 import com.example.generated.CodeRef;
+import com.example.generated.DeleteMeinVersionResponse;
 import com.example.generated.MeinJournalItem;
 import org.example.apigateway.clients.ETLArticleClient;
 import org.example.apigateway.config.SecurityConfig;
@@ -137,16 +138,14 @@ public class ETLArticleController {
         return apiResponse;
     }
 
-
-    //TODO : make in asynchronius in back, also add delete points from articles
     @DeleteMapping("/admin/deleteMeinVersion")
-    public ApiResponse adminDeleteMeinVersion(@RequestParam long versionId){
+    public DeleteMVersionResponse adminDeleteMeinVersion(@RequestParam long versionId){
         var response = ETLArticleClient.adminDeleteMeinVersion(versionId);
 
-        ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setCode(response.getCode());
-        apiResponse.setMessage(response.getMessage());
-        return apiResponse;
+       DeleteMVersionResponse deleteResponse = new DeleteMVersionResponse();
+       deleteResponse.setJobId(response.getJobId());
+       deleteResponse.setMessage(response.getMessage());
+       return deleteResponse;
     }
 
     @PostMapping("/admin/recalcCycleScores")
@@ -155,11 +154,23 @@ public class ETLArticleController {
         var response = ETLArticleClient.adminRecalcCycleScores(cycleId);
 
         RecalcCycleScoresResponse recalcResponse = new RecalcCycleScoresResponse();
-        recalcResponse.setUpdated_publications(response.getUpdatedPublications());
-        recalcResponse.setUnmatched_publications(response.getUnmatchedPublications());
+        recalcResponse.setJobId(response.getJobId());
+        recalcResponse.setMessage(response.getMessage());
         return recalcResponse;
     }
 
+    @GetMapping("/admin/getJobStatus")
+    public JobStatusResponse getJobStatus(@RequestParam long jobId){
+        var response = ETLArticleClient.getJobStatus(jobId);
+
+        JobStatusResponse jobStatusResponse = new JobStatusResponse();
+        jobStatusResponse.setJobId(response.getJobId());
+        jobStatusResponse.setStatus(response.getStatus());
+        jobStatusResponse.setType(response.getType());
+        jobStatusResponse.setError(response.getError());
+
+        return jobStatusResponse;
+    }
 
 
 

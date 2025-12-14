@@ -94,7 +94,7 @@ public class ETLArticleClient {
         return stub.adminDeactivateMeinVersion(request);
     }
 
-    public static ApiResponse adminDeleteMeinVersion(long versionId){
+    public static DeleteMeinVersionResponse adminDeleteMeinVersion(long versionId){
         DeleteMeinVersionRequest request = DeleteMeinVersionRequest.newBuilder()
                 .setVersionId(versionId)
                 .build();
@@ -108,6 +108,14 @@ public class ETLArticleClient {
                 .build();
 
         return stub.adminRecalculateCycleScores(request);
+    }
+
+    public static GetJobStatusResponse getJobStatus(long jobId){
+        GetJobStatusRequest request = GetJobStatusRequest.newBuilder()
+                .setJobId(jobId)
+                .build();
+
+        return stub.adminGetJobStats(request);
     }
 
     public static void init(Channel channel) {

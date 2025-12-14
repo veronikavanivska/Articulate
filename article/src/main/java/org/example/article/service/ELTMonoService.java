@@ -109,7 +109,7 @@ public class ELTMonoService extends ETLMonoServiceGrpc.ETLMonoServiceImplBase {
     }
 
     @Override
-    public void adminGetMeinMonoPublisher(AdminGetMeinMonoPublisherRequest request, StreamObserver<AdminGetMeinMonoPublisherResponse> responseObserver) {
+        public void adminGetMeinMonoPublisher(AdminGetMeinMonoPublisherRequest request, StreamObserver<AdminGetMeinMonoPublisherResponse> responseObserver) {
         Long publisherId = request.getId();
 
         MeinMonoPublisher meinMonoPublisher = meinMonoPublisherRepository.findById(publisherId).orElseThrow(() -> new RuntimeException("Mein publisher not found"));
@@ -277,7 +277,7 @@ public class ELTMonoService extends ETLMonoServiceGrpc.ETLMonoServiceImplBase {
 //    }
 @Override
 public void adminDeleteMeinMonoVersion(DeleteMeinMonoVersionRequest request,
-                                       StreamObserver<ApiResponse> responseObserver) {
+                                       StreamObserver<DeleteMeinMonoVersionResponse> responseObserver) {
     long versionId = request.getId();
 
     if (!meinMonoVersionRepository.existsById(versionId)) {
@@ -314,13 +314,14 @@ public void adminDeleteMeinMonoVersion(DeleteMeinMonoVersionRequest request,
         asyncMeinService.executeDeleteMeinMonoVersionJob(job.getId());
     }
 
-    ApiResponse response = ApiResponse.newBuilder()
-            .setCode(200)
-            .setMessage("MeinMonoVersion deletion started or already in progress. JobId=" + job.getId())
-            .build();
+   DeleteMeinMonoVersionResponse response = DeleteMeinMonoVersionResponse.newBuilder()
+           .setJobId(job.getId())
+           .setMessage("MEiN mono version deletion started or already in progress")
+           .build();
 
-    responseObserver.onNext(response);
-    responseObserver.onCompleted();
+   responseObserver.onNext(response);
+   responseObserver.onCompleted();
+
 }
 //    @Override
 //    public void adminRecalculateMonoCycleScores(AdminRecalcMonoCycleScoresRequest request, StreamObserver<AdminRecalcMonoCycleScoresResponse> responseObserver) {

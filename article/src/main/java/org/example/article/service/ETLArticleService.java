@@ -504,7 +504,7 @@ public void adminDeleteMeinVersion(DeleteMeinVersionRequest request,
 //        responseObserver.onNext(response);
 //        responseObserver.onCompleted();
 //    }
-
+    
     @Override
     public void adminRecalculateCycleScores(AdminRecalcCycleScoresRequest request,
                                             StreamObserver<AdminRecalcCycleScoresResponse> responseObserver) {

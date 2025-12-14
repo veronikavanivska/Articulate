@@ -147,6 +147,31 @@ message ListAdminPublicationRequest{
 
 }
 
+message ListAdminMonographsRequest{
+  int64 ownerId = 1;
+  int32 typeId = 2;
+  int32 disciplineId = 3;
+  int32 cycleId = 4;
+
+  // paginacja
+  int32 page = 5;
+  int32 size = 6;
+  string sortBy = 7;
+  string sortDir = 8;
+}
+
+message ListAdminChaptersRequest{
+  int64 ownerId = 1;
+  int32 typeId = 2;
+  int32 disciplineId = 3;
+  int32 cycleId = 4;
+
+  // paginacja
+  int32 page = 5;
+  int32 size = 6;
+  string sortBy = 7;
+  string sortDir = 8;
+}
 
 //disciplines
 message AdminListDisciplinesRequest {
@@ -607,7 +632,10 @@ message AdminRecalcMonoCycleScoresResponse {
   string message = 6;
 }
 
-
+message DeleteMeinMonoVersionResponse{
+  int64 job_id = 1;
+  string message = 2;
+}
 service WorkerArticleService{
   rpc CreatePublication(CreatePublicationRequest) returns (PublicationView);
   rpc GetPublication(GetPublicationRequest) returns (PublicationView);
@@ -667,7 +695,7 @@ service ETLMonoService{
   // versions
   rpc AdminListMeinMonoVersions(AdminListMeinMonoVersionsRequest) returns (AdminListMeinMonoVersionsResponse);
   rpc AdminGetMeinMonoVersion(AdminGetMeinMonoVersionRequest) returns (AdminGetMeinMonoVersionResponse);
-  rpc AdminDeleteMeinMonoVersion(DeleteMeinMonoVersionRequest) returns (ApiResponse);
+  rpc AdminDeleteMeinMonoVersion(DeleteMeinMonoVersionRequest) returns (DeleteMeinMonoVersionResponse);
 
   // publishers (equivalent of journals)
   rpc AdminListMeinMonoPublishers(AdminListMeinMonoPublishersRequest) returns (AdminListMeinMonoPublishersResponse);
@@ -707,11 +735,9 @@ service WorkerMonographService {
 }
 
 service AdminMonographService {
-  // monographs
-//  rpc AdminListMonographs(ListAdminMonographsRequest) returns (ListMonographsResponse);
-//  rpc AdminGetMonograph(GetMonographRequest) returns (MonographView);
-//
-//  // chapters
-//  rpc AdminListChapters(ListAdminChaptersRequest) returns (ListChaptersResponse);
-//  rpc AdminGetChapter(GetChapterRequest) returns (ChapterView);
+  rpc AdminListMonographs(ListAdminMonographsRequest) returns (ListMonographsResponse);
+  rpc AdminGetMonograph(GetMonographRequest) returns (MonographView);
+
+  rpc AdminListChapters(ListAdminChaptersRequest) returns (ListChaptersResponse);
+  rpc AdminGetChapter(GetChapterRequest) returns (ChapterView);
 }
