@@ -39,6 +39,15 @@ services:
     networks:
       - articulate
 
+  search:
+    build:
+      context: ./search
+      dockerfile: Dockerfile
+    ports:
+      - "9095:9090"
+    networks:
+      - articulate
+
   auth:
     build:
       context: ./auth
