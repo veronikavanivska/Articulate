@@ -1,6 +1,5 @@
-package org.example.apigateway.config;
+package org.example.apigateway.mappers;
 
-import com.example.generated.MeinVersionItem;
 import org.example.apigateway.responses.articles.MeinJournalItem;
 
 public class MeinJournalItemMapper {

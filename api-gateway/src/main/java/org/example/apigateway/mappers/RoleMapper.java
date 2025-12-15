@@ -1,4 +1,4 @@
-package org.example.apigateway.config;
+package org.example.apigateway.mappers;
 
 import org.example.apigateway.requests.auth.RoleName;
 import org.springframework.stereotype.Component;

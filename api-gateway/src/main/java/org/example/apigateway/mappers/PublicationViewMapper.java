@@ -1,4 +1,4 @@
-package org.example.apigateway.config;
+package org.example.apigateway.mappers;
 
 import com.example.generated.PublicationView;
 import org.example.apigateway.responses.articles.Coauthor;

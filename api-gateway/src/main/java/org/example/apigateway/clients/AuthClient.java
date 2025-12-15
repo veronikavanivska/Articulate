@@ -3,7 +3,7 @@ package org.example.apigateway.clients;
 import com.example.generated.*;
 import io.grpc.Channel;
 import org.example.apigateway.Client;
-import org.example.apigateway.config.RoleMapper;
+import org.example.apigateway.mappers.RoleMapper;
 
 
 @Client(host = "${auth.server.host}",

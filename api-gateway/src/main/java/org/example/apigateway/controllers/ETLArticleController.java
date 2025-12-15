@@ -1,14 +1,13 @@
 package org.example.apigateway.controllers;
 
 
-import com.example.generated.CodeRef;
-import com.example.generated.DeleteMeinVersionResponse;
 import com.example.generated.MeinJournalItem;
 import org.example.apigateway.clients.ETLArticleClient;
 import org.example.apigateway.config.SecurityConfig;
 import org.example.apigateway.requests.articles.GetMeinJournalRequest;
 import org.example.apigateway.requests.articles.ListMeinJournalRequest;
 import org.example.apigateway.responses.ApiResponse;
+import org.example.apigateway.responses.AsyncResponse;
 import org.example.apigateway.responses.MEiNResponse;
 import org.example.apigateway.responses.articles.*;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.example.apigateway.config.MeinJournalItemMapper.toMeinJournalItem;
-import static org.example.apigateway.config.MeinVersionItemMapper.toMeinVersionItem;
-import static org.example.apigateway.config.PageMetaMapper.toPageMeta;
+import static org.example.apigateway.mappers.MeinJournalItemMapper.toMeinJournalItem;
+import static org.example.apigateway.mappers.MeinVersionItemMapper.toMeinVersionItem;
+import static org.example.apigateway.mappers.PageMetaMapper.toPageMeta;
 
 @RequestMapping("/etl")
 @RestController
@@ -139,21 +138,21 @@ public class ETLArticleController {
     }
 
     @DeleteMapping("/admin/deleteMeinVersion")
-    public DeleteMVersionResponse adminDeleteMeinVersion(@RequestParam long versionId){
+    public AsyncResponse adminDeleteMeinVersion(@RequestParam long versionId){
         var response = ETLArticleClient.adminDeleteMeinVersion(versionId);
 
-       DeleteMVersionResponse deleteResponse = new DeleteMVersionResponse();
+       AsyncResponse deleteResponse = new AsyncResponse();
        deleteResponse.setJobId(response.getJobId());
        deleteResponse.setMessage(response.getMessage());
        return deleteResponse;
     }
 
     @PostMapping("/admin/recalcCycleScores")
-    public RecalcCycleScoresResponse recalcCycleScores(@RequestParam long cycleId){
+    public AsyncResponse recalcCycleScores(@RequestParam long cycleId){
 
         var response = ETLArticleClient.adminRecalcCycleScores(cycleId);
 
-        RecalcCycleScoresResponse recalcResponse = new RecalcCycleScoresResponse();
+        AsyncResponse recalcResponse = new AsyncResponse();
         recalcResponse.setJobId(response.getJobId());
         recalcResponse.setMessage(response.getMessage());
         return recalcResponse;

@@ -5,7 +5,7 @@ import io.grpc.Channel;
 import org.example.apigateway.Client;
 import org.example.apigateway.requests.profiles.UpdateProfileRequest;
 
-import static org.example.apigateway.config.ProfileMapper.toGrpc;
+import static org.example.apigateway.mappers.ProfileMapper.toGrpc;
 
 @Client(
         host = "${profiles.server.host}",

@@ -10,5 +10,6 @@ public class CycleItem {
     private String name;
     private boolean isActive;
     private long meinVersionId;
+    private long meinMonoVersionId;
 }
 

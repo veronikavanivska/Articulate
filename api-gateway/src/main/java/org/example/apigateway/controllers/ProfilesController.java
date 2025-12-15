@@ -1,7 +1,7 @@
 package org.example.apigateway.controllers;
 
 import org.example.apigateway.clients.ProfilesClient;
-import org.example.apigateway.config.ProfileMapper;
+import org.example.apigateway.mappers.ProfileMapper;
 import org.example.apigateway.config.SecurityConfig;
 import org.example.apigateway.requests.profiles.UpdateProfileRequest;
 import org.example.apigateway.responses.GetProfileResponse;

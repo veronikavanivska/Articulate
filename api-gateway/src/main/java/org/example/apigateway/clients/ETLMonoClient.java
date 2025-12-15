@@ -71,7 +71,7 @@ public class ETLMonoClient {
         return stub.adminListMeinMonoPublishers(request);
     }
 
-    public DeleteMeinMonoVersionResponse deleteMeinMonoVersion(Long versionId){
+    public static DeleteMeinMonoVersionResponse deleteMeinMonoVersion(Long versionId){
         DeleteMeinMonoVersionRequest request = DeleteMeinMonoVersionRequest.newBuilder()
                 .setId(versionId)
                 .build();

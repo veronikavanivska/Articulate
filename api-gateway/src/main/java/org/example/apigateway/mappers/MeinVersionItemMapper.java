@@ -1,4 +1,4 @@
-package org.example.apigateway.config;
+package org.example.apigateway.mappers;
 
 import com.google.protobuf.Timestamp;
 import org.example.apigateway.responses.articles.MeinVersionItem;

@@ -16,15 +16,15 @@ public class ArticleClient {
     private static ArticleServiceGrpc.ArticleServiceBlockingStub stub;
 
     // dla dropdown
-    public ListTypesResponse listPublicationTypes(){
+    public static ListTypesResponse listPublicationTypes(){
         return stub.listPublicationTypes(Empty.getDefaultInstance());
     }
 
-    public ListDisciplinesResponse listDisciplines(){
+    public static ListDisciplinesResponse listDisciplines(){
         return stub.listDisciplines(Empty.getDefaultInstance());
     }
 
-    public ListCyclesResponse listCycles(){
+    public static ListCyclesResponse listCycles(){
         return stub.listEvalCycles(Empty.getDefaultInstance());
     }
 

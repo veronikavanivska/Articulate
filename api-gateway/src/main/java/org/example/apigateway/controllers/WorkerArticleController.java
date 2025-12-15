@@ -2,7 +2,7 @@ package org.example.apigateway.controllers;
 
 import com.example.generated.PublicationView;
 import org.example.apigateway.clients.WorkerArticleClient;
-import org.example.apigateway.config.PublicationViewMapper;
+import org.example.apigateway.mappers.PublicationViewMapper;
 import org.example.apigateway.config.SecurityConfig;
 import org.example.apigateway.requests.articles.ListPublicationRequest;
 import org.example.apigateway.requests.articles.UpdatePublicationRequest;

@@ -3,12 +3,20 @@ package org.example.apigateway.controllers;
 import org.example.apigateway.clients.ETLArticleClient;
 import org.example.apigateway.clients.ETLMonoClient;
 import org.example.apigateway.config.SecurityConfig;
+import org.example.apigateway.mappers.MeinMonoPublisherMapper;
+import org.example.apigateway.mappers.MeinMonoVersionItemMapper;
+import org.example.apigateway.mappers.MeinVersionItemMapper;
+import org.example.apigateway.requests.articles.ListMeinMonoPublishersRequest;
+import org.example.apigateway.requests.articles.ListMeinMonoVersionsRequest;
+import org.example.apigateway.responses.AsyncResponse;
 import org.example.apigateway.responses.MEiNResponse;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.example.apigateway.responses.mono.MeinMonoPublisherItem;
+import org.example.apigateway.responses.mono.MeinMonoVersionItem;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/etl")
@@ -25,6 +33,73 @@ public class ETLMonoController {
         meinResponse.setAlreadyImported(response.getAlreadyImported());
 
         return meinResponse;
+    }
+
+    @GetMapping("/admin/getMeinMonoVersion")
+    public MeinMonoVersionItem getMeinMonoVersionItem(@RequestParam("versionId") Long versionId){
+        var response = ETLMonoClient.adminGetMeinMonoVersion(versionId);
+
+        com.example.generated.MeinMonoVersionItem versionItem = response.getVersion();
+        MeinMonoVersionItem meinMonoVersionItem = MeinMonoVersionItemMapper.map(versionItem);
+
+        return meinMonoVersionItem;
+    }
+
+     @GetMapping("/admin/getMeinMonoPublishers")
+     public MeinMonoPublisherItem getMeinMonoPublishersItem(@RequestParam("publisherId") Long publisherId){
+        var response = ETLMonoClient.adminGetMeinMonoPublisher(publisherId);
+
+        com.example.generated.MeinMonoPublisherItem publisher = response.getPublisher();
+        MeinMonoPublisherItem item = MeinMonoPublisherMapper.map(publisher);
+
+        return item;
+     }
+
+    @GetMapping("/admin/listMeinMonoVerions")
+    public List<MeinMonoVersionItem> listMeinMonoVerions(@RequestBody ListMeinMonoVersionsRequest request){
+        var response = ETLMonoClient.adminListMeinMonoVersions(request.getPage(),request.getSize(),request.getSortDir());
+
+        List<MeinMonoVersionItem> list = new ArrayList<>();
+        for(com.example.generated.MeinMonoVersionItem item : response.getItemsList()){
+            MeinMonoVersionItem meinItem = MeinMonoVersionItemMapper.map(item);
+            list.add(meinItem);
+        }
+
+        return list;
+    }
+
+    @GetMapping("/admin/listMeinMonoPublishers")
+    public List<MeinMonoPublisherItem> listMeinMonoPublishers(@RequestBody ListMeinMonoPublishersRequest request){
+        var response = ETLMonoClient.adminListMeinMonoPublishers(request.getVersionId(), request.getPage(), request.getSize(), request.getSortDir());
+
+        List<MeinMonoPublisherItem> list = new ArrayList<>();
+        for(com.example.generated.MeinMonoPublisherItem item : response.getItemsList()){
+            MeinMonoPublisherItem meinItem = MeinMonoPublisherMapper.map(item);
+            list.add(meinItem);
+        }
+
+        return list;
+    }
+
+    @DeleteMapping("/admin/deleteMeinMonoVersion")
+    public AsyncResponse deleteMeinMonoVersion(@RequestParam("versionId") long versionId){
+        var response = ETLMonoClient.deleteMeinMonoVersion(versionId);
+
+        AsyncResponse asyncResponse = new AsyncResponse();
+        asyncResponse.setJobId(response.getJobId());
+        asyncResponse.setMessage(response.getMessage());
+        return asyncResponse;
+    }
+
+    @GetMapping("/admin/recalculateMonoPoints")
+    public AsyncResponse recalculateMonoPoints(@RequestParam("cycleId") long cycleId){
+        var response = ETLMonoClient.adminRecalcMonoCycleScores(cycleId);
+
+        AsyncResponse asyncResponse = new AsyncResponse();
+        asyncResponse.setJobId(response.getJobId());
+        asyncResponse.setMessage(response.getMessage());
+        return asyncResponse;
+
     }
 
 }

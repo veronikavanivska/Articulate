@@ -624,10 +624,7 @@ message AdminRecalcMonoCycleScoresRequest {
 }
 
 message AdminRecalcMonoCycleScoresResponse {
-//  int64 updated_monographs = 1;
-//  int64 updated_chapters = 2;
-//  int64 unmatched_monographs = 3;
-//  int64 unmatched_chapters = 4;
+
   int64 job_id = 5;
   string message = 6;
 }
