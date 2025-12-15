@@ -6,10 +6,14 @@ import org.example.apigateway.config.SecurityConfig;
 import org.example.apigateway.mappers.MeinMonoPublisherMapper;
 import org.example.apigateway.mappers.MeinMonoVersionItemMapper;
 import org.example.apigateway.mappers.MeinVersionItemMapper;
+import org.example.apigateway.mappers.PageMetaMapper;
 import org.example.apigateway.requests.articles.ListMeinMonoPublishersRequest;
 import org.example.apigateway.requests.articles.ListMeinMonoVersionsRequest;
 import org.example.apigateway.responses.AsyncResponse;
 import org.example.apigateway.responses.MEiNResponse;
+import org.example.apigateway.responses.articles.PageMeta;
+import org.example.apigateway.responses.mono.ListMonoPublishersResponse;
+import org.example.apigateway.responses.mono.ListMonoVersionResponse;
 import org.example.apigateway.responses.mono.MeinMonoPublisherItem;
 import org.example.apigateway.responses.mono.MeinMonoVersionItem;
 import org.springframework.web.bind.annotation.*;
@@ -56,8 +60,10 @@ public class ETLMonoController {
      }
 
     @GetMapping("/admin/listMeinMonoVerions")
-    public List<MeinMonoVersionItem> listMeinMonoVerions(@RequestBody ListMeinMonoVersionsRequest request){
+    public ListMonoVersionResponse listMeinMonoVerions(@RequestBody ListMeinMonoVersionsRequest request){
         var response = ETLMonoClient.adminListMeinMonoVersions(request.getPage(),request.getSize(),request.getSortDir());
+
+        ListMonoVersionResponse listMonoVersionResponse = new ListMonoVersionResponse();
 
         List<MeinMonoVersionItem> list = new ArrayList<>();
         for(com.example.generated.MeinMonoVersionItem item : response.getItemsList()){
@@ -65,12 +71,19 @@ public class ETLMonoController {
             list.add(meinItem);
         }
 
-        return list;
+        PageMeta page = PageMetaMapper.toPageMeta(response.getPage());
+
+        listMonoVersionResponse.setItems(list);
+        listMonoVersionResponse.setPageMeta(page);
+
+        return listMonoVersionResponse;
     }
 
     @GetMapping("/admin/listMeinMonoPublishers")
-    public List<MeinMonoPublisherItem> listMeinMonoPublishers(@RequestBody ListMeinMonoPublishersRequest request){
+    public ListMonoPublishersResponse listMeinMonoPublishers(@RequestBody ListMeinMonoPublishersRequest request){
         var response = ETLMonoClient.adminListMeinMonoPublishers(request.getVersionId(), request.getPage(), request.getSize(), request.getSortDir());
+
+        ListMonoPublishersResponse listMonoPublishersResponse = new ListMonoPublishersResponse();
 
         List<MeinMonoPublisherItem> list = new ArrayList<>();
         for(com.example.generated.MeinMonoPublisherItem item : response.getItemsList()){
@@ -78,7 +91,12 @@ public class ETLMonoController {
             list.add(meinItem);
         }
 
-        return list;
+        listMonoPublishersResponse.setItems(list);
+
+        PageMeta page = PageMetaMapper.toPageMeta(response.getPageMeta());
+        listMonoPublishersResponse.setPageMeta(page);
+
+        return listMonoPublishersResponse;
     }
 
     @DeleteMapping("/admin/deleteMeinMonoVersion")

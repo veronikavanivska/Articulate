@@ -6,6 +6,6 @@ import lombok.Data;
 public class PageMeta {
     private int page;
     private int size;
-    private long  totalItems;
+    private long totalItems;
     private int totalPages;
 }
