@@ -1,21 +1,22 @@
 package org.example.apigateway.controllers;
 
-import com.example.generated.GetPublicationRequest;
-import com.example.generated.PublicationView;
+import com.example.generated.*;
+import com.google.protobuf.Api;
 import org.example.apigateway.clients.AdminArticleClient;
+import org.example.apigateway.clients.ETLArticleClient;
 import org.example.apigateway.mappers.PageMetaMapper;
 import org.example.apigateway.mappers.PublicationViewMapper;
-import org.example.apigateway.requests.articles.AdminGetPublicationRequest;
-import org.example.apigateway.requests.articles.AdminListPublicationRequest;
-import org.example.apigateway.requests.articles.ListPublicationRequest;
-import org.example.apigateway.requests.articles.Page;
-import org.example.apigateway.responses.articles.ListPublicationResponse;
+import org.example.apigateway.requests.ListSmthRequest;
+import org.example.apigateway.requests.articles.*;
+import org.example.apigateway.requests.articles.CreateCycleRequest;
+import org.example.apigateway.requests.articles.UpdateCycleRequest;
+import org.example.apigateway.responses.ApiResponse;
+import org.example.apigateway.responses.ListSmthResponse;
+import org.example.apigateway.responses.articles.*;
+import org.example.apigateway.responses.articles.CycleItem;
 import org.example.apigateway.responses.articles.PageMeta;
-import org.example.apigateway.responses.articles.PublicationViewResponse;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.example.apigateway.responses.articles.RefItem;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,5 +56,184 @@ public class AdminArticleController {
         return viewResponse;
     }
 
-    @
+    @GetMapping("/listDisciplines")
+    public ListSmthResponse<RefItem> listDisciplines(@RequestBody ListSmthRequest request) {
+        var response = AdminArticleClient.adminListDisciplines(request.getPage(), request.getSize(), request.getSortDir());
+
+        ListSmthResponse<RefItem> result = new ListSmthResponse<>();
+
+        List<RefItem> refItem = new ArrayList<>();
+
+        for (com.example.generated.RefItem ref : response.getItemsList()) {
+            RefItem item = new RefItem();
+            item.setId(ref.getId());
+            item.setName(ref.getName());
+
+            refItem.add(item);
+        }
+
+        PageMeta page = PageMetaMapper.toPageMeta(response.getPage());
+
+        result.setPageMeta(page);
+        result.setItem(refItem);
+
+        return result;
+    }
+
+    @PostMapping("/createDiscipline")
+    public RefItem createDiscipline(@RequestParam("name") String name) {
+        var response = AdminArticleClient.adminCreateDiscipline(name);
+
+        RefItem refItem = new RefItem();
+        refItem.setId(response.getId());
+        refItem.setName(name);
+
+        return refItem;
+    }
+
+
+    @PostMapping("/updateDiscipline")
+    public RefItem updateDiscipline(@RequestParam("name") String name, @RequestParam("id") Long id) {
+        var response = AdminArticleClient.adminUpdateDiscipline(id, name);
+
+        RefItem refItem = new RefItem();
+        refItem.setId(response.getId());
+        refItem.setName(name);
+
+        return refItem;
+    }
+
+    @DeleteMapping("/deleteDIscipline")
+    public ApiResponse deleteDiscipline(@RequestParam("id") Long id) {
+        var response = AdminArticleClient.adminDeleteDiscipline(id);
+
+        ApiResponse apiResponse = new ApiResponse();
+        apiResponse.setCode(response.getCode());
+        apiResponse.setMessage(response.getMessage());
+
+        return apiResponse;
+    }
+
+    @GetMapping("/listTypes")
+    public ListSmthResponse<RefItem> listTypes(@RequestBody ListSmthRequest request) {
+        var response = AdminArticleClient.adminListPublicationTypes(request.getPage(), request.getSize(), request.getSortDir());
+
+        ListSmthResponse<RefItem> result = new ListSmthResponse<>();
+        List<RefItem> refItem = new ArrayList<>();
+
+        for (com.example.generated.RefItem ref : response.getItemsList()) {
+            RefItem item = new RefItem();
+            item.setId(ref.getId());
+            item.setName(ref.getName());
+            refItem.add(item);
+        }
+
+        PageMeta page = PageMetaMapper.toPageMeta(response.getPage());
+        result.setPageMeta(page);
+        result.setItem(refItem);
+
+        return result;
+    }
+
+    @PostMapping("/createType")
+    public RefItem createType(@RequestParam("name") String name) {
+        var response = AdminArticleClient.adminCreatePublicationType(name);
+
+        RefItem refItem = new RefItem();
+        refItem.setId(response.getId());
+        refItem.setName(name);
+
+        return refItem;
+    }
+
+    @PostMapping("/updateType")
+    public RefItem updateType(@RequestParam("name") String name, @RequestParam("id") Long id) {
+        var response = AdminArticleClient.adminUpdatePublicationType(id, name);
+
+        RefItem refItem = new RefItem();
+        refItem.setId(response.getId());
+        refItem.setName(name);
+
+        return refItem;
+    }
+
+    @DeleteMapping("/deleteType")
+    public ApiResponse deleteType(@RequestParam("id") Long id) {
+        var response = AdminArticleClient.adminDeletePublicationType(id);
+
+        ApiResponse apiResponse = new ApiResponse();
+        apiResponse.setCode(response.getCode());
+        apiResponse.setMessage(response.getMessage());
+
+        return apiResponse;
+    }
+
+    @GetMapping("/listEvalCycles")
+    public ListSmthResponse<CycleItem> listEvalCycles(@RequestBody ListSmthRequest request) {
+        var response = AdminArticleClient.adminListEvalCycles(request.getPage(), request.getSize(), request.getSortDir());
+
+        ListSmthResponse<CycleItem> result = new ListSmthResponse<>();
+        List<CycleItem> cycleItem = new ArrayList<>();
+        for (com.example.generated.CycleItem cycle : response.getItemsList()) {
+            CycleItem item = new CycleItem();
+            item.setId(cycle.getId());
+            item.setName(cycle.getName());
+            item.setYearFrom(cycle.getYearFrom());
+            item.setYearTo(cycle.getYearTo());
+            item.setActive(cycle.getIsActive());
+            item.setMeinVersionId(cycle.getMeinVersionId());
+            item.setMeinMonoVersionId(cycle.getMonoVersionId());
+            cycleItem.add(item);
+        }
+
+        PageMeta page = PageMetaMapper.toPageMeta(response.getPage());
+        result.setPageMeta(page);
+        result.setItem(cycleItem);
+
+        return result;
+    }
+
+    @PostMapping("/createEvalCycle")
+    public CycleItem createEvalCycle(@RequestBody CreateCycleRequest request) {
+        var response = AdminArticleClient.adminCreateCycle(request.getName(), request.getYearFrom(), request.getYearTo(), request.isActive());
+
+        CycleItem cycleItem = new CycleItem();
+        cycleItem.setId(response.getId());
+        cycleItem.setName(response.getName());
+        cycleItem.setYearFrom(request.getYearFrom());
+        cycleItem.setYearTo(request.getYearTo());
+        cycleItem.setActive(request.isActive());
+        cycleItem.setMeinMonoVersionId(response.getMonoVersionId());
+        cycleItem.setMeinVersionId(response.getMeinVersionId());
+
+        return cycleItem;
+    }
+
+    @PostMapping("/updateEvalCycle")
+    public CycleItem updateEvalCycle(@RequestBody UpdateCycleRequest request) {
+        var response = AdminArticleClient.adminUpdateCycle(request.getId(), request.getName(), request.getYearFrom(), request.getYearTo(), request.isActive(), request.getMeinVersionId(), request.getMeinMonoVersionId());
+
+        CycleItem cycleItem = new CycleItem();
+        cycleItem.setId(response.getId());
+        cycleItem.setName(response.getName());
+        cycleItem.setYearFrom(request.getYearFrom());
+        cycleItem.setYearTo(request.getYearTo());
+        cycleItem.setActive(request.isActive());
+        cycleItem.setMeinMonoVersionId(response.getMonoVersionId());
+        cycleItem.setMeinVersionId(response.getMeinVersionId());
+        return cycleItem;
+    }
+
+    @DeleteMapping("/deleteEvalCycle")
+    public ApiResponse deleteEvalCycle(@RequestParam("id") Long id) {
+        var response = AdminArticleClient.adminDeleteCycle(id);
+
+        ApiResponse apiResponse = new ApiResponse();
+        apiResponse.setCode(response.getCode());
+        apiResponse.setMessage(response.getMessage());
+
+        return apiResponse;
+    }
+
+
 }

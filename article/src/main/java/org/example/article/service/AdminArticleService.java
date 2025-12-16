@@ -559,7 +559,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         String sortProposition = switch(sortBy){
             case "publicationYear" -> "publicationYear";
             case "meinPoints"      -> "meinPoints";
-            case "createdAt"       -> "crqeatedAt";
+            case "createdAt"       -> "createdAt";
             default                -> "createdAt";
         };
 

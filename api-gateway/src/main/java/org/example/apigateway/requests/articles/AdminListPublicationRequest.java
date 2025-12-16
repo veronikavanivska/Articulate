@@ -4,12 +4,13 @@ import lombok.Data;
 
 @Data
 public class AdminListPublicationRequest {
-    private long id;
-    private int typeId;
-    private int disciplineId;
-    private int cycleId;
-    private int page;
-    private int size;
-    private String sortBy;
-    private String sortDir;
+    private Long id;
+    private Integer typeId;
+    private Integer disciplineId;
+    private Integer cycleId;
+
+    private int page = 0;
+    private int size = 20;
+    private String sortBy = "createdAt";
+    private String sortDir = "DESC";
 }

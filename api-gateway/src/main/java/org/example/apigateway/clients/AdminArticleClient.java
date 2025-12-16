@@ -11,21 +11,23 @@ public class AdminArticleClient {
 
     private static AdminArticleServiceGrpc.AdminArticleServiceBlockingStub stub;
 
-    public static ListPublicationsResponse adminListPublications(long ownerId, int typeId, int disciplineId, int cycleId, int page,
+    public static ListPublicationsResponse adminListPublications(Long ownerId, Integer typeId, Integer disciplineId, Integer cycleId, int page,
     int size, String sortBy, String sortDir) {
 
-        ListAdminPublicationRequest request = ListAdminPublicationRequest.newBuilder()
-                .setOwnerId(ownerId)
-                .setTypeId(typeId)
-                .setCycleId(cycleId)
-                .setDisciplineId(disciplineId)
+        ListAdminPublicationRequest.Builder request = ListAdminPublicationRequest.newBuilder()
                 .setPage(page)
                 .setSize(size)
                 .setSortBy(sortBy)
-                .setSortDir(sortDir)
-                .build();
+                .setSortDir(sortDir);
 
-        return stub.adminListPublications(request);
+
+        if (ownerId != null) request.setOwnerId(ownerId);
+        if (typeId != null) request.setTypeId(typeId);
+        if (disciplineId != null) request.setDisciplineId(disciplineId);
+        if (cycleId != null) request.setCycleId(cycleId);
+
+
+        return stub.adminListPublications(request.build());
     }
 
     public static PublicationView adminGetPublication(long publicationId , long ownerId) {
@@ -124,24 +126,32 @@ public class AdminArticleClient {
         return stub.adminListEvalCycles(request);
     }
 
-    public static CycleItem adminCreateCycle(String cycleName) {
+    public static CycleItem adminCreateCycle(String cycleName, int yearFrom, int yearTo, boolean isActive) {
         CreateCycleRequest request = CreateCycleRequest.newBuilder()
                 .setName(cycleName)
+                .setYearFrom(yearFrom)
+                .setYearTo(yearTo)
+                .setIsActive(isActive)
                 .build();
 
         return stub.adminCreateEvalCycle(request);
     }
 
-    public static CycleItem adminUpdateCycle(long cycleId, String cycleName) {
+    public static CycleItem adminUpdateCycle(long cycleId, String cycleName , int yearFrom, int yearTo, boolean isActive, long meinVersionId, long MeinMonoVersionId) {
         UpdateCycleRequest request = UpdateCycleRequest.newBuilder()
                 .setId(cycleId)
                 .setName(cycleName)
+                .setYearFrom(yearFrom)
+                .setYearTo(yearTo)
+                .setIsActive(isActive)
+                .setMeinVersionId(meinVersionId)
+                .setMonoVersionId(MeinMonoVersionId)
                 .build();
 
         return stub.adminUpdateEvalCycle(request);
     }
 
-    public ApiResponse adminDeleteCycle(long cycleId) {
+    public static ApiResponse adminDeleteCycle(long cycleId) {
         DeleteCycleRequest request = DeleteCycleRequest.newBuilder()
                 .setId(cycleId)
                 .build();
