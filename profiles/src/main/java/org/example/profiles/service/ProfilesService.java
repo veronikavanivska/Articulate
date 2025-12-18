@@ -5,9 +5,8 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.example.profiles.entities.ProfileUser;
-import org.example.profiles.repositories.ProfileAdminRepository;
-import org.example.profiles.repositories.ProfileUserRepository;
-import org.example.profiles.repositories.ProfileWorkerRepository;
+import org.example.profiles.helper.Mapper;
+import org.example.profiles.repositories.*;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +20,19 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
     private final ProfileUserRepository profileUserRepository;
     private final ProfileWorkerRepository profileWorkerRepository;
     private final ProfileAdminRepository profileAdminRepository;
-
-    public ProfilesService(ProfileUserRepository profileUserRepository, ProfileWorkerRepository profileWorkerRepository, ProfileAdminRepository profileAdminRepository) {
+    private final ProfileWorkerDisciplineRepository profileWorkerDisciplineRepository;
+    private final DisciplineRepository disciplineRepository;
+    private final ProfileWorkerStatementRepository profileWorkerStatementRepository;
+    private final Mapper mapper;
+    public ProfilesService(ProfileUserRepository profileUserRepository, Mapper mapper,ProfileWorkerRepository profileWorkerRepository, ProfileAdminRepository profileAdminRepository, ProfileWorkerDisciplineRepository profileWorkerDisciplineRepository, DisciplineRepository disciplineRepository, ProfileWorkerStatementRepository profileWorkerStatementRepository) {
         super();
         this.profileUserRepository = profileUserRepository;
         this.profileWorkerRepository = profileWorkerRepository;
         this.profileAdminRepository = profileAdminRepository;
+        this.profileWorkerDisciplineRepository = profileWorkerDisciplineRepository;
+        this.disciplineRepository = disciplineRepository;
+        this.profileWorkerStatementRepository = profileWorkerStatementRepository;
+        this.mapper = mapper;
     }
 
     @Override
@@ -51,10 +57,7 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
                     Status.NOT_FOUND.withDescription("Profile not found for user " + userId)
             ));
 
-            protoWorker = ProfileWorker.newBuilder()
-                    .setDegreeTitle(worker.getDegreeTitle())
-                    .setUnitName(worker.getUnitName())
-                    .build();
+            protoWorker = mapper.buildProtoWorker(userId, worker);
         }
 
 
@@ -116,10 +119,8 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
             entity2.setUnitName(worker.getUnitName() == null ? "" : worker.getUnitName());
             profileWorkerRepository.save(entity2);
 
-            protoWorker = ProfileWorker.newBuilder()
-                    .setDegreeTitle(entity2.getDegreeTitle())
-                    .setUnitName(entity2.getUnitName())
-                    .build();
+            protoWorker = mapper.buildProtoWorker(userId, entity2);
+
         }
 
 
@@ -171,10 +172,8 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
                     Status.NOT_FOUND.withDescription("Profile not found for user " + userId)
             ));
 
-            protoWorker = ProfileWorker.newBuilder()
-                    .setDegreeTitle(worker.getDegreeTitle())
-                    .setUnitName(worker.getUnitName())
-                    .build();
+
+            protoWorker = mapper.buildProtoWorker(userId, worker);
         }
 
 
@@ -200,5 +199,158 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void listWorkerDisciplines(ListWorkerDisciplinesRequest request,
+                                      StreamObserver<ListWorkerDisciplinesResponse> responseObserver) {
+
+        Long userId = request.getUserId();
+
+        var links = profileWorkerDisciplineRepository.findAllByUserIdWithDiscipline(userId);
+
+        ListWorkerDisciplinesResponse.Builder resp = ListWorkerDisciplinesResponse.newBuilder();
+        for (var link : links) {
+            var d = link.getDiscipline();
+            if (d != null) {
+                resp.addDisciplines(DisciplineRef.newBuilder()
+                        .setId(d.getId())
+                        .setName(d.getName())
+                        .build());
+            }
+        }
+
+        resp.setResponse(ApiResponse.newBuilder().setCode(200).setMessage("OK").build());
+        responseObserver.onNext(resp.build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    @Transactional
+    public void addWorkerDiscipline(AddWorkerDisciplineRequest request,
+                                    StreamObserver<ListWorkerDisciplinesResponse> responseObserver) {
+
+        Long userId = request.getUserId();
+        Long disciplineId = request.getDisciplineId();
+
+        // worker musi istnieć
+        profileWorkerRepository.findByUserId(userId).orElseThrow(() ->
+                Status.NOT_FOUND.withDescription("Worker not found: " + userId).asRuntimeException());
+
+        // discipline musi istnieć
+        var discipline = disciplineRepository.findById(disciplineId).orElseThrow(() ->
+                Status.NOT_FOUND.withDescription("Discipline not found: " + disciplineId).asRuntimeException());
+
+        if (!profileWorkerDisciplineRepository.existsByIdUserIdAndIdDisciplineId(userId, disciplineId)) {
+            var link = new org.example.profiles.entities.ProfileWorkerDiscipline();
+            link.setId(new org.example.profiles.entities.ProfileWorkerDisciplineId(userId, disciplineId));
+            link.setDiscipline(discipline);
+            profileWorkerDisciplineRepository.save(link);
+        }
+
+        int year = java.time.Year.now().getValue(); // w tej chwili 2025
+        profileWorkerStatementRepository.initStatementForUserDisciplineYear(userId, disciplineId, year);
+
+        // zwróć aktualną listę
+        listWorkerDisciplines(ListWorkerDisciplinesRequest.newBuilder().setUserId(userId).build(), responseObserver);
+    }
+
+    @Override
+    @Transactional
+    public void removeWorkerDiscipline(RemoveWorkerDisciplineRequest request,
+                                       StreamObserver<ListWorkerDisciplinesResponse> responseObserver) {
+
+        Long userId = request.getUserId();
+        Long disciplineId = request.getDisciplineId();
+
+        profileWorkerDisciplineRepository.deleteByIdUserIdAndIdDisciplineId(userId, disciplineId);
+
+        listWorkerDisciplines(ListWorkerDisciplinesRequest.newBuilder().setUserId(userId).build(), responseObserver);
+    }
+
+
+    @Override
+    @Transactional
+    public void getOrCreateStatement(GetOrCreateStatementRequest request,
+                                     StreamObserver<GetOrCreateStatementResponse> responseObserver) {
+
+        Long userId = request.getUserId();
+        Long disciplineId = request.getDisciplineId();
+        int year = request.getEvalYear();
+
+        if (year < 1900 || year > 2100) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("Invalid evalYear: " + year)
+                    .asRuntimeException());
+            return;
+        }
+
+        // user musi być przypisany do dyscypliny
+        if (!profileWorkerDisciplineRepository.existsByIdUserIdAndIdDisciplineId(userId, disciplineId)) {
+            responseObserver.onError(Status.FAILED_PRECONDITION
+                    .withDescription("Worker is not assigned to discipline: " + disciplineId)
+                    .asRuntimeException());
+            return;
+        }
+
+        var st = profileWorkerStatementRepository
+                .findByIdUserIdAndIdDisciplineIdAndIdEvalYear(userId, disciplineId, year)
+                .orElseGet(() -> {
+                    var created = new org.example.profiles.entities.ProfileWorkerStatement();
+                    created.setId(new org.example.profiles.entities.ProfileWorkerStatementId(userId, disciplineId, year));
+                    // defaulty już są ustawione w polach encji
+                    return profileWorkerStatementRepository.save(created);
+                });
+
+        WorkerStatement proto = WorkerStatement.newBuilder()
+                .setUserId(userId)
+                .setDisciplineId(disciplineId)
+                .setEvalYear(year)
+                .setFte(st.getFte().doubleValue())
+                .setSharePercent(st.getSharePercent().doubleValue())
+                .setSlotInDiscipline(st.getSlotInDiscipline().doubleValue())
+                .setMaxSlots(st.getMaxSlots().doubleValue())
+                .setMaxMonoSlots(st.getMaxMonoSlots().doubleValue())
+                .build();
+
+        GetOrCreateStatementResponse resp = GetOrCreateStatementResponse.newBuilder()
+                .setStatement(proto)
+                .setResponse(ApiResponse.newBuilder().setCode(200).setMessage("OK").build())
+                .build();
+
+        responseObserver.onNext(resp);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    @Transactional
+    public void adminInitStatementsForYear(
+            AdminInitStatementsForYearRequest request,
+            StreamObserver<AdminInitStatementsForYearResponse> responseObserver) {
+
+        int year = request.getEvalYear();
+
+        if (year < 1900 || year > 2100) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("Invalid evalYear: " + year)
+                    .asRuntimeException());
+            return;
+        }
+
+        int created = profileWorkerStatementRepository.initStatementsForYear(year);
+
+        AdminInitStatementsForYearResponse resp = AdminInitStatementsForYearResponse.newBuilder()
+                .setEvalYear(year)
+                .setCreatedCount(created)
+                .setResponse(ApiResponse.newBuilder()
+                        .setCode(200)
+                        .setMessage("Initialized statements for year " + year + ". Created: " + created)
+                        .build())
+                .build();
+
+        responseObserver.onNext(resp);
+        responseObserver.onCompleted();
+    }
+
 
 }
