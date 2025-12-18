@@ -35,4 +35,6 @@ public interface MonographChapterRepository extends JpaRepository<MonographChapt
     List<MonographChapter> findAllByCycle(EvalCycle cycle);
 
     List<MonographChapter> findAllByMeinMonoId(Long meinMonoId);
+
+    boolean existsByMonograficChapterTitle(String monograficChapterTitle);
 }

@@ -135,9 +135,9 @@ message AdminRecalcCycleScoresResponse {
 //publications
 message ListAdminPublicationRequest{
   int64 ownerId = 1;
-  int32 typeId = 2;
-  int32 disciplineId = 3;
-  int32 cycleId = 4;
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  int64 cycleId = 4;
 
   // paginacja
   int32 page = 5;
@@ -149,9 +149,9 @@ message ListAdminPublicationRequest{
 
 message ListAdminMonographsRequest{
   int64 ownerId = 1;
-  int32 typeId = 2;
-  int32 disciplineId = 3;
-  int32 cycleId = 4;
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  int64 cycleId = 4;
 
   // paginacja
   int32 page = 5;
@@ -162,9 +162,9 @@ message ListAdminMonographsRequest{
 
 message ListAdminChaptersRequest{
   int64 ownerId = 1;
-  int32 typeId = 2;
-  int32 disciplineId = 3;
-  int32 cycleId = 4;
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  int64 cycleId = 4;
 
   // paginacja
   int32 page = 5;

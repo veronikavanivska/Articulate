@@ -1,6 +1,7 @@
 package org.example.apigateway.clients;
 
 import com.example.generated.*;
+import com.google.protobuf.FieldMask;
 import io.grpc.Channel;
 import org.example.apigateway.Client;
 
@@ -11,7 +12,7 @@ public class AdminArticleClient {
 
     private static AdminArticleServiceGrpc.AdminArticleServiceBlockingStub stub;
 
-    public static ListPublicationsResponse adminListPublications(Long ownerId, Integer typeId, Integer disciplineId, Integer cycleId, int page,
+    public static ListPublicationsResponse adminListPublications(Long ownerId, Long typeId, Long disciplineId, Long cycleId, int page,
     int size, String sortBy, String sortDir) {
 
         ListAdminPublicationRequest.Builder request = ListAdminPublicationRequest.newBuilder()
@@ -137,18 +138,41 @@ public class AdminArticleClient {
         return stub.adminCreateEvalCycle(request);
     }
 
-    public static CycleItem adminUpdateCycle(long cycleId, String cycleName , int yearFrom, int yearTo, boolean isActive, long meinVersionId, long MeinMonoVersionId) {
-        UpdateCycleRequest request = UpdateCycleRequest.newBuilder()
-                .setId(cycleId)
-                .setName(cycleName)
-                .setYearFrom(yearFrom)
-                .setYearTo(yearTo)
-                .setIsActive(isActive)
-                .setMeinVersionId(meinVersionId)
-                .setMonoVersionId(MeinMonoVersionId)
-                .build();
+    public static CycleItem adminUpdateCycle(long cycleId, String cycleName , Integer yearFrom, Integer yearTo, Boolean isActive, Long meinVersionId, Long MeinMonoVersionId) {
 
-        return stub.adminUpdateEvalCycle(request);
+        UpdateCycleRequest.Builder req = UpdateCycleRequest.newBuilder()
+                .setId(cycleId);
+
+        FieldMask.Builder mask = FieldMask.newBuilder();
+
+        if(cycleName != null) {
+            req.setName(cycleName);
+            mask.addPaths("name");
+        }
+        if(yearFrom != null){
+            req.setYearFrom(yearFrom);
+            mask.addPaths("yearFrom");
+        }
+        if(yearTo != null){
+            req.setYearTo(yearTo);
+            mask.addPaths("yearTo");
+        }
+        if(isActive != null){
+            req.setIsActive(isActive);
+            mask.addPaths("isActive");
+        }
+        if(meinVersionId != null){
+            req.setMeinVersionId(meinVersionId);
+            mask.addPaths("meinVersionId");
+        }
+        if(MeinMonoVersionId != null){
+            req.setMeinVersionId(MeinMonoVersionId);
+            mask.addPaths("meinMonoVersionId");
+        }
+
+        req.setUpdateMask(mask.build());
+
+        return stub.adminUpdateEvalCycle(req.build());
     }
 
     public static ApiResponse adminDeleteCycle(long cycleId) {

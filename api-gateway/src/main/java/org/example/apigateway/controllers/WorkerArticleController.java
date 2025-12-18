@@ -4,7 +4,7 @@ import com.example.generated.PublicationView;
 import org.example.apigateway.clients.WorkerArticleClient;
 import org.example.apigateway.mappers.PublicationViewMapper;
 import org.example.apigateway.config.SecurityConfig;
-import org.example.apigateway.requests.articles.ListPublicationRequest;
+import org.example.apigateway.requests.articles.ListRequest;
 import org.example.apigateway.requests.articles.UpdatePublicationRequest;
 import org.example.apigateway.responses.ApiResponse;
 import org.example.apigateway.responses.articles.*;
@@ -38,7 +38,7 @@ public class WorkerArticleController {
     }
 
     @GetMapping("/worker/listMyPublication")
-    public ListPublicationResponse listMyPublications(@RequestBody ListPublicationRequest request){
+    public ListPublicationResponse listMyPublications(@RequestBody ListRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
         var response = WorkerArticleClient.listMyPublications(userId, request.getTypeId(), request.getDisciplineId(),request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());

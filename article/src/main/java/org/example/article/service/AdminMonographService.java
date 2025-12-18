@@ -70,7 +70,7 @@ public class AdminMonographService extends AdminMonographServiceGrpc.AdminMonogr
         String sortProposition = switch (sortBy) {
             case "publicationYear" -> "publicationYear";
             case "meinPoints" -> "meinPoints";
-            case "createdAt" -> "crqeatedAt";
+            case "createdAt" -> "createdAt";
             default -> "createdAt";
         };
 
@@ -113,7 +113,7 @@ public class AdminMonographService extends AdminMonographServiceGrpc.AdminMonogr
         String sortProposition = switch (sortBy) {
             case "publicationYear" -> "publicationYear";
             case "meinPoints" -> "meinPoints";
-            case "createdAt" -> "crqeatedAt";
+            case "createdAt" -> "createdAt";
             default -> "createdAt";
         };
 

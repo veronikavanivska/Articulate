@@ -1,0 +1,16 @@
+package org.example.apigateway.requests.articles;
+
+import lombok.Data;
+
+@Data
+public class AdminListRequest {
+    private Long id;
+    private Long typeId;
+    private Long disciplineId;
+    private Long cycleId;
+
+    private int page = 0;
+    private int size = 20;
+    private String sortBy = "createdAt";
+    private String sortDir = "DESC";
+}

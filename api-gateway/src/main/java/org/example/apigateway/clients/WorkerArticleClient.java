@@ -61,21 +61,21 @@ public class WorkerArticleClient {
         return stub.getPublication(request);
     }
 
-    public static ListPublicationsResponse listMyPublications(long userId, long typeId, long disciplineId, long cycleId,
+    public static ListPublicationsResponse listMyPublications(Long userId, Long typeId, Long disciplineId, Long cycleId,
                                                        int page, int size, String sortBy, String sortDir){
 
-        ListPublicationsRequest request = ListPublicationsRequest.newBuilder()
-                .setUserId(userId)
-                .setTypeId(typeId)
-                .setDisciplineId(disciplineId)
-                .setCycleId(cycleId)
+        ListPublicationsRequest.Builder request = ListPublicationsRequest.newBuilder()
                 .setPage(page)
                 .setSize(size)
                 .setSortBy(sortBy)
-                .setSortDir(sortDir)
-                .build();
+                .setSortDir(sortDir);
 
-        return stub.listMyPublications(request);
+        if (userId != null) request.setUserId(userId);
+        if (typeId != null) request.setTypeId(typeId);
+        if (disciplineId != null) request.setDisciplineId(disciplineId);
+        if (cycleId != null) request.setCycleId(cycleId);
+
+        return stub.listMyPublications(request.build());
     }
 
     public static PublicationView updatePublication(long id, long userId, Long typeId, Long disciplineId,

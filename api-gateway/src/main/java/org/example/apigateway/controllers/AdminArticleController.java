@@ -1,9 +1,7 @@
 package org.example.apigateway.controllers;
 
 import com.example.generated.*;
-import com.google.protobuf.Api;
 import org.example.apigateway.clients.AdminArticleClient;
-import org.example.apigateway.clients.ETLArticleClient;
 import org.example.apigateway.mappers.PageMetaMapper;
 import org.example.apigateway.mappers.PublicationViewMapper;
 import org.example.apigateway.requests.ListSmthRequest;
@@ -26,7 +24,7 @@ import java.util.List;
 public class AdminArticleController {
 
     @GetMapping("/listPublication")
-    public ListPublicationResponse listPublication(@RequestBody AdminListPublicationRequest request) {
+    public ListPublicationResponse listPublication(@RequestBody AdminListRequest request) {
 
         var response = AdminArticleClient.adminListPublications(request.getId(),request.getTypeId(),request.getDisciplineId(),request.getCycleId(),request.getPage(),request.getSize(),request.getSortBy(),request.getSortDir());
 
@@ -48,7 +46,7 @@ public class AdminArticleController {
     }
 
     @GetMapping("/getPublication")
-    public PublicationViewResponse getPublication(@RequestBody AdminGetPublicationRequest request) {
+    public  PublicationViewResponse getPublication(@RequestBody AdminGetRequest request) {
         var response = AdminArticleClient.adminGetPublication(request.getId(), request.getOwnerId());
 
         PublicationViewResponse viewResponse = PublicationViewMapper.map(response);
@@ -57,7 +55,7 @@ public class AdminArticleController {
     }
 
     @GetMapping("/listDisciplines")
-    public ListSmthResponse<RefItem> listDisciplines(@RequestBody ListSmthRequest request) {
+    public  ListSmthResponse<RefItem> listDisciplines(@RequestBody ListSmthRequest request) {
         var response = AdminArticleClient.adminListDisciplines(request.getPage(), request.getSize(), request.getSortDir());
 
         ListSmthResponse<RefItem> result = new ListSmthResponse<>();
@@ -103,7 +101,7 @@ public class AdminArticleController {
         return refItem;
     }
 
-    @DeleteMapping("/deleteDIscipline")
+    @DeleteMapping("/deleteDiscipline")
     public ApiResponse deleteDiscipline(@RequestParam("id") Long id) {
         var response = AdminArticleClient.adminDeleteDiscipline(id);
 
@@ -209,18 +207,19 @@ public class AdminArticleController {
         return cycleItem;
     }
 
-    @PostMapping("/updateEvalCycle")
+    @PatchMapping("/updateEvalCycle")
     public CycleItem updateEvalCycle(@RequestBody UpdateCycleRequest request) {
-        var response = AdminArticleClient.adminUpdateCycle(request.getId(), request.getName(), request.getYearFrom(), request.getYearTo(), request.isActive(), request.getMeinVersionId(), request.getMeinMonoVersionId());
+        var response = AdminArticleClient.adminUpdateCycle(request.getId(), request.getName(), request.getYearFrom(), request.getYearTo(), request.getActive(), request.getMeinVersionId(), request.getMeinMonoVersionId());
 
         CycleItem cycleItem = new CycleItem();
         cycleItem.setId(response.getId());
         cycleItem.setName(response.getName());
-        cycleItem.setYearFrom(request.getYearFrom());
-        cycleItem.setYearTo(request.getYearTo());
-        cycleItem.setActive(request.isActive());
+        cycleItem.setYearFrom(response.getYearFrom());
+        cycleItem.setYearTo(response.getYearTo());
+        cycleItem.setActive(response.getIsActive());
         cycleItem.setMeinMonoVersionId(response.getMonoVersionId());
         cycleItem.setMeinVersionId(response.getMeinVersionId());
+
         return cycleItem;
     }
 

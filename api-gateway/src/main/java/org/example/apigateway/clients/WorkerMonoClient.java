@@ -220,35 +220,38 @@ public class WorkerMonoClient {
         return stub.updateChapter(req.build());
     }
 
-    public static ListMonographsResponse listMonographs(long ownerId, int typeId, int disciplineId, int cycleId, int page,
+    public static ListMonographsResponse listMonographs(long ownerId, Long typeId, Long disciplineId, Long cycleId, int page,
                                                         int size, String sortBy, String sortDir) {
-        ListMonographsRequest request = ListMonographsRequest.newBuilder()
+
+        ListMonographsRequest.Builder request = ListMonographsRequest.newBuilder()
                 .setUserId(ownerId)
-                .setTypeId(typeId)
-                .setCycleId(cycleId)
-                .setDisciplineId(disciplineId)
                 .setPage(page)
                 .setSize(size)
                 .setSortBy(sortBy)
-                .setSortDir(sortDir)
-                .build();
+                .setSortDir(sortDir);
 
-        return stub.listMyMonographs(request);
+        if (typeId != null) request.setTypeId(typeId);
+        if (disciplineId != null) request.setDisciplineId(disciplineId);
+        if (cycleId != null) request.setCycleId(cycleId);
+
+
+
+        return stub.listMyMonographs(request.build());
     }
 
-    public static ListChaptersResponse listChapters(long ownerId, int typeId, int disciplineId, int cycleId, int page, int size, String sortBy, String sortDir) {
-        ListChaptersRequest request = ListChaptersRequest.newBuilder()
+    public static ListChaptersResponse listChapters(long ownerId, Long typeId, Long disciplineId, Long cycleId, int page, int size, String sortBy, String sortDir) {
+        ListChaptersRequest.Builder request = ListChaptersRequest.newBuilder()
                 .setUserId(ownerId)
-                .setTypeId(typeId)
-                .setCycleId(cycleId)
-                .setDisciplineId(disciplineId)
                 .setPage(page)
                 .setSize(size)
                 .setSortBy(sortBy)
-                .setSortDir(sortDir)
-                .build();
+                .setSortDir(sortDir);
 
-        return stub.listMyChapters(request);
+        if (typeId != null) request.setTypeId(typeId);
+        if (disciplineId != null) request.setDisciplineId(disciplineId);
+        if (cycleId != null) request.setCycleId(cycleId);
+
+        return stub.listMyChapters(request.build());
     }
 
     public static ApiResponse deleteMonograph(long id, long userId) {

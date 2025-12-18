@@ -3,11 +3,10 @@ package org.example.apigateway.requests.articles;
 import lombok.Data;
 
 @Data
-public class AdminListPublicationRequest {
-    private Long id;
-    private Integer typeId;
-    private Integer disciplineId;
-    private Integer cycleId;
+public class ListRequest {
+    private Long typeId;
+    private Long disciplineId;
+    private Long cycleId;
 
     private int page = 0;
     private int size = 20;

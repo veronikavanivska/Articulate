@@ -106,11 +106,15 @@ public final class Mapper {
                 .setYearFrom(monograph.getCycle().getYearFrom())
                 .setYearTo(monograph.getCycle().getYearTo());
 
-        if(monograph.getCycle().getMeinVersion().getId() != null) {
+        if(monograph.getCycle().getMeinVersion()!= null) {
             cycle.setMeinVersionId(monograph.getCycle().getMeinVersion().getId());
+        }else {
+            cycle.setMeinVersionId(0);
         }
-        if(monograph.getCycle().getMeinMonoVersion().getId() != null) {
+        if(monograph.getCycle().getMeinMonoVersion() != null) {
             cycle.setMonoVersionId(monograph.getCycle().getMeinMonoVersion().getId());
+        }else {
+            cycle.setMonoVersionId(0);
         }
 
         cycle.build();
@@ -129,9 +133,13 @@ public final class Mapper {
 
         if (monograph.getMeinMonoPublisherId() != null) {
             b.setMeinMonoPublisherId(monograph.getMeinMonoPublisherId());
+        }else{
+            b.setMeinMonoPublisherId(0);
         }
         if (monograph.getMeinMonoId() != null) {
             b.setMeinMonoId(monograph.getMeinMonoId());
+        }else{
+            b.setMeinMonoId(0);
         }
 
         monograph.getCoauthors().stream()
@@ -170,11 +178,15 @@ public final class Mapper {
                 .setYearFrom(monographChapter.getCycle().getYearFrom())
                 .setYearTo(monographChapter.getCycle().getYearTo());
 
-        if(monographChapter.getCycle().getMeinVersion().getId() != null) {
+        if(monographChapter.getCycle().getMeinVersion() != null) {
             cycle.setMeinVersionId(monographChapter.getCycle().getMeinVersion().getId());
+        }else {
+            cycle.setMeinVersionId(0);
         }
-        if(monographChapter.getCycle().getMeinMonoVersion().getId() != null) {
+        if(monographChapter.getCycle().getMeinMonoVersion() != null) {
             cycle.setMonoVersionId(monographChapter.getCycle().getMeinMonoVersion().getId());
+        }else {
+            cycle.setMonoVersionId(0);
         }
 
         cycle.build();
@@ -194,9 +206,13 @@ public final class Mapper {
 
         if (monographChapter.getMeinMonoPublisherId() != null) {
             b.setMeinMonoPublisherId(monographChapter.getMeinMonoPublisherId());
+        }else{
+            b.setMeinMonoPublisherId(0);
         }
         if (monographChapter.getMeinMonoId() != null) {
             b.setMeinMonoId(monographChapter.getMeinMonoId());
+        }else {
+            b.setMeinMonoId(0);
         }
 
         monographChapter.getCoauthors().stream()

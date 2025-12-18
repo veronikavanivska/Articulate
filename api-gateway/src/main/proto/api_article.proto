@@ -5,7 +5,6 @@ import "google/protobuf/field_mask.proto";
 import "common.proto";
 package com.example.generated;
 
-
 option java_multiple_files = true;
 
 
@@ -137,9 +136,9 @@ message AdminRecalcCycleScoresResponse {
 //publications
 message ListAdminPublicationRequest{
   int64 ownerId = 1;
-  int32 typeId = 2;
-  int32 disciplineId = 3;
-  int32 cycleId = 4;
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  int64 cycleId = 4;
 
   // paginacja
   int32 page = 5;
@@ -151,9 +150,9 @@ message ListAdminPublicationRequest{
 
 message ListAdminMonographsRequest{
   int64 ownerId = 1;
-  int32 typeId = 2;
-  int32 disciplineId = 3;
-  int32 cycleId = 4;
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  int64 cycleId = 4;
 
   // paginacja
   int32 page = 5;
@@ -164,9 +163,9 @@ message ListAdminMonographsRequest{
 
 message ListAdminChaptersRequest{
   int64 ownerId = 1;
-  int32 typeId = 2;
-  int32 disciplineId = 3;
-  int32 cycleId = 4;
+  int64 typeId = 2;
+  int64 disciplineId = 3;
+  int64 cycleId = 4;
 
   // paginacja
   int32 page = 5;
@@ -395,6 +394,8 @@ message CycleItem {
   int64 monoVersionId =7;
 }
 
+
+
 message DeleteMeinVersionResponse {
   int64 job_id = 1;
   string message = 2;
@@ -621,10 +622,7 @@ message AdminRecalcMonoCycleScoresRequest {
 }
 
 message AdminRecalcMonoCycleScoresResponse {
-  //  int64 updated_monographs = 1;
-  //  int64 updated_chapters = 2;
-  //  int64 unmatched_monographs = 3;
-  //  int64 unmatched_chapters = 4;
+
   int64 job_id = 5;
   string message = 6;
 }

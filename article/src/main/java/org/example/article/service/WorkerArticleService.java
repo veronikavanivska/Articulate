@@ -376,7 +376,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
         String sortProposition = switch(sortBy){
             case "publicationYear" -> "publicationYear";
             case "meinPoints"      -> "meinPoints";
-            case "createdAt"       -> "crqeatedAt";
+            case "createdAt"       -> "createdAt";
             default                -> "createdAt";
         };
 

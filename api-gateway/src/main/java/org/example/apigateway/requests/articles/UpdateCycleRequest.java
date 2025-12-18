@@ -6,9 +6,9 @@ import lombok.Data;
 public class UpdateCycleRequest {
     private long id;
     private String name;
-    private int yearFrom;
-    private int yearTo;
-    private boolean active;
-    private long meinMonoVersionId;
-    private long meinVersionId;
+    private Integer yearFrom;
+    private Integer yearTo;
+    private Boolean active;
+    private Long meinMonoVersionId;
+    private Long meinVersionId;
 }

@@ -193,7 +193,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
 //    repeated CoauthorInput input = 9;
     @Override
     public void createChapter(CreateChapterRequest request, StreamObserver<ChapterView> responseObserver) {
-        if (monographChapterRepository.existsByAuthorId(request.getUserId()) && monographicRepository.existsByTitle(request.getMonographChapterTitle())) {
+        if (monographChapterRepository.existsByAuthorId(request.getUserId()) && monographChapterRepository.existsByMonograficChapterTitle(request.getMonographChapterTitle())) {
             responseObserver.onError(Status.INVALID_ARGUMENT
                     .withDescription("You already added this monograph").asRuntimeException());
             return;
@@ -643,7 +643,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
         String sortProposition = switch (sortBy) {
             case "publicationYear" -> "publicationYear";
             case "meinPoints" -> "meinPoints";
-            case "createdAt" -> "crqeatedAt";
+            case "createdAt" -> "createdAt";
             default -> "createdAt";
         };
 
@@ -686,7 +686,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
         String sortProposition = switch (sortBy) {
             case "publicationYear" -> "publicationYear";
             case "meinPoints" -> "meinPoints";
-            case "createdAt" -> "crqeatedAt";
+            case "createdAt" -> "createdAt";
             default -> "createdAt";
         };
 
