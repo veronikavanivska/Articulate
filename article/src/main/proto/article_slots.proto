@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package com.example.generated;
+option java_multiple_files = true;
+
+
+message GetPublicationForSlotsRequest {
+  int64 publicationId = 1;
+}
+
+message PublicationForSlots {
+  int64 id = 1;
+
+  string kind = 2;
+  string title = 3;
+
+  int32 publicationYear = 4;
+  double points = 5;
+
+  repeated SlotAuthor authors = 6;
+}
+
+message SlotAuthor {
+  int64 userId = 1;
+  string fullName = 2;
+}
+
+
+service ArticleSlotsService {
+  rpc GetPublicationForSlots(GetPublicationForSlotsRequest) returns (PublicationForSlots);
+}
