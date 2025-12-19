@@ -1,0 +1,44 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+
+package com.example.generated;
+option java_multiple_files = true;
+
+
+message WorkerStatement {
+  int64 userId = 1;
+  int64 disciplineId = 2;
+  int32 evalYear = 3;
+
+  double fte = 4;
+  double sharePercent = 5;
+  double slotInDiscipline = 6;
+
+  double maxSlots = 7;
+  double maxMonoSlots = 8;
+}
+
+message GetOrCreateStatementRequest {
+  int64 userId = 1;
+  int64 disciplineId = 2;
+  int32 evalYear = 3;
+}
+
+message GetOrCreateStatementResponse {
+  WorkerStatement statement = 1;
+  ApiResponse response = 2;
+}
+
+message ApiResponse{
+  int32 code = 1;
+  string message = 2;
+}
+
+
+
+service ProfilesService{
+
+
+  rpc GetOrCreateStatement(GetOrCreateStatementRequest) returns (GetOrCreateStatementResponse);
+
+}

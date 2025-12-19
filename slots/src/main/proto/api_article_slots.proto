@@ -1,16 +1,14 @@
 syntax = "proto3";
 
+import "api_slots.proto";
+
 package com.example.generated;
 option java_multiple_files = true;
 
-enum SlotItemType {
-  SLOT_ITEM_ARTICLE = 0;
-  SLOT_ITEM_MONOGRAPH = 1;
-  SLOT_ITEM_CHAPTER = 2;
-}
+
 
 message GetItemForSlotsRequest {
-  int64 userId = 1;
+  int64 userId = 1;        // NOWE: do autoryzacji (owner/author)
   SlotItemType itemType = 2;
   int64 itemId = 3;
 }

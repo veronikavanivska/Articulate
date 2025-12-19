@@ -1,65 +1,73 @@
 syntax = "proto3";
-
 package com.example.generated;
+import "google/protobuf/empty.proto";
 option java_multiple_files = true;
 
+service SlotService {
+  // edycja tylko na aktywnym cyklu/activeYear
+  rpc AddToActiveSlot(AddToSlotRequest) returns (DraftView);
+  rpc RemoveFromActiveSlot(RemoveFromSlotRequest) returns (DraftView);
 
-
-message AddToDraftRequest {
-  int64 userId = 1;        // z JWT w gateway
-  int64 evalCycleId = 2;   // z UI
-  int64 disciplineId = 3;  // z UI
-  int64 publicationId = 4; // z UI (konkretna publikacja)
+  // podgląd: można pobrać aktywny lub wskazany cykl/rok
+  rpc GetDraft(GetDraftRequest) returns (DraftView);
 }
 
-message RemoveFromDraftRequest {
+enum SlotItemType {
+  SLOT_ITEM_ARTICLE = 0;
+  SLOT_ITEM_MONOGRAPH = 1;
+  SLOT_ITEM_CHAPTER = 2;
+}
+
+message AddToSlotRequest {
+  int64 userId = 1;        // gateway z JWT
+  int64 disciplineId = 2;  // user wybiera dyscyplinę
+  SlotItemType itemType = 3;
+  int64 itemId = 4;        // ID publikacji/monografii/rozdziału
+}
+
+message RemoveFromSlotRequest {
   int64 userId = 1;
-  int64 evalCycleId = 2;
-  int64 disciplineId = 3;
-  int32 evalYear = 4;      // bo draft jest per rok (albo CURRENT)
-  int64 publicationId = 5;
+  int64 disciplineId = 2;
+  SlotItemType itemType = 3;
+  int64 itemId = 4;
 }
 
 message GetDraftRequest {
   int64 userId = 1;
-  int64 evalCycleId = 2;
-  int64 disciplineId = 3;
-  int32 evalYear = 4;      // jeśli tryb CURRENT – gateway może wysyłać 2025
+  int64 disciplineId = 2;
+
+  // jeżeli 0 → użyj aktywnego cyklu i activeYear
+  int64 cycleId = 3;
+  int32 evalYear = 4;
 }
 
 message DraftView {
-  int64 draftId = 1;
-
+  int64 draftId = 1;       // 0 jeśli draft jeszcze nie istnieje
   int64 userId = 2;
-  int64 evalCycleId = 3;
-  int64 disciplineId = 4;
+  int64 disciplineId = 3;
+  int64 cycleId = 4;
   int32 evalYear = 5;
 
-  double maxSlots = 6;
-  double usedSlots = 7;
-  double freeSlots = 8;
+  bool editable = 6;       // true tylko gdy cycle.isActive == true i evalYear==activeYear
 
-  double sumPoints = 9;
-  double sumPointsRecalc = 10;
+  double maxSlots = 7;
+  double usedSlots = 8;
+  double freeSlots = 9;
 
-  repeated DraftItem items = 11;
+  double sumPoints = 10;
+  double sumPointsRecalc = 11;
+
+  repeated DraftItem items = 12;
 }
 
 message DraftItem {
-  int64 publicationId = 1;
-  string kind = 2;
-  int32 publicationYear = 3;
+  SlotItemType itemType = 1;
+  int64 itemId = 2;
 
+  int32 publicationYear = 3;
   string title = 4;
 
   double points = 5;
   double slotValue = 6;
   double pointsRecalc = 7;
-}
-
-
-service SlotService {
-  rpc AddToDraft(AddToDraftRequest) returns (DraftView);
-  rpc RemoveFromDraft(RemoveFromDraftRequest) returns (DraftView);
-  rpc GetDraft(GetDraftRequest) returns (DraftView);
 }

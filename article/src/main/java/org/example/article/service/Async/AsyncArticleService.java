@@ -61,8 +61,8 @@ public class AsyncArticleService {
         if (progressCallback != null) {
             progressCallback.accept(0, "Starting article recalculation");
         }
-
         for (Publication pub : publications) {
+
             CommuteResultArticle result = commutePoints.commuteArticle(
                     pub.getJournalTitle(),
                     pub.getType().getId(),
@@ -72,16 +72,25 @@ public class AsyncArticleService {
                     pub.getPublicationYear()
             );
 
-            if (result == null
-                    || result.meinJournal() == null
-                    || result.meinVersion() == null) {
+            if (result == null || result.cycle() == null) {
                 unmatched++;
             } else {
+                // ZAWSZE aktualizuj punkty + cykl
                 pub.setCycle(result.cycle());
                 pub.setMeinPoints(result.points());
-                pub.setMeinVersionId(result.meinVersion().getId());
-                pub.setMeinJournalId(result.meinJournal().getId());
                 pub.setUpdatedAt(Instant.now());
+
+                // ID tylko jeśli dopasowane do MEiN (nie offList)
+                if (!result.offList()
+                        && result.meinJournal() != null
+                        && result.meinVersion() != null) {
+                    pub.setMeinVersionId(result.meinVersion().getId());
+                    pub.setMeinJournalId(result.meinJournal().getId());
+                } else {
+                    pub.setMeinVersionId(null);
+                    pub.setMeinJournalId(null);
+                }
+
                 updated++;
             }
 
@@ -93,7 +102,6 @@ public class AsyncArticleService {
                         "Recalculating articles (" + processed + "/" + total + ")");
             }
         }
-
         if (!publications.isEmpty()) {
             publicationRepository.saveAll(publications);
         }

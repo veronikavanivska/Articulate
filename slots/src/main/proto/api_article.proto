@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package com.example.generated;
+option java_multiple_files = true;
+
+message CycleItem {
+  int64 id = 1;
+  string name = 2;
+  int32 yearFrom = 3;
+  int32 yearTo = 4;
+  bool isActive = 5;
+  int64 meinVersionId =6;
+  int64 monoVersionId =7;
+  int32 activeYear = 8;
+}
+
+service ArticleService{
+  rpc GetActiveEvalCycle(google.protobuf.Empty) returns (CycleItem);
+}

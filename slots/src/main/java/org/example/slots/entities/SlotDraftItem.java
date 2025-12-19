@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
         name = "slot_draft_item",
         uniqueConstraints = @UniqueConstraint(
                 name = "uq_slot_item",
-                columnNames = {"draft_id", "publication_id"}
+                columnNames = {"draft_id", "kind", "publication_id"}
         )
 )
 @Getter @Setter
