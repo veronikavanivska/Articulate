@@ -2,10 +2,13 @@ package org.example.article.service;
 
 import com.example.generated.*;
 import com.google.protobuf.Empty;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import org.example.article.entities.*;
 import org.example.article.repositories.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -74,12 +77,53 @@ public class ArticleService extends ArticleServiceGrpc.ArticleServiceImplBase {
                     .setIsActive(evalCycle.isActive())
                     .setMeinVersionId(meinId)
                     .setMonoVersionId(monoId)
+                    .setActiveYear(evalCycle.getActiveYear() == null ? 0 : evalCycle.getActiveYear())
                     .build());
         }
 
         responseObserver.onNext(response.build());
         responseObserver.onCompleted();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void getActiveEvalCycle(com.google.protobuf.Empty request,
+                                   StreamObserver<CycleItem> responseObserver) {
+
+        EvalCycle active = evalCycleRepository.findFirstByIsActiveTrue()
+                .orElseThrow(() -> Status.NOT_FOUND
+                        .withDescription("No active eval cycle")
+                        .asRuntimeException());
+
+        // dodatkowa walidacja (opcjonalnie, ale bardzo sensowna)
+        if (active.getActiveYear() == null) {
+            responseObserver.onError(Status.FAILED_PRECONDITION
+                    .withDescription("Active eval cycle has no activeYear set.")
+                    .asRuntimeException());
+            return;
+        }
+        if (active.getActiveYear() < active.getYearFrom() || active.getActiveYear() > active.getYearTo()) {
+            responseObserver.onError(Status.FAILED_PRECONDITION
+                    .withDescription("activeYear is outside cycle range.")
+                    .asRuntimeException());
+            return;
+        }
+
+        CycleItem resp = CycleItem.newBuilder()
+                .setId(active.getId())
+                .setName(active.getName() == null ? "" : active.getName())
+                .setYearFrom(active.getYearFrom())
+                .setYearTo(active.getYearTo())
+                .setIsActive(active.isActive())
+                .setMeinVersionId(active.getMeinVersion() == null ? 0 : active.getMeinVersion().getId())
+                .setMonoVersionId(active.getMeinMonoVersion() == null ? 0 : active.getMeinMonoVersion().getId())
+                .setActiveYear(active.getActiveYear() == null ? 0 : active.getActiveYear())
+                .build();
+
+        responseObserver.onNext(resp);
+        responseObserver.onCompleted();
+    }
+
 
 
 }

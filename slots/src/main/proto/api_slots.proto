@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package com.example.generated;
+option java_multiple_files = true;
+
+
+
+message AddToDraftRequest {
+  int64 userId = 1;        // z JWT w gateway
+  int64 evalCycleId = 2;   // z UI
+  int64 disciplineId = 3;  // z UI
+  int64 publicationId = 4; // z UI (konkretna publikacja)
+}
+
+message RemoveFromDraftRequest {
+  int64 userId = 1;
+  int64 evalCycleId = 2;
+  int64 disciplineId = 3;
+  int32 evalYear = 4;      // bo draft jest per rok (albo CURRENT)
+  int64 publicationId = 5;
+}
+
+message GetDraftRequest {
+  int64 userId = 1;
+  int64 evalCycleId = 2;
+  int64 disciplineId = 3;
+  int32 evalYear = 4;      // jeśli tryb CURRENT – gateway może wysyłać 2025
+}
+
+message DraftView {
+  int64 draftId = 1;
+
+  int64 userId = 2;
+  int64 evalCycleId = 3;
+  int64 disciplineId = 4;
+  int32 evalYear = 5;
+
+  double maxSlots = 6;
+  double usedSlots = 7;
+  double freeSlots = 8;
+
+  double sumPoints = 9;
+  double sumPointsRecalc = 10;
+
+  repeated DraftItem items = 11;
+}
+
+message DraftItem {
+  int64 publicationId = 1;
+  string kind = 2;
+  int32 publicationYear = 3;
+
+  string title = 4;
+
+  double points = 5;
+  double slotValue = 6;
+  double pointsRecalc = 7;
+}
+
+
+service SlotService {
+  rpc AddToDraft(AddToDraftRequest) returns (DraftView);
+  rpc RemoveFromDraft(RemoveFromDraftRequest) returns (DraftView);
+  rpc GetDraft(GetDraftRequest) returns (DraftView);
+}

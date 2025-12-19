@@ -18,6 +18,8 @@ public interface EvalCycleRepository extends JpaRepository<EvalCycle, Long> {
 
     boolean existsByName(String name);
 
+    Optional<EvalCycle> findFirstByIsActiveTrue();
+
 
     @Query("""
         select (count(c) > 0)

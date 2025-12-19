@@ -132,6 +132,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                     .setYearTo(evalCycle.getYearTo())
                     .setIsActive(evalCycle.isActive())
                     .setMeinVersionId(mvId)
+                    .setActiveYear(evalCycle.getActiveYear() == null ? 0 : evalCycle.getActiveYear())
                     .build());
         }
 
@@ -208,6 +209,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         int yearFrom = request.getYearFrom();
         int yearTo = request.getYearTo();
         boolean active = request.getIsActive();
+        int activeYear = request.getActiveYear();
 
         if (evalName.isEmpty()) {
             responseObserver.onError(Status.INVALID_ARGUMENT
@@ -236,16 +238,39 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                     .withDescription("The provided year range overlaps an existing evaluation cycle.").asRuntimeException());
             return;
         }
+
+
+        Integer activeYearSet = null;
+        if (active) {
+            if (activeYear <= 0) {
+                responseObserver.onError(Status.INVALID_ARGUMENT
+                        .withDescription("activeYear is required when isActive=true.")
+                        .asRuntimeException());
+                return;
+            }
+            if (activeYear < yearFrom || activeYear > yearTo) {
+                responseObserver.onError(Status.INVALID_ARGUMENT
+                        .withDescription("activeYear must be within yearFrom..yearTo.")
+                        .asRuntimeException());
+                return;
+            }
+            activeYearSet = activeYear;
+        }
+
+        if (active) {
+            evalCycleRepository.deactivateAll();
+        }
+
         EvalCycle cycle = new EvalCycle();
 
         cycle.setName(evalName);
         cycle.setYearFrom(yearFrom);
         cycle.setYearTo(yearTo);
         cycle.setActive(active);
+        cycle.setActiveYear(activeYear);
 
-        if (active) {
-            evalCycleRepository.deactivateAll();
-        }
+
+
 
 
         EvalCycle saved = evalCycleRepository.save(cycle);
@@ -262,6 +287,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                 .setYearTo(saved.getYearTo())
                 .setIsActive(saved.isActive())
                 .setMeinVersionId(mvId)
+                .setActiveYear(saved.getActiveYear() == null ? 0 : saved.getActiveYear())
                 .build();
 
         responseObserver.onNext(resp);
@@ -338,6 +364,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         Long oldMeinVersionId = (cycle.getMeinVersion() != null ? cycle.getMeinVersion().getId() : null);
         Long oldMonoVersionId = (cycle.getMeinMonoVersion() != null ? cycle.getMeinMonoVersion().getId() : null);
 
+        Integer activeYear = cycle.getActiveYear();
         String evalName = cycle.getName();
         int yearFrom = cycle.getYearFrom();
         int yearTo = cycle.getYearTo();
@@ -369,6 +396,21 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                         .withDescription("Evaluation cycle \"" + evalName + "\" already exists.").asRuntimeException());
                 return;
             }
+        }
+        if (activeYear != null) {
+            if (activeYear < yearFrom || activeYear > yearTo) {
+                responseObserver.onError(Status.INVALID_ARGUMENT
+                        .withDescription("activeYear must be within yearFrom..yearTo.")
+                        .asRuntimeException());
+                return;
+            }
+        }
+
+        if (isActive && activeYear == null) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("activeYear is required when isActive=true.")
+                    .asRuntimeException());
+            return;
         }
 
         if (paths.contains("yearFrom") || paths.contains("yearTo")) {
@@ -405,11 +447,21 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                 return;
             }
         }
+        if (paths.contains("activeYear")) {
+            int ay = request.getActiveYear();
+            activeYear = (ay > 0 ? ay : null);
+        }
 
         if(paths.contains("name"))      cycle.setName(evalName);
         if (paths.contains("yearFrom")) cycle.setYearFrom(yearFrom);
         if (paths.contains("yearTo"))   cycle.setYearTo(yearTo);
-        if (paths.contains("isActive")) cycle.setActive(isActive);
+        if (paths.contains("isActive")) {
+            evalCycleRepository.deactivateAllExcept(evalId);
+            cycle.setActive(isActive);
+
+        }
+        if (paths.contains("activeYear")) cycle.setActiveYear(activeYear);
+
         if (paths.contains("meinVersionId")) {
             if (newMeinVersionId == null) {
                 cycle.setMeinVersion(null);
@@ -455,6 +507,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                 .setIsActive(cycle.isActive())
                 .setMeinVersionId(meinVersionIdOut == null ? 0 : meinVersionIdOut)
                 .setMonoVersionId(monoVersionIdOut == null ? 0 : monoVersionIdOut)
+                .setActiveYear(cycle.getActiveYear() == null ? 0 : cycle.getActiveYear())
                 .build();
 
         responseObserver.onNext(response);

@@ -6,6 +6,8 @@ import org.example.article.entities.MEiN.article.MeinVersion;
 import org.example.article.entities.MEiN.monographs.MeinMonoVersion;
 import org.hibernate.annotations.OnDelete;
 
+import javax.annotation.Nullable;
+
 @Data
 @Entity
 @Table(name = "eval_cycle")
@@ -34,5 +36,7 @@ public class EvalCycle {
     @JoinColumn(name = "mein_monograph_version_id")
     private MeinMonoVersion meinMonoVersion;
 
+    @Column(nullable = false)
+    private Integer activeYear;
 }
 

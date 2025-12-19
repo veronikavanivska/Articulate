@@ -29,7 +29,8 @@ public final class Mapper {
                 .setIsActive(publication.getCycle().isActive())
                 .setId(publication.getCycle().getId())
                 .setYearFrom(publication.getCycle().getYearFrom())
-                .setYearTo(publication.getCycle().getYearTo());
+                .setYearTo(publication.getCycle().getYearTo())
+                .setActiveYear(publication.getCycle().getActiveYear());
 
         if(publication.getCycle().getMeinVersion() != null) {
              cycle.setMeinVersionId(publication.getCycle().getMeinVersion().getId());
@@ -104,7 +105,8 @@ public final class Mapper {
                 .setIsActive(monograph.getCycle().isActive())
                 .setId(monograph.getCycle().getId())
                 .setYearFrom(monograph.getCycle().getYearFrom())
-                .setYearTo(monograph.getCycle().getYearTo());
+                .setYearTo(monograph.getCycle().getYearTo())
+                .setActiveYear(monograph.getCycle().getActiveYear());
 
         if(monograph.getCycle().getMeinVersion()!= null) {
             cycle.setMeinVersionId(monograph.getCycle().getMeinVersion().getId());
@@ -127,6 +129,7 @@ public final class Mapper {
                 .setIsbn(backfromnorm(monograph.getIsbn()))
                 .setPoints(monograph.getMeinPoints())
                 .setMonograficTitle(monograph.getMonograficTitle())
+                .setPublicationYear(monograph.getPublicationYear())
                 .setCycle(cycle)
                 .setType(type)
                 .setDiscipline(discipline);
@@ -176,7 +179,8 @@ public final class Mapper {
                 .setIsActive(monographChapter.getCycle().isActive())
                 .setId(monographChapter.getCycle().getId())
                 .setYearFrom(monographChapter.getCycle().getYearFrom())
-                .setYearTo(monographChapter.getCycle().getYearTo());
+                .setYearTo(monographChapter.getCycle().getYearTo())
+                .setActiveYear(monographChapter.getCycle().getActiveYear());
 
         if(monographChapter.getCycle().getMeinVersion() != null) {
             cycle.setMeinVersionId(monographChapter.getCycle().getMeinVersion().getId());
@@ -200,6 +204,7 @@ public final class Mapper {
                 .setPoints(monographChapter.getMeinPoints())
                 .setMonograficTitle(monographChapter.getMonograficTitle())
                 .setMonographPublisher(monographChapter.getMonographChapterPublisher())
+                .setPublicationYear(monographChapter.getPublicationYear())
                 .setCycle(cycle)
                 .setType(type)
                 .setDiscipline(discipline);
