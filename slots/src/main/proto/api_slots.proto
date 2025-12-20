@@ -1,15 +1,31 @@
 syntax = "proto3";
 package com.example.generated;
 import "google/protobuf/empty.proto";
+import "api_profiles.proto";
 option java_multiple_files = true;
 
 service SlotService {
-  // edycja tylko na aktywnym cyklu/activeYear
   rpc AddToActiveSlot(AddToSlotRequest) returns (DraftView);
   rpc RemoveFromActiveSlot(RemoveFromSlotRequest) returns (DraftView);
 
-  // podgląd: można pobrać aktywny lub wskazany cykl/rok
   rpc GetDraft(GetDraftRequest) returns (DraftView);
+  rpc syncSlotItem(SyncSlotItemRequest) returns (SyncSlotItemResponse);
+}
+enum SlotSyncAction {
+  SLOT_SYNC_ACTION_UNSPECIFIED = 0;
+  SLOT_SYNC_ACTION_UPDATED = 1;
+  SLOT_SYNC_ACTION_DELETED = 2;
+}
+
+message SyncSlotItemRequest {
+  SlotSyncAction action = 1;
+  SlotItemType itemType = 2;
+  int64 itemId = 3;
+}
+
+message SyncSlotItemResponse {
+  ApiResponse response = 1;
+  int32 affected = 2;
 }
 
 enum SlotItemType {

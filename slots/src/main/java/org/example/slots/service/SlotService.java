@@ -13,6 +13,7 @@ import org.example.slots.entities.SlotDraft;
 import org.example.slots.entities.SlotDraftItem;
 import org.example.slots.helpers.SlotComute;
 import org.example.slots.helpers.SlotMapper;
+import org.example.slots.helpers.SyncHelper;
 import org.example.slots.repositories.SlotDraftItemRepository;
 import org.example.slots.repositories.SlotDraftRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -30,12 +31,12 @@ public class SlotService extends SlotServiceGrpc.SlotServiceImplBase {
 
     private final SlotDraftRepository draftRepo;
     private final SlotDraftItemRepository itemRepo;
+    private final SyncHelper syncHelper;
 
-
-    public SlotService(SlotDraftRepository draftRepo, SlotDraftItemRepository itemRepo) {
+    public SlotService(SyncHelper syncHelper, SlotDraftRepository draftRepo, SlotDraftItemRepository itemRepo) {
         this.draftRepo = draftRepo;
         this.itemRepo = itemRepo;
-
+        this.syncHelper = syncHelper;
     }
 
     // =========================================================
@@ -154,8 +155,30 @@ public class SlotService extends SlotServiceGrpc.SlotServiceImplBase {
     }
 
 
+    @Override
+    public void syncSlotItem(SyncSlotItemRequest request, StreamObserver<SyncSlotItemResponse> responseObserver) {
+        try {
+            PublicationKind kind = toKind(request.getItemType());
 
+            int affected = syncHelper.sync(
+                    request.getAction(),
+                    request.getItemType(),
+                    kind,
+                    request.getItemId()
+            );
 
+            responseObserver.onNext(SyncSlotItemResponse.newBuilder()
+                    .setAffected(affected)
+                    .setResponse(ApiResponse.newBuilder().setCode(200).setMessage("OK").build())
+                    .build());
+            responseObserver.onCompleted();
+
+        } catch (StatusRuntimeException e) {
+            responseObserver.onError(e);
+        } catch (Exception e) {
+            responseObserver.onError(Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
+        }
+    }
 
 
     private DraftView loadDraftView(SlotDraft draft, CycleItem active) {

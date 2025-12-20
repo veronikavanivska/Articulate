@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package com.example.generated;
+option java_multiple_files = true;
+
+import "article_slots.proto";
+
+
+enum SlotSyncAction {
+  SLOT_SYNC_ACTION_UNSPECIFIED = 0;
+  SLOT_SYNC_ACTION_UPDATED = 1;
+  SLOT_SYNC_ACTION_DELETED = 2;
+}
+
+message SyncSlotItemRequest {
+  SlotSyncAction action = 1;
+  SlotItemType itemType = 2;
+  int64 itemId = 3;
+}
+
+message SyncSlotItemResponse {
+  APIResponse response = 1;
+  int32 affected = 2;
+}
+
+message APIResponse{
+  int32 code =1;
+  string message =2;
+}
+
+service SlotService {
+  rpc syncSlotItem(SyncSlotItemRequest) returns (SyncSlotItemResponse);
+}

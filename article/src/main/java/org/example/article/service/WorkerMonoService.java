@@ -11,6 +11,7 @@ import org.example.article.entities.MEiN.monographs.Monographic;
 import org.example.article.helpers.ChapterSpecification;
 import org.example.article.helpers.CommutePoints;
 import org.example.article.helpers.MonographSpecification;
+import org.example.article.helpers.SlotSyncService;
 import org.example.article.repositories.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,8 +38,8 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
     private final OpenLibraryIsbnService openLibraryIsbnService;
     private final MonographChapterRepository monographChapterRepository;
     private final MonographChapterAuthorRepository monographChapterAuthorRepository;
-
-    public WorkerMonoService(MonographicRepository monographicRepository, OpenLibraryIsbnService openLibraryIsbnService, CommutePoints commutePoints, PublicationTypeRepository publicationTypeRepository, DisciplineRepository disciplineRepository, MonographAuthorRepository monographAuthorRepository, MonographChapterRepository monographChapterRepository, MonographChapterAuthorRepository monographChapterAuthorRepository) {
+    private final SlotSyncService slotSyncService;
+    public WorkerMonoService(SlotSyncService slotSyncService, MonographicRepository monographicRepository, OpenLibraryIsbnService openLibraryIsbnService, CommutePoints commutePoints, PublicationTypeRepository publicationTypeRepository, DisciplineRepository disciplineRepository, MonographAuthorRepository monographAuthorRepository, MonographChapterRepository monographChapterRepository, MonographChapterAuthorRepository monographChapterAuthorRepository) {
         this.monographicRepository = monographicRepository;
         this.commutePoints = commutePoints;
         this.publicationTypeRepository = publicationTypeRepository;
@@ -47,6 +48,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
         this.openLibraryIsbnService = openLibraryIsbnService;
         this.monographChapterRepository = monographChapterRepository;
         this.monographChapterAuthorRepository = monographChapterAuthorRepository;
+        this.slotSyncService = slotSyncService;
     }
 
     @Override
@@ -476,7 +478,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
         List<MonographAuthor> updatedCoauthors =
                 monographAuthorRepository.findByMonographIdOrderByPosition(monographic.getId());
         monographic.setCoauthors(updatedCoauthors);
-
+        slotSyncService.syncUpdated(SlotItemType.SLOT_ITEM_MONOGRAPH, monographic.getId());
         MonographView monographView = entityToProtoMonograph(monographic);
         responseObserver.onNext(monographView);
         responseObserver.onCompleted();
@@ -616,7 +618,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
         List<MonographChapterAuthor> updatedCoauthors =
                 monographChapterAuthorRepository.findByMonographChapterIdOrderByPosition(chapter.getId());
         chapter.setCoauthors(updatedCoauthors);
-
+        slotSyncService.syncUpdated(SlotItemType.SLOT_ITEM_CHAPTER, chapter.getId());
         ChapterView chapterView = entityToProtoChapter(chapter);
         responseObserver.onNext(chapterView);
         responseObserver.onCompleted();
@@ -733,7 +735,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
         }
 
         monographicRepository.deleteById(monographic.getId());
-
+        slotSyncService.syncDeleted(SlotItemType.SLOT_ITEM_MONOGRAPH, monographic.getId());
         ApiResponse response = ApiResponse.newBuilder().setCode(200).setMessage("Deleted").build();
 
         responseObserver.onNext(response);
@@ -752,7 +754,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
         }
 
         monographChapterRepository.deleteById(chapter.getId());
-
+        slotSyncService.syncDeleted(SlotItemType.SLOT_ITEM_CHAPTER, chapter.getId());
         ApiResponse response = ApiResponse.newBuilder().setCode(200).setMessage("Deleted").build();
 
         responseObserver.onNext(response);

@@ -8,7 +8,10 @@ import org.example.article.entities.Publication;
 import org.example.article.entities.PublicationCoauthor;
 import org.example.article.helpers.CommutePoints;
 import org.example.article.helpers.PublicationSpecification;
+import org.example.article.helpers.SlotSyncService;
 import org.example.article.repositories.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,13 +34,16 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
     private final PublicationRepository publicationRepository;
     private final PublicationCoauthorRepository publicationCoauthorRepository;
 
+    private final Logger logger = LoggerFactory.getLogger(WorkerArticleService.class);
+    private final SlotSyncService slotSyncService;
 
-    public WorkerArticleService(PublicationTypeRepository publicationTypeRepository, CommutePoints commutePoints, DisciplineRepository disciplineRepository, PublicationRepository publicationRepository, PublicationCoauthorRepository publicationCoauthorRepository) {
+    public WorkerArticleService(PublicationTypeRepository publicationTypeRepository, CommutePoints commutePoints, DisciplineRepository disciplineRepository, PublicationRepository publicationRepository, PublicationCoauthorRepository publicationCoauthorRepository, SlotSyncService slotSyncService) {
         this.publicationTypeRepository = publicationTypeRepository;
         this.commutePoints = commutePoints;
         this.disciplineRepository = disciplineRepository;
         this.publicationRepository = publicationRepository;
         this.publicationCoauthorRepository = publicationCoauthorRepository;
+        this.slotSyncService = slotSyncService;
     }
 
 
@@ -194,7 +200,6 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
     }
 
     @Override
-    @Transactional
     public void updatePublication(UpdatePublicationRequest request, StreamObserver<PublicationView> responseObserver) {
 
         boolean changeForCommute = false;
@@ -331,10 +336,14 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
 
         publicationRepository.save(publication);
 
+
+
+
+        publicationRepository.saveAndFlush(publication);
         List<PublicationCoauthor> updatedCoauthors =
                 publicationCoauthorRepository.findByPublicationIdOrderByPosition(publication.getId());
         publication.setCoauthors(updatedCoauthors);
-
+        slotSyncService.syncUpdated(SlotItemType.SLOT_ITEM_ARTICLE, publication.getId());
         PublicationView publicationView = entityToProtoArticle(publication);
         responseObserver.onNext(publicationView);
         responseObserver.onCompleted();
@@ -352,7 +361,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
         }
 
         publicationRepository.delete(publication);
-
+        slotSyncService.syncDeleted(SlotItemType.SLOT_ITEM_ARTICLE, publication.getId());
         ApiResponse response = ApiResponse.newBuilder().setCode(200).setMessage("Deleted").build();
 
         responseObserver.onNext(response);

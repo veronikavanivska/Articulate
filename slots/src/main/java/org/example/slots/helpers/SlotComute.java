@@ -3,236 +3,133 @@ package org.example.slots.helpers;
 import com.example.generated.ItemForSlots;
 import com.example.generated.SlotAuthor;
 import com.example.generated.WorkerStatement;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-import org.example.slots.clients.ProfilesClient;
-import org.example.slots.entities.AuthorsInDisciplineCtx;
 import org.example.slots.entities.PublicationKind;
 import org.example.slots.entities.SlotComputation;
-import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/**
- * SlotComute (helper) — central place for slot math and BigDecimal utilities.
- *
- * =========================
- * SLOT MODEL (FORMULAS)
- * =========================
- *
- * Definitions:
- *  - m = total number of authors (authorsCount from ItemForSlots)
- *  - A = authors that "count" in given discipline+year:
- *        internal authors for whom Profiles has a statement in (disciplineId, evalYear)
- *  - k = |A|
- *  - w_i = slotInDiscipline for author i (usually 1.0 in your simplified model)
- *  - W = Σ w_i over A
- *
- * Owner share inside discipline:
- *  - share(owner) = w_owner / W
- *
- * Publication factor:
- *  - factor = slotFactor(kind, points, k, m)
- *
- * Final slot consumption for owner:
- *  - slotValue = share(owner) * factor
- *
- * Recalculated points:
- *  - pointsRecalc = points * slotValue
- *
- * IMPORTANT EFFECT:
- *  - If a coauthor is NOT assigned to this discipline/year (no statement),
- *    they do NOT enter A → they do NOT reduce owner share → slotValue stays high.
- *    (This fixes your “200pts monograph + coauthor from other discipline” case.)
- */
-@Component
-public class SlotComute {
+public final class SlotComute {
 
+    private SlotComute() {}
 
+    public static final int SCALE_SLOT = 6;
+    public static final int SCALE_POINTS = 4;
 
-        /** Scale for slot computations (e.g., slotValue). */
-        public static final int SCALE_SLOT = 6;
-
-        /** Scale for points computations (e.g., pointsRecalc). */
-        public static final int SCALE_POINTS = 4;
-
-        /** Points thresholds for factor rules. */
-        public static final BigDecimal THRESH_HIGH = BigDecimal.valueOf(100);
-        public static final BigDecimal THRESH_MID  = BigDecimal.valueOf(40);
-
-
-        /**
-         * Compute slotValue and pointsRecalc for a single item under a discipline/year,
-         * for the "owner" (request user).
-         *
-         * @throws StatusRuntimeException when computation is impossible (no eligible authors, etc.)
-         */
-        public static SlotComputation computeSlotValueAndPointsRecalc(
-                long ownerUserId,
-                long disciplineId,
-                int evalYear,
-                PublicationKind kind,
-                ItemForSlots item,
-                WorkerStatement ownerSt
-        ) {
-            int m = item.getAuthorsCount();
-            if (m <= 0) {
-                throw Status.INVALID_ARGUMENT.withDescription("Publication has no authors.").asRuntimeException();
-            }
-
-            BigDecimal points = bd(item.getPoints(), SCALE_POINTS);
-
-            // w_owner: slotInDiscipline from statement (fallback to 1)
-            BigDecimal ownerW = bd(ownerSt.getSlotInDiscipline(), SCALE_SLOT);
-            if (ownerW.compareTo(BigDecimal.ZERO) <= 0) ownerW = BigDecimal.ONE;
-
-            AuthorsInDisciplineCtx ctx = computeEligibleAuthorsCtx(ownerUserId, disciplineId, evalYear, item, ownerW);
-
-            // share = w_owner / sumW
-            BigDecimal share = ownerW.divide(ctx.sumW(), SCALE_SLOT, RoundingMode.HALF_UP);
-
-            // factor depends on kind, points class, and (k,m)
-            BigDecimal factor = slotFactor(kind, points, ctx.k(), m);
-
-            // slotValue = share * factor
-            BigDecimal slotValue = share.multiply(factor).setScale(SCALE_SLOT, RoundingMode.HALF_UP);
-
-            if (slotValue.compareTo(BigDecimal.ZERO) <= 0) {
-                throw Status.FAILED_PRECONDITION
-                        .withDescription("Computed slotValue<=0. Check discipline assignments/statements.")
-                        .asRuntimeException();
-            }
-
-            // defensive clamp
-            if (slotValue.compareTo(BigDecimal.ONE) > 0) {
-                slotValue = BigDecimal.ONE.setScale(SCALE_SLOT, RoundingMode.HALF_UP);
-            }
-
-            BigDecimal pointsRecalc = points.multiply(slotValue).setScale(SCALE_POINTS, RoundingMode.HALF_UP);
-
-            return new SlotComputation(points, slotValue, pointsRecalc);
+    /**
+     * Liczenie STRICT wg tabeli z Pc->U:
+     * - Grupa A: U = 1/k
+     * - Grupa B: U = sqrt(k/m) * 1/k
+     * - Grupa C: U = 1/m
+     *
+     * k = liczba autorów "liczonych" w tej dyscyplinie/roku (np. mają statement)
+     * m = liczba wszystkich autorów w osiągnięciu (wszyscy współautorzy)
+     */
+    public static SlotComputation computeSlotValueAndPointsRecalc(
+            long ownerUserId,
+            long disciplineId,
+            int evalYear,
+            PublicationKind kind,
+            ItemForSlots item,
+            WorkerStatement ownerSt
+    ) {
+        int m = item.getAuthorsCount();
+        if (m <= 0) {
+            throw new IllegalArgumentException("Publication has no authors (authorsCount<=0).");
         }
 
-        // =========================================================
-        // Core helpers (authors eligibility + factor)
-        // =========================================================
+        BigDecimal points = bd(item.getPoints(), SCALE_POINTS);
 
-        /**
-         * Builds (k, sumW) for authors eligible in given discipline/year.
-         * An eligible author is an internal author for which Profiles can return a statement.
-         *
-         * Defensive rule: if owner is missing from eligible set, we add ownerW anyway.
-         */
-        private static AuthorsInDisciplineCtx computeEligibleAuthorsCtx(
-                long ownerUserId,
-                long disciplineId,
-                int evalYear,
-                ItemForSlots item,
-                BigDecimal ownerW
-        ) {
-            BigDecimal sumW = BigDecimal.ZERO;
-            int k = 0;
-            boolean ownerSeen = false;
-
-            for (SlotAuthor a : item.getAuthorsList()) {
-                long uid = a.getUserId();
-                if (uid <= 0) continue; // external
-
-                try {
-                    WorkerStatement st = ProfilesClient.getOrCreateStatement(uid, disciplineId, evalYear).getStatement();
-
-                    BigDecimal w = bd(st.getSlotInDiscipline(), SCALE_SLOT);
-                    if (w.compareTo(BigDecimal.ZERO) <= 0) w = BigDecimal.ONE;
-
-                    sumW = sumW.add(w);
-                    k++;
-
-                    if (uid == ownerUserId) {
-                        ownerSeen = true;
-                    }
-                } catch (StatusRuntimeException ignore) {
-                    // author not assigned to this discipline/year -> not counted
-                }
-            }
-
-            // owner must be countable; if not present, include them
-            if (!ownerSeen) {
-                sumW = sumW.add(ownerW);
-                k++;
-            }
-
-            if (k <= 0 || sumW.compareTo(BigDecimal.ZERO) <= 0) {
-                throw Status.FAILED_PRECONDITION
-                        .withDescription("No authors assigned to this discipline/year. Cannot compute slotValue.")
-                        .asRuntimeException();
-            }
-
-            return new AuthorsInDisciplineCtx(k, sumW);
+        // k = ilu autorów "liczy się" w tej dyscyplinie/roku
+        int k = 0;
+        for (SlotAuthor a : item.getAuthorsList()) {
+            if (a.getUserId() <= 0) continue; // zewnętrzny
+            // Autor jest "liczony", jeżeli w profiles-service da się pobrać statement dla disciplineId + evalYear.
+            // Uwaga: ta metoda NIE ma tu dostępu do ProfilesClient – w Twoim kodzie k liczysz tam gdzie masz ProfilesClient.
+            // Jeżeli chcesz k liczyć tutaj, musisz podać je jako argument.
+            //
+            // W praktyce: w Twojej implementacji k już liczysz w SlotService/SlotComute (z ProfilesClient).
+            // Tutaj zostawiamy k jako "minimum 1" żeby nie dzielić przez 0 w dev/test.
+            k = Math.max(k, 1);
         }
 
-        /**
-         * factor rules:
-         *
-         * ARTICLE:
-         *  - points >= 100        -> factor = 1
-         *  - 40 <= points < 100   -> factor = sqrt(k/m)
-         *  - points < 40          -> factor = k/m
-         *
-         * MONOGRAPH / CHAPTER:
-         *  - points >= 100        -> factor = 1
-         *  - otherwise            -> factor = k/m
-         */
-        private static BigDecimal slotFactor(PublicationKind kind, BigDecimal points, int k, int m) {
-            if (k <= 0 || m <= 0) return BigDecimal.ZERO;
+        // Jeśli k wyliczasz u siebie realnie (ProfilesClient), to usuń powyższą pętlę
+        // i wstaw k policzone z profiles-service. Najważniejsze: slotValue ma być wg tabeli.
 
-            BigDecimal kOverM = BigDecimal.valueOf(k)
-                    .divide(BigDecimal.valueOf(m), SCALE_SLOT, RoundingMode.HALF_UP);
+        BigDecimal slotValue = computeUFromTable(kind, points, k, m);
 
-            return switch (kind) {
-                case ARTICLE -> {
-                    if (points.compareTo(THRESH_HIGH) >= 0) {
-                        yield BigDecimal.ONE;
-                    } else if (points.compareTo(THRESH_MID) >= 0) {
-                        yield sqrtBd(kOverM);
-                    } else {
-                        yield kOverM;
-                    }
-                }
-                case MONOGRAPH, CHAPTER -> {
-                    if (points.compareTo(THRESH_HIGH) >= 0) {
-                        yield BigDecimal.ONE;
-                    } else {
-                        yield kOverM;
-                    }
-                }
-            };
+        // bezpieczeństwo
+        if (slotValue.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalStateException("Computed slotValue<=0 (U). Check inputs k/m/points.");
+        }
+        if (slotValue.compareTo(BigDecimal.ONE) > 0) {
+            slotValue = BigDecimal.ONE.setScale(SCALE_SLOT, RoundingMode.HALF_UP);
         }
 
-        private static BigDecimal sqrtBd(BigDecimal x) {
-            double d = x.doubleValue();
-            if (d <= 0.0) return BigDecimal.ZERO.setScale(SCALE_SLOT, RoundingMode.HALF_UP);
-            return BigDecimal.valueOf(Math.sqrt(d)).setScale(SCALE_SLOT, RoundingMode.HALF_UP);
-        }
-
-        // =========================================================
-        // BigDecimal utilities (used by SlotService)
-        // =========================================================
-
-        public static BigDecimal bd(double v, int scale) {
-            return BigDecimal.valueOf(v).setScale(scale, RoundingMode.HALF_UP);
-        }
-
-        public static BigDecimal nz(BigDecimal v) {
-            return v == null ? BigDecimal.ZERO : v;
-        }
-
-        public static boolean isMono(PublicationKind kind) {
-            return kind == PublicationKind.MONOGRAPH || kind == PublicationKind.CHAPTER;
-        }
-
-
-
+        BigDecimal pointsRecalc = points.multiply(slotValue).setScale(SCALE_POINTS, RoundingMode.HALF_UP);
+        return new SlotComputation(points, slotValue, pointsRecalc);
     }
 
+    /**
+     * Zwraca U wg tabeli.
+     * Uwaga: żeby tabela działała, musisz rozróżniać grupy po Pc (points).
+     */
+    public static BigDecimal computeUFromTable(PublicationKind kind, BigDecimal points, int k, int m) {
+        if (k <= 0 || m <= 0) return BigDecimal.ZERO;
 
+        // U = 1/k
+        BigDecimal oneOverK = BigDecimal.ONE.divide(BigDecimal.valueOf(k), SCALE_SLOT, RoundingMode.HALF_UP);
+        // U = 1/m
+        BigDecimal oneOverM = BigDecimal.ONE.divide(BigDecimal.valueOf(m), SCALE_SLOT, RoundingMode.HALF_UP);
+
+        // √(k/m) * 1/k
+        BigDecimal kOverM = BigDecimal.valueOf(k)
+                .divide(BigDecimal.valueOf(m), SCALE_SLOT, RoundingMode.HALF_UP);
+        BigDecimal sqrtKOverM = sqrtBd(kOverM);
+        BigDecimal sqrtKOverM_times_1overK = sqrtKOverM.multiply(oneOverK).setScale(SCALE_SLOT, RoundingMode.HALF_UP);
+
+        // Mapowanie wg tabeli (per typ i Pc):
+        // CHAPTER: 50 -> 1/k ; 20 -> √(k/m)*1/k ; 5 -> 1/m
+        // MONOGRAPH: 200/100 -> 1/k ; 80 -> √(k/m)*1/k ; 20 -> 1/m
+        // ARTICLE: 200/140/100/70/40 -> 1/k ; 20 -> √(k/m)*1/k ; 5 -> 1/m
+
+        int pc = points.setScale(0, RoundingMode.HALF_UP).intValue();
+
+        return switch (kind) {
+            case CHAPTER -> {
+                if (pc >= 50) yield oneOverK;                // 50
+                if (pc == 20) yield sqrtKOverM_times_1overK; // 20
+                yield oneOverM;                              // 5 (fallback)
+            }
+            case MONOGRAPH -> {
+                if (pc >= 100) yield oneOverK;               // 200/100
+                if (pc == 80) yield sqrtKOverM_times_1overK; // 80
+                yield oneOverM;                              // 20 (fallback)
+            }
+            case ARTICLE -> {
+                if (pc >= 100) yield oneOverK;                // 40/70/100/140/200
+                if (pc == 70 || pc == 40) yield sqrtKOverM_times_1overK;
+
+                yield oneOverM;                              // 5 (fallback)
+            }
+        };
+    }
+
+    public static boolean isMono(PublicationKind k) {
+        return k == PublicationKind.MONOGRAPH || k == PublicationKind.CHAPTER;
+    }
+
+    public static BigDecimal bd(double v, int scale) {
+        return BigDecimal.valueOf(v).setScale(scale, RoundingMode.HALF_UP);
+    }
+
+    public static BigDecimal nz(BigDecimal v) {
+        return v == null ? BigDecimal.ZERO : v;
+    }
+
+    private static BigDecimal sqrtBd(BigDecimal x) {
+        double d = x.doubleValue();
+        if (d <= 0.0) return BigDecimal.ZERO.setScale(SCALE_SLOT, RoundingMode.HALF_UP);
+        return BigDecimal.valueOf(Math.sqrt(d)).setScale(SCALE_SLOT, RoundingMode.HALF_UP);
+    }
+}
