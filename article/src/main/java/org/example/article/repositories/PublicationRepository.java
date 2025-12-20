@@ -18,6 +18,7 @@ import java.util.Optional;
 @Repository
 public interface PublicationRepository extends JpaRepository<Publication, Long>, JpaSpecificationExecutor<Publication> {
 
+    boolean existsByAuthorIdAndTitle(Long authorId, String title);
     boolean existsByTitle(String title);
     boolean existsByAuthorId(Long id);
     @Query("""

@@ -166,8 +166,8 @@ public class AdminArticleClient {
             mask.addPaths("meinVersionId");
         }
         if(MeinMonoVersionId != null){
-            req.setMeinVersionId(MeinMonoVersionId);
-            mask.addPaths("meinMonoVersionId");
+            req.setMonoVersionId(MeinMonoVersionId);
+            mask.addPaths("monoVersionId");
         }
 
         req.setUpdateMask(mask.build());

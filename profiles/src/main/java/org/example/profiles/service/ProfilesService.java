@@ -298,7 +298,8 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
                 .orElseGet(() -> {
                     var created = new org.example.profiles.entities.ProfileWorkerStatement();
                     created.setId(new org.example.profiles.entities.ProfileWorkerStatementId(userId, disciplineId, year));
-                    // defaulty już są ustawione w polach encji
+
+
                     return profileWorkerStatementRepository.save(created);
                 });
 

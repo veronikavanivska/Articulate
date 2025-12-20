@@ -59,8 +59,7 @@ public class WorkerArticleService extends WorkerArticleServiceGrpc.WorkerArticle
 
     @Override
     public void createPublication(CreatePublicationRequest request, StreamObserver<PublicationView> responseObserver) {
-        if(publicationRepository.existsByAuthorId(request.getUserId())&&
-                publicationRepository.existsByTitle(request.getTitle())){
+        if(publicationRepository.existsByAuthorIdAndTitle(request.getUserId(),request.getTitle())) {
             responseObserver.onError(Status.INVALID_ARGUMENT
                     .withDescription("You already added this article").asRuntimeException());
             return;

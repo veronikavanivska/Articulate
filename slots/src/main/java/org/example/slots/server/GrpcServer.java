@@ -2,14 +2,14 @@ package org.example.slots.server;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import org.example.slots.service.SlotServiceImpl;
+import org.example.slots.service.SlotService;
 import org.springframework.stereotype.Component;
 
 @Component
 public class GrpcServer {
-    private final SlotServiceImpl slotService;
+    private final SlotService slotService;
 
-    public GrpcServer(SlotServiceImpl slotService) {
+    public GrpcServer(SlotService slotService) {
         this.slotService = slotService;
     }
     public void start() {

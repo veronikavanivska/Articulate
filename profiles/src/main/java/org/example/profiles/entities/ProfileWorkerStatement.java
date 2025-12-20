@@ -31,7 +31,7 @@ public class ProfileWorkerStatement {
     private BigDecimal sharePercent = new BigDecimal("100.00");
 
     @Column(name = "slot_in_discipline", nullable = false, precision = 8, scale = 4)
-    private BigDecimal slotInDiscipline = new BigDecimal("0.0000");
+    private BigDecimal slotInDiscipline = new BigDecimal("1.0000");
 
     @Column(name = "max_slots", nullable = false, precision = 8, scale = 4)
     private BigDecimal maxSlots = new BigDecimal("1.0000");
