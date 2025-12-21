@@ -15,7 +15,10 @@ import org.example.slots.repositories.SlotDraftItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+
+import static org.example.slots.helpers.SlotComute.isMono;
 
 @Service
 public class SyncHelper {
@@ -53,10 +56,14 @@ public class SyncHelper {
         if (items.isEmpty()) return 0;
 
         int updated = 0;
+        int removedForLimits = 0;
 
         for (SlotDraftItem di : items) {
             SlotDraft draft = di.getDraft();
-
+            if (draft == null) {
+                itemRepo.delete(di);
+                continue;
+            }
 
             final ItemForSlots item;
             try {
@@ -88,6 +95,33 @@ public class SyncHelper {
                     item,
                     ownerSt
             );
+
+            BigDecimal oldSlot = SlotComute.nz(di.getSlotValue());
+            BigDecimal newSlot = SlotComute.nz(comp.slotValue());
+
+            BigDecimal usedNow = SlotComute.nz(itemRepo.sumSlotValue(draft.getId()));
+            BigDecimal usedAfter = usedNow.subtract(oldSlot).add(newSlot);
+
+            if (usedAfter.compareTo(SlotComute.nz(draft.getMaxSlots())) > 0) {
+                itemRepo.delete(di);
+                removedForLimits++;
+
+                continue;
+            }
+
+            if (isMono(kind)) {
+                BigDecimal usedMonoNow = SlotComute.nz(itemRepo.sumSlotValueMono(draft.getId()));
+                BigDecimal oldMono = oldSlot;
+                BigDecimal newMono = newSlot;
+
+                BigDecimal usedMonoAfter = usedMonoNow.subtract(oldMono).add(newMono);
+
+                if (usedMonoAfter.compareTo(SlotComute.nz(draft.getMaxMonoSlots())) > 0) {
+                    itemRepo.delete(di);
+                    removedForLimits++;
+                    continue;
+                }
+            }
 
             di.setTitle(item.getTitle() == null ? "" : item.getTitle());
             di.setPublicationYear(item.getPublicationYear());
