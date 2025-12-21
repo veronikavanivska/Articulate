@@ -1,5 +1,6 @@
 package org.example.article.helpers;
 
+
 import com.example.generated.SlotItemType;
 import org.example.article.clients.SlotsClient;
 import org.example.article.repositories.PublicationCoauthorRepository;
@@ -35,4 +36,3 @@ public class SlotSyncService {
         }
     }
 }
-

@@ -1,0 +1,38 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+import "api_profiles.proto";
+package com.example.generated;
+option java_multiple_files = true;
+
+
+message UserId {
+  int64 user_id = 1;
+}
+
+message EnsureUserProfileRequest {
+  int64 user_id = 1;
+}
+
+message EnsureWorkerProfileRequest {
+  int64 user_id = 1;
+}
+
+message EnsureAdminProfileRequest {
+  int64 user_id = 1;
+}
+
+
+service ProfilesCommandsService {
+
+  rpc EnsureUserProfile(EnsureUserProfileRequest) returns (ApiResponse);
+
+  rpc EnsureWorkerProfile(EnsureWorkerProfileRequest) returns (ApiResponse);
+
+  rpc EnsureAdminProfile(EnsureAdminProfileRequest) returns (ApiResponse);
+
+  rpc DeleteWorkerProfile(UserId) returns (ApiResponse);
+
+  rpc DeleteAdminProfile(UserId) returns (ApiResponse);
+
+  rpc DeleteAllProfiles(UserId) returns (ApiResponse);
+}

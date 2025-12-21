@@ -24,7 +24,8 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
     private final DisciplineRepository disciplineRepository;
     private final ProfileWorkerStatementRepository profileWorkerStatementRepository;
     private final Mapper mapper;
-    public ProfilesService(ProfileUserRepository profileUserRepository, Mapper mapper,ProfileWorkerRepository profileWorkerRepository, ProfileAdminRepository profileAdminRepository, ProfileWorkerDisciplineRepository profileWorkerDisciplineRepository, DisciplineRepository disciplineRepository, ProfileWorkerStatementRepository profileWorkerStatementRepository) {
+
+    public ProfilesService( ProfileUserRepository profileUserRepository, Mapper mapper,ProfileWorkerRepository profileWorkerRepository, ProfileAdminRepository profileAdminRepository, ProfileWorkerDisciplineRepository profileWorkerDisciplineRepository, DisciplineRepository disciplineRepository, ProfileWorkerStatementRepository profileWorkerStatementRepository) {
         super();
         this.profileUserRepository = profileUserRepository;
         this.profileWorkerRepository = profileWorkerRepository;
@@ -148,8 +149,10 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
 
         UpdateMyProfileResponse response = UpdateMyProfileResponse.newBuilder().setResponse(apiResponse).setProfile(viewBuilder.build()).build();
 
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
+
 
     }
 

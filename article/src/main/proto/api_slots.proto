@@ -1,10 +1,13 @@
 syntax = "proto3";
-
+import "api_article.proto";
 package com.example.generated;
 option java_multiple_files = true;
 
-import "article_slots.proto";
-
+enum SlotItemType {
+  SLOT_ITEM_ARTICLE = 0;
+  SLOT_ITEM_MONOGRAPH = 1;
+  SLOT_ITEM_CHAPTER = 2;
+}
 
 enum SlotSyncAction {
   SLOT_SYNC_ACTION_UNSPECIFIED = 0;
@@ -24,9 +27,11 @@ message SyncSlotItemResponse {
 }
 
 message APIResponse{
-  int32 code =1;
-  string message =2;
+  int32 code = 1;
+  string message = 2;
 }
+
+
 
 service SlotService {
   rpc syncSlotItem(SyncSlotItemRequest) returns (SyncSlotItemResponse);

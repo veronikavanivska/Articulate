@@ -4,6 +4,11 @@ import "google/protobuf/empty.proto";
 package com.example.generated;
 option java_multiple_files = true;
 
+message ApiResponse{
+  int32 code =1;
+  string message =2;
+}
+
 message ProfileUser {
   string fullname  = 1;
   string bio       = 2;
@@ -60,10 +65,7 @@ enum RoleName {
   ROLE_ADMIN = 2;
 }
 
-message ApiResponse{
-  uint32 code = 1;
-  string message = 2;
-}
+
 
 /* =========================
    NOWE: worker ↔ disciplines

@@ -16,8 +16,7 @@ services:
       - "9092:9090"
     networks:
       - articulate
-    depends_on:
-      - rabbitmq
+
 
   article:
     build:
@@ -27,8 +26,7 @@ services:
       - "9093:9090"
     networks:
       - articulate
-    depends_on:
-      - rabbitmq
+
 
   slots:
     build:
@@ -39,14 +37,20 @@ services:
     networks:
       - articulate
 
-  search:
-    build:
-      context: ./search
-      dockerfile: Dockerfile
-    ports:
-      - "9095:9090"
-    networks:
-      - articulate
+#  search:
+#    build:
+#      context: ./search
+#      dockerfile: Dockerfile
+#    ports:
+#      - "9095:9090"
+#    networks:
+#      - articulate
+#    environment:
+#      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+#    depends_on:
+#      elasticsearch:
+#        condition: service_healthy
+#    restart: on-failure
 
   auth:
     build:
@@ -56,8 +60,44 @@ services:
       - "9091:9090"
     networks:
       - articulate
-    depends_on:
-      - rabbitmq
+
+
+#  elasticsearch:
+#    build:
+#      context: ./search/elastic
+#      args:
+#        STACK_VERSION: 8.15.0  # Or whatever exact version you want (e.g., 9.0.0) – use full version, not 9.2.3
+#    container_name: es
+#    healthcheck:
+#      test: [ "CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=90s > /dev/null || exit 1" ]
+#      interval: 10s
+#      timeout: 10s
+#      retries: 30
+#      start_period: 60s
+#    environment:
+#      - discovery.type=single-node
+#      - xpack.security.enabled=false   # Critical for dev – disables auth/HTTPS
+#      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+#    ports:
+#      - "9200:9200"
+#    volumes:
+#      - esdata:/usr/share/elasticsearch/data
+#    networks:
+#      - articulate
+#
+#  kibana:
+#    image: docker.elastic.co/kibana/kibana:8.15.0
+#    container_name: kibana
+#    environment:
+#      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+#      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=0123456789abcdef0123456789abcdef
+#    ports:
+#      - "5601:5601"
+#    depends_on:
+#      - elasticsearch
+#    networks:
+#      - articulate
+#
 
   profiles-postgres:
     image: postgres
@@ -133,16 +173,16 @@ services:
       - redis-data:/data
     command: [ "redis-server", "--save", "60", "1", "--loglevel", "warning" ]
 
-  rabbitmq:
-    image: rabbitmq:3.13-management
-    ports:
-      - "5672:5672"      # AMQP
-      - "15672:15672"    # Web UI
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    networks:
-      - articulate
+#  rabbitmq:
+#    image: rabbitmq:3.13-management
+#    ports:
+#      - "5672:5672"      # AMQP
+#      - "15672:15672"    # Web UI
+#    environment:
+#      RABBITMQ_DEFAULT_USER: guest
+#      RABBITMQ_DEFAULT_PASS: guest
+#    networks:
+#      - articulate
 
 volumes:
   profiles_service_postgres:
@@ -150,6 +190,7 @@ volumes:
   article_service_postgres:
   redis-data:
   slots_service_postgres:
+  esdata:
 
 networks:
   articulate:

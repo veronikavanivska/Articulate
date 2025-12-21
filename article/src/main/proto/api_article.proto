@@ -2,11 +2,15 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/field_mask.proto";
+
 package com.example.generated;
 
 option java_multiple_files = true;
 
-
+message ApiResponse{
+  int32 code =1;
+  string message =2;
+}
 
 //For admins
 message ImportMEiNRequest{
@@ -397,10 +401,7 @@ message CycleItem {
   int32 activeYear = 8;
 }
 
-message ApiResponse {
-  int32 code = 1;
-  string message = 2;
-}
+
 
 message DeleteMeinVersionResponse {
   int64 job_id = 1;
