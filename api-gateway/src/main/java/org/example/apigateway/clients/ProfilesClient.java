@@ -32,6 +32,43 @@ public class ProfilesClient {
         return stub.seeSomeoneProfile(request);
     }
 
+    public static ListWorkerDisciplinesResponse listWorkerDisciplines(Long userId) {
+        ListWorkerDisciplinesRequest request = ListWorkerDisciplinesRequest.newBuilder().setUserId(userId).build();
+        return stub.listWorkerDisciplines(request);
+    }
+
+
+    public static ListWorkerDisciplinesResponse addWorkerDiscipline(Long userId, Long disciplineId) {
+        AddWorkerDisciplineRequest req = AddWorkerDisciplineRequest.newBuilder()
+                .setUserId(userId)
+                .setDisciplineId(disciplineId)
+                .build();
+        return stub.addWorkerDiscipline(req);
+    }
+
+    public static ListWorkerDisciplinesResponse removeWorkerDiscipline(Long userId, Long disciplineId) {
+        RemoveWorkerDisciplineRequest req = RemoveWorkerDisciplineRequest.newBuilder()
+                .setUserId(userId)
+                .setDisciplineId(disciplineId)
+                .build();
+        return stub.removeWorkerDiscipline(req);
+    }
+
+    public static GetOrCreateStatementResponse getOrCreateStatement(Long userId, Long disciplineId, int evalYear) {
+        GetOrCreateStatementRequest req = GetOrCreateStatementRequest.newBuilder()
+                .setUserId(userId)
+                .setDisciplineId(disciplineId)
+                .setEvalYear(evalYear)
+                .build();
+        return stub.getOrCreateStatement(req);
+    }
+
+    public static AdminInitStatementsForYearResponse adminInitStatementsForYear(int evalYear) {
+        AdminInitStatementsForYearRequest req = AdminInitStatementsForYearRequest.newBuilder()
+                .setEvalYear(evalYear)
+                .build();
+        return stub.adminInitStatementsForYear(req);
+    }
 
     public static void init(Channel channel) {
         stub = ProfilesServiceGrpc.newBlockingStub(channel);

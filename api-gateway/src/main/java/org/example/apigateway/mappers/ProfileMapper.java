@@ -15,6 +15,7 @@ public class ProfileMapper {
         GetProfileResponse.ProfileWorker workerProfile = null;
         GetProfileResponse.ProfileAdmin adminProfile = null;
 
+
         if(view != null && view.hasUser()) {
             var user = view.getUser();
             userProfile = new GetProfileResponse.ProfileUser(user.getFullname(),user.getBio());
@@ -22,7 +23,13 @@ public class ProfileMapper {
 
         if(view != null && view.hasWorker()) {
             var user = view.getWorker();
-            workerProfile = new GetProfileResponse.ProfileWorker(user.getDegreeTitle(), user.getUnitName());
+
+            java.util.List<org.example.apigateway.responses.DisciplineResponse> disciplines =
+                    user.getDisciplinesList().stream()
+                            .map(d -> new org.example.apigateway.responses.DisciplineResponse(d.getId(), d.getName()))
+                            .toList();
+
+            workerProfile = new GetProfileResponse.ProfileWorker(user.getDegreeTitle(), user.getUnitName() , disciplines);
         }
 
         if(view != null && view.hasAdmin()) {

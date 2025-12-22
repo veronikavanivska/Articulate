@@ -1,6 +1,6 @@
 syntax = "proto3";
 import "google/protobuf/empty.proto";
-import "api_profiles.proto";
+import "api_profile.proto";
 package com.example.generated;
 option java_multiple_files = true;
 

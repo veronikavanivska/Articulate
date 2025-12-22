@@ -37,7 +37,7 @@ public class ProfileWorkerStatement {
     private BigDecimal maxSlots = new BigDecimal("1.0000");
 
     @Column(name = "max_mono_slots", nullable = false, precision = 8, scale = 4)
-    private BigDecimal maxMonoSlots = new BigDecimal("0.0000");
+    private BigDecimal maxMonoSlots = new BigDecimal("1.0000");
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt = OffsetDateTime.now();

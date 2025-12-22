@@ -23,9 +23,9 @@ public interface ProfileWorkerStatementRepository extends JpaRepository<ProfileW
       :year,
       1.0000,
       100.00,
-      0.0000,
       1.0000,
-      0.0000,
+      1.0000,
+      1.0000,
       NOW(),
       NOW()
     FROM profile_worker_discipline pwd
@@ -40,7 +40,7 @@ public interface ProfileWorkerStatementRepository extends JpaRepository<ProfileW
   INSERT INTO profile_worker_statement
     (user_id, discipline_id, eval_year, fte, share_percent, slot_in_discipline, max_slots, max_mono_slots, created_at, updated_at)
   VALUES
-    (:userId, :disciplineId, :year, 1.0000, 100.00, 0.0000, 1.0000, 0.0000, NOW(), NOW())
+    (:userId, :disciplineId, :year, 1.0000, 100.00,1.0000, 1.0000, 1.0000, NOW(), NOW())
   ON CONFLICT (user_id, discipline_id, eval_year) DO NOTHING
 """, nativeQuery = true)
     int initStatementForUserDisciplineYear(@Param("userId") long userId,

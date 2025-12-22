@@ -1,7 +1,7 @@
 syntax = "proto3";
 package com.example.generated;
 import "google/protobuf/empty.proto";
-import "api_profiles.proto";
+import "api_profile_a.proto";
 option java_multiple_files = true;
 
 service SlotService {

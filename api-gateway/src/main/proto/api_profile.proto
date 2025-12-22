@@ -3,17 +3,23 @@ import "google/protobuf/empty.proto";
 import "common.proto";
 
 package com.example.generated;
-
 option java_multiple_files = true;
+
+
 
 message ProfileUser {
   string fullname  = 1;
   string bio       = 2;
 }
 
+message DisciplineRef {
+  int64 id = 1;
+  string name = 2;
+}
 message ProfileWorker {
   string degreeTitle  = 1;
   string unitName     = 2;
+  repeated DisciplineRef disciplines = 3; // <-- NOWE
 }
 
 message ProfileAdmin {
@@ -51,9 +57,58 @@ message SeeSomeoneProfileRequest{
   int64 userId = 1;
 }
 
-message SeeSomeoneProfileResponse {
-  ProfileView profile = 1;
+
+message ListWorkerDisciplinesRequest {
+  int64 userId = 1;
+}
+
+message ListWorkerDisciplinesResponse {
+  repeated DisciplineRef disciplines = 1;
   ApiResponse response = 2;
+}
+
+message AddWorkerDisciplineRequest {
+  int64 userId = 1;
+  int64 disciplineId = 2;
+}
+
+message RemoveWorkerDisciplineRequest {
+  int64 userId = 1;
+  int64 disciplineId = 2;
+}
+
+message WorkerStatement {
+  int64 userId = 1;
+  int64 disciplineId = 2;
+  int32 evalYear = 3;
+
+  double fte = 4;
+  double sharePercent = 5;
+  double slotInDiscipline = 6;
+
+  double maxSlots = 7;
+  double maxMonoSlots = 8;
+}
+
+message GetOrCreateStatementRequest {
+  int64 userId = 1;
+  int64 disciplineId = 2;
+  int32 evalYear = 3;
+}
+
+message GetOrCreateStatementResponse {
+  WorkerStatement statement = 1;
+  ApiResponse response = 2;
+}
+
+message AdminInitStatementsForYearRequest {
+  int32 evalYear = 1;
+}
+
+message AdminInitStatementsForYearResponse {
+  int32 evalYear = 1;
+  int64 createdCount = 2;
+  ApiResponse response = 3;
 }
 
 
@@ -61,4 +116,12 @@ service ProfilesService{
   rpc GetMyProfile(GetProfileRequest) returns (GetProfileResponse);
   rpc UpdateMyProfile(UpdateMyProfileRequest) returns (UpdateMyProfileResponse);
   rpc SeeSomeoneProfile(SeeSomeoneProfileRequest) returns (GetProfileResponse);
+
+  // NOWE:
+  rpc ListWorkerDisciplines(ListWorkerDisciplinesRequest) returns (ListWorkerDisciplinesResponse);
+  rpc AddWorkerDiscipline(AddWorkerDisciplineRequest) returns (ListWorkerDisciplinesResponse);
+  rpc RemoveWorkerDiscipline(RemoveWorkerDisciplineRequest) returns (ListWorkerDisciplinesResponse);
+
+  rpc GetOrCreateStatement(GetOrCreateStatementRequest) returns (GetOrCreateStatementResponse);
+  rpc AdminInitStatementsForYear(AdminInitStatementsForYearRequest) returns (AdminInitStatementsForYearResponse);
 }
