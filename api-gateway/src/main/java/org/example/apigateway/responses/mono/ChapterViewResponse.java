@@ -29,5 +29,7 @@ public class ChapterViewResponse {
     private Long meinMonoPublisherId;
     private Long meinMonoId;
 
+    private int publicationYear;
+
     private List<Coauthor> coauthor;
 }

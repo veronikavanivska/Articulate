@@ -30,6 +30,8 @@ public class PublicationViewMapper {
         cycle.setYearFrom(publicationView.getCycle().getYearFrom());
         cycle.setMeinVersionId(publicationView.getCycle().getMeinVersionId());
         cycle.setMeinMonoVersionId(publicationView.getCycle().getMonoVersionId());
+        cycle.setActiveYear(publicationView.getCycle().getActiveYear());
+
         List<Coauthor> coauthors = new ArrayList<>();
 
         for (com.example.generated.Coauthor c : publicationView.getCoauthorsList()) {

@@ -30,6 +30,8 @@ public class MonographViewMapper {
         cycle.setYearFrom(monographView.getCycle().getYearFrom());
         cycle.setMeinVersionId(monographView.getCycle().getMeinVersionId());
         cycle.setMeinMonoVersionId(monographView.getCycle().getMonoVersionId());
+        cycle.setActiveYear(monographView.getCycle().getActiveYear());
+
         List<Coauthor> coauthors = new ArrayList<>();
 
         for (com.example.generated.Coauthor c : monographView.getCoauthorList()) {
@@ -54,6 +56,8 @@ public class MonographViewMapper {
         monographViewResponse.setMeinMonoPublisherId(monographView.getMeinMonoPublisherId());
         monographViewResponse.setMeinMonoId(monographView.getMeinMonoId());
         monographViewResponse.setCoauthors(coauthors);
+
+        monographViewResponse.setPublicationYear(monographView.getPublicationYear());
 
         return monographViewResponse;
     }

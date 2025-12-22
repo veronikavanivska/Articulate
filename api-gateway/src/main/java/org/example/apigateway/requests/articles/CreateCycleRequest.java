@@ -8,4 +8,5 @@ public class CreateCycleRequest {
     private int yearFrom;
     private int yearTo;
     private boolean active;
+    private int activeYear;
 }

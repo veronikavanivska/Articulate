@@ -193,7 +193,7 @@ public class AdminArticleController {
 
     @PostMapping("/createEvalCycle")
     public CycleItem createEvalCycle(@RequestBody CreateCycleRequest request) {
-        var response = AdminArticleClient.adminCreateCycle(request.getName(), request.getYearFrom(), request.getYearTo(), request.isActive());
+        var response = AdminArticleClient.adminCreateCycle(request.getName(), request.getYearFrom(), request.getYearTo(), request.isActive(), request.getActiveYear());
 
         CycleItem cycleItem = new CycleItem();
         cycleItem.setId(response.getId());
@@ -203,13 +203,14 @@ public class AdminArticleController {
         cycleItem.setActive(request.isActive());
         cycleItem.setMeinMonoVersionId(response.getMonoVersionId());
         cycleItem.setMeinVersionId(response.getMeinVersionId());
+        cycleItem.setActiveYear(response.getActiveYear());
 
         return cycleItem;
     }
 
     @PatchMapping("/updateEvalCycle")
     public CycleItem updateEvalCycle(@RequestBody UpdateCycleRequest request) {
-        var response = AdminArticleClient.adminUpdateCycle(request.getId(), request.getName(), request.getYearFrom(), request.getYearTo(), request.getActive(), request.getMeinVersionId(), request.getMeinMonoVersionId());
+        var response = AdminArticleClient.adminUpdateCycle(request.getId(), request.getName(), request.getYearFrom(), request.getYearTo(), request.getActive(), request.getMeinVersionId(), request.getMeinMonoVersionId(),request.getActiveYear());
 
         CycleItem cycleItem = new CycleItem();
         cycleItem.setId(response.getId());
@@ -219,6 +220,7 @@ public class AdminArticleController {
         cycleItem.setActive(response.getIsActive());
         cycleItem.setMeinMonoVersionId(response.getMonoVersionId());
         cycleItem.setMeinVersionId(response.getMeinVersionId());
+        cycleItem.setActiveYear(response.getActiveYear());
 
         return cycleItem;
     }

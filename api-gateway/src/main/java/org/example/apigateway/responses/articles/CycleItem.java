@@ -11,5 +11,6 @@ public class CycleItem {
     private boolean isActive;
     private long meinVersionId;
     private long meinMonoVersionId;
+    private long activeYear;
 }
 

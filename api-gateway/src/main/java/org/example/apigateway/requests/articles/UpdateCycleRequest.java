@@ -11,4 +11,5 @@ public class UpdateCycleRequest {
     private Boolean active;
     private Long meinMonoVersionId;
     private Long meinVersionId;
+    private Integer activeYear;
 }

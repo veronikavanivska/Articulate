@@ -3,10 +3,10 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/field_mask.proto";
 import "common.proto";
+
 package com.example.generated;
 
 option java_multiple_files = true;
-
 
 
 //For admins
@@ -206,6 +206,7 @@ message CreateCycleRequest {
   int32 yearFrom = 2;
   int32 yearTo = 3;
   bool isActive = 4;
+  int32 activeYear = 5;
 }
 
 message UpdateCycleRequest {
@@ -218,6 +219,8 @@ message UpdateCycleRequest {
   int64 monoVersionId =7;
 
   google.protobuf.FieldMask update_mask = 8;
+
+  int32 activeYear = 9;
 }
 
 message DeleteCycleRequest{
@@ -392,6 +395,7 @@ message CycleItem {
   bool isActive = 5;
   int64 meinVersionId =6;
   int64 monoVersionId =7;
+  int32 activeYear = 8;
 }
 
 
@@ -410,6 +414,7 @@ message CreateMonographRequest{
   string isbn = 6;
   string monograficPublisherTitle = 13;
   int32 publicationYear = 7;
+
 
 
   repeated CoauthorInput input = 9;
@@ -432,6 +437,7 @@ message MonographView{
   int64 meinMonoId = 11;
 
   repeated Coauthor coauthor = 12;
+  int32 publicationYear = 14;
 }
 
 message GetMonographRequest{
@@ -511,6 +517,7 @@ message ChapterView{
   int64 meinMonoId = 11;
 
   repeated Coauthor coauthor = 12;
+  int32 publicationYear = 20;
 }
 
 message GetChapterRequest{
@@ -669,6 +676,8 @@ service ArticleService{
   rpc ListPublicationTypes(google.protobuf.Empty) returns (ListTypesResponse);
   rpc ListDisciplines(google.protobuf.Empty) returns (ListDisciplinesResponse);
   rpc ListEvalCycles(google.protobuf.Empty) returns (ListCyclesResponse);
+
+  rpc GetActiveEvalCycle(google.protobuf.Empty) returns (CycleItem);
 }
 message GetJobStatusRequest {
   int64 job_id = 1;

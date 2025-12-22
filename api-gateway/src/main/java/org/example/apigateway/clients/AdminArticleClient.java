@@ -127,18 +127,19 @@ public class AdminArticleClient {
         return stub.adminListEvalCycles(request);
     }
 
-    public static CycleItem adminCreateCycle(String cycleName, int yearFrom, int yearTo, boolean isActive) {
+    public static CycleItem adminCreateCycle(String cycleName, int yearFrom, int yearTo, boolean isActive, int activeYear) {
         CreateCycleRequest request = CreateCycleRequest.newBuilder()
                 .setName(cycleName)
                 .setYearFrom(yearFrom)
                 .setYearTo(yearTo)
                 .setIsActive(isActive)
+                .setActiveYear(activeYear)
                 .build();
 
         return stub.adminCreateEvalCycle(request);
     }
 
-    public static CycleItem adminUpdateCycle(long cycleId, String cycleName , Integer yearFrom, Integer yearTo, Boolean isActive, Long meinVersionId, Long MeinMonoVersionId) {
+    public static CycleItem adminUpdateCycle(long cycleId, String cycleName , Integer yearFrom, Integer yearTo, Boolean isActive, Long meinVersionId, Long MeinMonoVersionId, Integer activeYear) {
 
         UpdateCycleRequest.Builder req = UpdateCycleRequest.newBuilder()
                 .setId(cycleId);
@@ -168,6 +169,11 @@ public class AdminArticleClient {
         if(MeinMonoVersionId != null){
             req.setMonoVersionId(MeinMonoVersionId);
             mask.addPaths("monoVersionId");
+        }
+
+        if(activeYear != null){
+            req.setActiveYear(activeYear);
+            mask.addPaths("activeYear");
         }
 
         req.setUpdateMask(mask.build());

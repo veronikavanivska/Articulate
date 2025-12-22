@@ -29,6 +29,8 @@ public class ChapterViewMapper {
         cycle.setYearTo(chapterView.getCycle().getYearTo());
         cycle.setYearFrom(chapterView.getCycle().getYearFrom());
         cycle.setMeinVersionId(chapterView.getCycle().getMeinVersionId());
+        cycle.setActiveYear(chapterView.getCycle().getActiveYear());
+
         List<Coauthor> coauthors = new ArrayList<>();
 
         for (com.example.generated.Coauthor c : chapterView.getCoauthorList()) {
@@ -57,6 +59,7 @@ public class ChapterViewMapper {
         chapterViewResponse.setMeinMonoId(chapterView.getMeinMonoId());
 
         chapterViewResponse.setCoauthor(coauthors);
+        chapterViewResponse.setPublicationYear(chapterView.getPublicationYear());
 
         return chapterViewResponse;
     }
