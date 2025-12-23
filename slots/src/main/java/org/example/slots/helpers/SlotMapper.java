@@ -7,6 +7,9 @@ import com.example.generated.SlotItemType;
 import org.example.slots.entities.PublicationKind;
 import org.example.slots.entities.SlotDraft;
 import org.example.slots.entities.SlotDraftItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -14,6 +17,9 @@ import java.util.List;
 
 @Component
 public class SlotMapper {
+
+
+    private static Logger logger = LoggerFactory.getLogger(SlotMapper.class);
 
 
     public static DraftView toEmptyDraftView(long userId,
@@ -44,9 +50,19 @@ public class SlotMapper {
                                  BigDecimal sumPoints,
                                  BigDecimal sumPointsRecalc) {
 
-        boolean editable = active.getIsActive()
-                && active.getId() == draft.getEvalCycleId()
-                && active.getActiveYear() == draft.getEvalYear();
+        boolean c1 = active.getIsActive();
+        boolean c2 = active.getId() == draft.getEvalCycleId();
+        boolean c3 = active.getActiveYear() == draft.getEvalYear();
+        boolean editable = c1 && c2 && c3;
+
+        logger.info("editable={} c1(isActive)={} c2(cycleEq)={} c3(yearEq)={} | active[id={},year={}] draft[cycleId={},year={}]",
+                editable, c1, c2, c3,
+                active.getId(), active.getActiveYear(),
+                draft.getEvalCycleId(), draft.getEvalYear());
+
+//        boolean editable = active.getIsActive()
+//                && active.getId() == draft.getEvalCycleId()
+//                && active.getActiveYear() == draft.getEvalYear();
 
         BigDecimal maxSlots = nz(draft.getMaxSlots());
         BigDecimal free = maxSlots.subtract(nz(usedSlots));

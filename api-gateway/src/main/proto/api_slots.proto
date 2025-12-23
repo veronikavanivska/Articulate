@@ -1,0 +1,89 @@
+syntax = "proto3";
+package com.example.generated;
+import "google/protobuf/empty.proto";
+import "common.proto";
+option java_multiple_files = true;
+
+service SlotService {
+  rpc AddToActiveSlot(AddToSlotRequest) returns (DraftView);
+  rpc RemoveFromActiveSlot(RemoveFromSlotRequest) returns (DraftView);
+
+  rpc GetDraft(GetDraftRequest) returns (DraftView);
+  rpc syncSlotItem(SyncSlotItemRequest) returns (SyncSlotItemResponse);
+}
+enum SlotSyncAction {
+  SLOT_SYNC_ACTION_UNSPECIFIED = 0;
+  SLOT_SYNC_ACTION_UPDATED = 1;
+  SLOT_SYNC_ACTION_DELETED = 2;
+}
+
+message SyncSlotItemRequest {
+  SlotSyncAction action = 1;
+  SlotItemType itemType = 2;
+  int64 itemId = 3;
+}
+
+message SyncSlotItemResponse {
+  ApiResponse response = 1;
+  int32 affected = 2;
+}
+
+enum SlotItemType {
+  SLOT_ITEM_ARTICLE = 0;
+  SLOT_ITEM_MONOGRAPH = 1;
+  SLOT_ITEM_CHAPTER = 2;
+}
+
+message AddToSlotRequest {
+  int64 userId = 1;        // gateway z JWT
+  int64 disciplineId = 2;  // user wybiera dyscyplinę
+  SlotItemType itemType = 3;
+  int64 itemId = 4;        // ID publikacji/monografii/rozdziału
+}
+
+message RemoveFromSlotRequest {
+  int64 userId = 1;
+  int64 disciplineId = 2;
+  SlotItemType itemType = 3;
+  int64 itemId = 4;
+}
+
+message GetDraftRequest {
+  int64 userId = 1;
+  int64 disciplineId = 2;
+
+  // jeżeli 0 → użyj aktywnego cyklu i activeYear
+  int64 cycleId = 3;
+  int32 evalYear = 4;
+}
+
+message DraftView {
+  int64 draftId = 1;       // 0 jeśli draft jeszcze nie istnieje
+  int64 userId = 2;
+  int64 disciplineId = 3;
+  int64 cycleId = 4;
+  int32 evalYear = 5;
+
+  bool editable = 6;       // true tylko gdy cycle.isActive == true i evalYear==activeYear
+
+  double maxSlots = 7;
+  double usedSlots = 8;
+  double freeSlots = 9;
+
+  double sumPoints = 10;
+  double sumPointsRecalc = 11;
+
+  repeated DraftItem items = 12;
+}
+
+message DraftItem {
+  SlotItemType itemType = 1;
+  int64 itemId = 2;
+
+  int32 publicationYear = 3;
+  string title = 4;
+
+  double points = 5;
+  double slotValue = 6;
+  double pointsRecalc = 7;
+}
