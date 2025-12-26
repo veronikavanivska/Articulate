@@ -23,7 +23,7 @@ import java.util.List;
 @RequestMapping("/article/admin")
 public class AdminArticleController {
 
-    @GetMapping("/listPublication")
+    @PostMapping("/listPublication")
     public ListPublicationResponse listPublication(@RequestBody AdminListRequest request) {
 
         var response = AdminArticleClient.adminListPublications(request.getId(),request.getTypeId(),request.getDisciplineId(),request.getCycleId(),request.getPage(),request.getSize(),request.getSortBy(),request.getSortDir());
@@ -45,7 +45,7 @@ public class AdminArticleController {
 
     }
 
-    @GetMapping("/getPublication")
+    @PostMapping("/getPublication")
     public  PublicationViewResponse getPublication(@RequestBody AdminGetRequest request) {
         var response = AdminArticleClient.adminGetPublication(request.getId(), request.getOwnerId());
 
@@ -54,7 +54,7 @@ public class AdminArticleController {
         return viewResponse;
     }
 
-    @GetMapping("/listDisciplines")
+    @PostMapping("/listDisciplines")
     public  ListSmthResponse<RefItem> listDisciplines(@RequestBody ListSmthRequest request) {
         var response = AdminArticleClient.adminListDisciplines(request.getPage(), request.getSize(), request.getSortDir());
 
@@ -112,7 +112,7 @@ public class AdminArticleController {
         return apiResponse;
     }
 
-    @GetMapping("/listTypes")
+    @PostMapping("/listTypes")
     public ListSmthResponse<RefItem> listTypes(@RequestBody ListSmthRequest request) {
         var response = AdminArticleClient.adminListPublicationTypes(request.getPage(), request.getSize(), request.getSortDir());
 
@@ -166,7 +166,7 @@ public class AdminArticleController {
         return apiResponse;
     }
 
-    @GetMapping("/listEvalCycles")
+    @PostMapping("/listEvalCycles")
     public ListSmthResponse<CycleItem> listEvalCycles(@RequestBody ListSmthRequest request) {
         var response = AdminArticleClient.adminListEvalCycles(request.getPage(), request.getSize(), request.getSortDir());
 
@@ -181,6 +181,7 @@ public class AdminArticleController {
             item.setActive(cycle.getIsActive());
             item.setMeinVersionId(cycle.getMeinVersionId());
             item.setMeinMonoVersionId(cycle.getMonoVersionId());
+            item.setActiveYear(cycle.getActiveYear());
             cycleItem.add(item);
         }
 
@@ -204,6 +205,7 @@ public class AdminArticleController {
         cycleItem.setMeinMonoVersionId(response.getMonoVersionId());
         cycleItem.setMeinVersionId(response.getMeinVersionId());
         cycleItem.setActiveYear(response.getActiveYear());
+
 
         return cycleItem;
     }

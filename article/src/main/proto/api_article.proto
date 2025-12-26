@@ -95,6 +95,7 @@ message AdminListMeinJournalsRequest {
   int32 size = 7;               // domyślnie 20, max 100
   string sortDir = 9;           // "ASC"|"DESC" (domyślnie ASC)
 }
+
 message AdminListMeinJournalsResponse {
   repeated MeinJournalItem items = 1;
   PageMeta page = 2;

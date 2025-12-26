@@ -9,8 +9,8 @@ public class CycleItem {
     private int yearTo;
     private String name;
     private boolean isActive;
-    private long meinVersionId;
-    private long meinMonoVersionId;
+    private Long meinVersionId;
+    private Long meinMonoVersionId;
     private long activeYear;
 }
 

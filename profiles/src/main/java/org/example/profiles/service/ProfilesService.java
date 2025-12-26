@@ -1,6 +1,7 @@
 package org.example.profiles.service;
 
 import com.example.generated.*;
+import com.google.protobuf.Empty;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -8,8 +9,14 @@ import org.example.profiles.entities.ProfileUser;
 import org.example.profiles.helper.Mapper;
 import org.example.profiles.repositories.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Set;
 
 
 @Service
@@ -355,6 +362,94 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
         responseObserver.onNext(resp);
         responseObserver.onCompleted();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void listAllProfiles(ListAllProfilesRequest request,
+                                StreamObserver<ListAllProfilesResponse> responseObserver) {
+
+        String q = request.getFullname() == null ? "" : request.getFullname().trim();
+
+        int page = Math.max(request.getPage(), 0);
+        int sizeRaw = request.getSize();
+        int size = sizeRaw <= 0 ? 20 : Math.min(sizeRaw, 100);
+
+        Sort sort = buildSort(request.getSortBy(), request.getSortDir());
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<ProfileUser> result = profileUserRepository.searchByFullname(q, pageable);
+
+        ListAllProfilesResponse.Builder resp = ListAllProfilesResponse.newBuilder()
+                .setTotalElements(result.getTotalElements())
+                .setTotalPages(result.getTotalPages())
+                .setResponse(ApiResponse.newBuilder().setCode(200).setMessage("OK").build());
+
+        for (ProfileUser pu : result.getContent()) {
+            AdminProfileListItem.Builder item = AdminProfileListItem.newBuilder()
+                    .setUserId(pu.getUserId())
+                    .setFullname(nvl(pu.getFullname()));
+
+            if (pu.getWorker() != null) {
+                item.setHasWorker(true)
+                        .setWorkerDegreeTitle(nvl(pu.getWorker().getDegreeTitle()))
+                        .setWorkerUnitName(nvl(pu.getWorker().getUnitName()));
+            } else {
+                item.setHasWorker(false);
+            }
+
+            if (pu.getAdmin() != null) {
+                item.setHasAdmin(true)
+                        .setAdminUnitName(nvl(pu.getAdmin().getUnitName()));
+            } else {
+                item.setHasAdmin(false);
+            }
+
+            resp.addItems(item);
+        }
+
+        responseObserver.onNext(resp.build());
+        responseObserver.onCompleted();
+    }
+
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public void listDisciplines(Empty request, StreamObserver<ListDisciplineResponse> responseObserver) {
+
+        var disciplines = disciplineRepository.findAll(Sort.by(Sort.Direction.ASC, "name"));
+
+        ListDisciplineResponse.Builder resp = ListDisciplineResponse.newBuilder()
+                .setResponse(ApiResponse.newBuilder().setCode(200).setMessage("OK").build());
+
+        for (var d : disciplines) {
+            resp.addDisciplines(DisciplineRef.newBuilder()
+                    .setId(d.getId())
+                    .setName(d.getName() == null ? "" : d.getName())
+                    .build());
+        }
+
+        responseObserver.onNext(resp.build());
+        responseObserver.onCompleted();
+    }
+
+    private static String nvl(String s) {
+        return s == null ? "" : s;
+    }
+
+    private static Sort buildSort(String sortBy, String sortDir) {
+        // Dopasuj do NAZW PÓL w encji ProfileUser (nie do kolumn SQL)
+        // Najczęściej: "userId", "fullname", "createdAt", "updatedAt"
+        Set<String> allowed = Set.of( "fullname", "createdAt", "updatedAt");
+
+        String by = (sortBy == null) ? "fullname" : sortBy.trim();
+        if (!allowed.contains(by)) by = "fullname";
+
+        Sort.Direction dir = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        return Sort.by(dir, by);
+    }
+
+
 
 
 }

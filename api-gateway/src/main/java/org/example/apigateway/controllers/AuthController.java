@@ -4,7 +4,11 @@ import org.example.apigateway.clients.AuthClient;
 import org.example.apigateway.config.SecurityConfig;
 import org.example.apigateway.requests.auth.*;
 import org.example.apigateway.responses.Response;
+import org.example.apigateway.responses.RoleResponse;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RequestMapping("/auth")
 @RestController
@@ -123,5 +127,27 @@ public class AuthController {
                 apiResponse.getCode(),
                 apiResponse.getMessage()
         );
+    }
+
+    @GetMapping("/roles")
+    public List<RoleResponse> roles() {
+        List<RoleResponse> out = new ArrayList<>();
+
+        for (RoleName r : RoleName.values()) {
+            RoleResponse opt = new RoleResponse();
+            opt.setValue(r.name());
+            opt.setLabel(mapRoleLabel(r));
+            out.add(opt);
+        }
+        return out;
+    }
+
+    private String mapRoleLabel(RoleName r) {
+        return switch (r) {
+            case ROLE_ADMIN -> "ADMIN";
+            case ROLE_WORKER -> "WORKER";
+            case ROLE_USER -> "USER";
+            default -> r.name();
+        };
     }
 }

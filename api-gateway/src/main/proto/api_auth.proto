@@ -67,11 +67,7 @@ message LogoutRequest{
 }
 
 
-enum RoleName {
-  ROLE_USER = 0;
-  ROLE_WORKER = 1;
-  ROLE_ADMIN = 2;
-}
+
 
 service AuthService{
   rpc register(RegistrationRequest) returns (ApiResponse);

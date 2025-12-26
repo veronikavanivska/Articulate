@@ -21,6 +21,7 @@ public class ArticleClient {
     }
 
     public static ListDisciplinesResponse listDisciplines(){
+
         return stub.listDisciplines(Empty.getDefaultInstance());
     }
 

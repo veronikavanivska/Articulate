@@ -23,7 +23,7 @@ import java.util.List;
 @RestController
 public class AdminMonoController {
 
-    @GetMapping("/listMonographs")
+    @PostMapping("/listMonographs")
     public ListMonographsResponse listMonographs(@RequestBody AdminListRequest request) {
         var response = AdminMonoClient.listMonographs(request.getId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());
 
@@ -41,7 +41,7 @@ public class AdminMonoController {
         return res;
     }
 
-    @GetMapping("/listChapters")
+    @PostMapping("/listChapters")
     public ListChaptersResponse listChapters(@RequestBody AdminListRequest request) {
         var response = AdminMonoClient.listChapters(request.getId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());
         List<ChapterViewResponse> chapterView = new ArrayList<>();
@@ -58,7 +58,7 @@ public class AdminMonoController {
     }
 
 
-    @GetMapping("/getMonographs")
+    @PostMapping("/getMonographs")
     public MonographViewResponse getMonograph(@RequestBody AdminGetRequest request) {
         var response = AdminMonoClient.getMonograph(request.getId(), request.getOwnerId());
 
@@ -66,7 +66,7 @@ public class AdminMonoController {
         return result;
     }
 
-    @GetMapping("/getChapters")
+    @PostMapping("/getChapters")
     public ChapterViewResponse getChapter(@RequestBody AdminGetRequest request) {
         var response = AdminMonoClient.getChapter(request.getId(), request.getOwnerId());
         ChapterViewResponse result = ChapterViewMapper.map(response);

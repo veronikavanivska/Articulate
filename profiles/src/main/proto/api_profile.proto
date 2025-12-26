@@ -89,6 +89,33 @@ message RemoveWorkerDisciplineRequest {
   int64 disciplineId = 2;
 }
 
+message ListAllProfilesRequest {
+  string fullname = 1; // wyszukiwanie po imię+nazwisko
+  int32 page = 2;
+  int32 size = 3;
+  string sortBy = 4;   // np. "userId" albo "fullname"
+  string sortDir = 5;  // "asc" / "desc"
+}
+
+message AdminProfileListItem {
+  int64 userId = 1;
+  string fullname = 2;
+
+  bool hasWorker = 3;
+  bool hasAdmin = 4;
+
+  // opcjonalnie do tabelki:
+  string workerDegreeTitle = 5;
+  string workerUnitName = 6;
+  string adminUnitName = 7;
+}
+
+message ListAllProfilesResponse {
+  repeated AdminProfileListItem items = 1;
+  int64 totalElements = 2;
+  int32 totalPages = 3;
+  ApiResponse response = 4;
+}
 
 
 /* =========================
@@ -129,6 +156,12 @@ message AdminInitStatementsForYearResponse {
 }
 
 
+message ListDisciplineResponse {
+  repeated DisciplineRef disciplines = 1;
+  ApiResponse response = 2;
+}
+
+
 service ProfilesService{
   rpc GetMyProfile(GetProfileRequest) returns (GetProfileResponse);
   rpc UpdateMyProfile(UpdateMyProfileRequest) returns (UpdateMyProfileResponse);
@@ -141,4 +174,7 @@ service ProfilesService{
 
   rpc GetOrCreateStatement(GetOrCreateStatementRequest) returns (GetOrCreateStatementResponse);
   rpc AdminInitStatementsForYear(AdminInitStatementsForYearRequest) returns (AdminInitStatementsForYearResponse);
+
+  rpc ListAllProfiles(ListAllProfilesRequest) returns (ListAllProfilesResponse);
+  rpc ListDisciplines(google.protobuf.Empty) returns (ListDisciplineResponse);
 }

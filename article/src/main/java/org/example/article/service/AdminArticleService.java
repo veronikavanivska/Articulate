@@ -121,9 +121,13 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
 
         for(EvalCycle evalCycle : page.getContent()){
             long mvId = 0L;
+            long monoId =0;
 
             if (evalCycle.getMeinVersion() != null && evalCycle.getMeinVersion().getId() != null) {
                 mvId = evalCycle.getMeinVersion().getId();
+            }
+            if (evalCycle.getMeinMonoVersion() != null && evalCycle.getMeinMonoVersion().getId() != null) {
+                monoId = evalCycle.getMeinMonoVersion().getId();
             }
             response.addItems(CycleItem.newBuilder()
                     .setId(evalCycle.getId())
@@ -132,6 +136,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                     .setYearTo(evalCycle.getYearTo())
                     .setIsActive(evalCycle.isActive())
                     .setMeinVersionId(mvId)
+                    .setMonoVersionId(monoId)
                     .setActiveYear(evalCycle.getActiveYear() == null ? 0 : evalCycle.getActiveYear())
                     .build());
         }
@@ -269,17 +274,17 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         cycle.setActive(active);
         cycle.setActiveYear(activeYear);
 
-
-
-
-
         EvalCycle saved = evalCycleRepository.save(cycle);
 
         long mvId = 0;
-
+        long monoId =0;
         if (saved.getMeinVersion() != null && saved.getMeinVersion().getId() != null) {
             mvId = saved.getMeinVersion().getId();
         }
+        if (saved.getMeinMonoVersion() != null && saved.getMeinMonoVersion().getId() != null) {
+            monoId = saved.getMeinMonoVersion().getId();
+        }
+
         CycleItem resp = CycleItem.newBuilder()
                 .setId(saved.getId())
                 .setName(saved.getName() == null ? "" : saved.getName())
@@ -287,6 +292,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                 .setYearTo(saved.getYearTo())
                 .setIsActive(saved.isActive())
                 .setMeinVersionId(mvId)
+                .setMonoVersionId(monoId)
                 .setActiveYear(saved.getActiveYear() == null ? 0 : saved.getActiveYear())
                 .build();
 
@@ -391,7 +397,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                         .withDescription("name must not be blank.").asRuntimeException());
                 return;
             }
-            if (evalCycleRepository.existsByName(evalName)) {
+            if (evalCycleRepository.existsByNameAndIdNot(evalName,evalId )) {
                 responseObserver.onError(Status.ALREADY_EXISTS
                         .withDescription("Evaluation cycle \"" + evalName + "\" already exists.").asRuntimeException());
                 return;
@@ -455,8 +461,8 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
         if(paths.contains("name"))      cycle.setName(evalName);
         if (paths.contains("yearFrom")) cycle.setYearFrom(yearFrom);
         if (paths.contains("yearTo"))   cycle.setYearTo(yearTo);
-        if (paths.contains("isActive")) {
-            evalCycleRepository.deactivateAllExcept(evalId);
+        if (paths.contains("isActive") ) {
+
             cycle.setActive(isActive);
 
         }

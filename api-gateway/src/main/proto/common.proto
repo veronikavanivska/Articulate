@@ -9,3 +9,8 @@ message ApiResponse{
   uint32 code = 1;
   string message = 2;
 }
+enum RoleName {
+  ROLE_USER = 0;
+  ROLE_WORKER = 1;
+  ROLE_ADMIN = 2;
+}

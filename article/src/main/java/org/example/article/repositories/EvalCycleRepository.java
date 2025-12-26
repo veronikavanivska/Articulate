@@ -16,8 +16,9 @@ public interface EvalCycleRepository extends JpaRepository<EvalCycle, Long> {
     @Query("SELECT c FROM EvalCycle c WHERE c.yearFrom <= :y AND c.yearTo >= :y")
     Optional<EvalCycle> findByYear(@Param("y") int year);
 
-    boolean existsByName(String name);
+    boolean existsByNameAndIdNot(String name, Long id);
 
+    boolean existsByName(String name);
     Optional<EvalCycle> findFirstByIsActiveTrue();
 
 

@@ -1,6 +1,7 @@
 package org.example.apigateway.clients;
 
 import com.example.generated.*;
+import com.google.protobuf.Empty;
 import io.grpc.Channel;
 import org.example.apigateway.Client;
 import org.example.apigateway.requests.profiles.UpdateProfileRequest;
@@ -68,6 +69,21 @@ public class ProfilesClient {
                 .setEvalYear(evalYear)
                 .build();
         return stub.adminInitStatementsForYear(req);
+    }
+
+    public static ListAllProfilesResponse allProfiles(String fullName, Integer page ,  Integer size , String sortBy, String sortDir) {
+        ListAllProfilesRequest request = ListAllProfilesRequest.newBuilder()
+                .setFullname(fullName)
+                .setPage(page)
+                .setSize(size)
+                .setSortBy(sortBy)
+                .setSortDir(sortDir)
+                .build();
+        return stub.listAllProfiles(request);
+    }
+
+    public static ListDisciplineResponse listDiscipline() {
+        return stub.listDisciplines(Empty.getDefaultInstance());
     }
 
     public static void init(Channel channel) {

@@ -37,7 +37,7 @@ public class WorkerArticleController {
 
     }
 
-    @GetMapping("/worker/listMyPublication")
+    @PostMapping("/worker/listMyPublication")
     public ListPublicationResponse listMyPublications(@RequestBody ListRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 

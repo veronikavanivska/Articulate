@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("/monograph/admin")
+@RequestMapping("/monograph/worker")
 public class WorkerMonoController {
 
 
@@ -94,7 +94,7 @@ public class WorkerMonoController {
         return chapterViewResponse;
     }
 
-    @GetMapping("/listMyMonographs")
+    @PostMapping("/listMyMonographs")
     public ListMonographsResponse listMyMonographs(@RequestBody ListRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
@@ -121,7 +121,7 @@ public class WorkerMonoController {
     }
 
 
-    @GetMapping("/listMyChapters")
+    @PostMapping("/listMyChapters")
     public org.example.apigateway.responses.mono.ListChaptersResponse listMyChapters(@RequestBody ListRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
