@@ -36,7 +36,7 @@ public class SlotController {
         return draftViewResponse;
     }
 
-    @GetMapping("/getSlots")
+    @PostMapping("/getSlots")
     public DraftViewResponse getSlots(@RequestBody GetDraftRequest request) {
         Long userId = Long.parseLong(SecurityConfig.getCurrentUserId());
 
