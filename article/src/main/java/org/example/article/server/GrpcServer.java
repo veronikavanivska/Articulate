@@ -16,7 +16,9 @@ public class GrpcServer {
     private final WorkerMonoService workerMonoService;
     private final AdminMonographService adminMonographService;
     private final ArticleSlotService articleSlotService;
-    public GrpcServer(ArticleService meinImportService,ArticleSlotService articleSlotService, AdminMonographService adminMonographService, WorkerMonoService workerMonoService, ETLArticleService etlArticleService, AdminArticleService adminArticleService, WorkerArticleService workerArticleService, ELTMonoService monoETLService) {
+    private final ArticleSync articleSync;
+
+    public GrpcServer(ArticleSync articleSync, ArticleService meinImportService,ArticleSlotService articleSlotService, AdminMonographService adminMonographService, WorkerMonoService workerMonoService, ETLArticleService etlArticleService, AdminArticleService adminArticleService, WorkerArticleService workerArticleService, ELTMonoService monoETLService) {
         this.adminArticleService = adminArticleService;
         this.adminMonographService = adminMonographService;
         this.etlArticleService = etlArticleService;
@@ -25,6 +27,7 @@ public class GrpcServer {
         this.monoETLService = monoETLService;
         this.workerMonoService = workerMonoService;
         this.articleSlotService = articleSlotService;
+        this.articleSync = articleSync;
     }
 
     public void start() {
@@ -41,6 +44,7 @@ public class GrpcServer {
                     .addService(workerMonoService)
                     .addService(adminMonographService)
                     .addService(articleSlotService)
+                    .addService(articleSync)
                     .build();
 
             server.start();

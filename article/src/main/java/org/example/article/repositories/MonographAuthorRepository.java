@@ -21,4 +21,14 @@ public interface MonographAuthorRepository extends JpaRepository<MonographAuthor
     @Query("DELETE FROM MonographAuthor c WHERE c.monograph.id = :monographId")
     void deleteByMonographId(@Param("monographId") Long monographId);
 
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+        update monograph_author
+        set full_name = :fullName
+        where user_id = :userId
+        """, nativeQuery = true)
+    int updateFullNameByUserId(@Param("userId") long userId, @Param("fullName") String fullName);
+
 }

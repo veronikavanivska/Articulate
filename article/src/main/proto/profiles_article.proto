@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package com.example.generated;
+
+option java_multiple_files = true;
+option java_package = "com.example.generated";
+
+service ArticleProfileSyncService {
+  rpc SyncAuthorFullName(SyncAuthorFullNameRequest) returns (SyncAuthorFullNameResponse);
+}
+
+message SyncAuthorFullNameRequest {
+  int64 userId = 1;
+  string fullName = 2;
+}
+
+message SyncAuthorFullNameResponse {
+  int32 updated_publication_coauthor = 1;
+  int32 updated_monograph_author = 2;
+  int32 updated_monograph_chapter_author = 3;
+  int32 total_updated = 4;
+}

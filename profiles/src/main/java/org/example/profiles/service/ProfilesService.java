@@ -104,14 +104,26 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
         var user = request.getUser();
         var entity = profileUserRepository.findByUserId(userId).orElseThrow();
 
-        entity.setFullname(user.getFullname() == null ? "" : user.getFullname());
+        String oldFullName = entity.getFullname() == null ? "" : entity.getFullname().trim();
+        String newFullName = user.getFullname() == null ? "" : user.getFullname().trim();
+
+        entity.setFullname(newFullName);
         entity.setBio(user.getBio() == null ? "" : user.getBio());
         profileUserRepository.save(entity);
 
+        if (!java.util.Objects.equals(oldFullName, newFullName)) {
+            try {
+                org.example.profiles.clients.ArticleClient.syncAuthorFullName(userId, newFullName);
+                System.out.println("[AuthorNameSync] updated userId=" + userId);
+            } catch (Exception e) {
+                System.err.println("[AuthorNameSync] failed userId=" + userId + ": " + e.getMessage());
+            }
+        }
+
         com.example.generated.ProfileUser protoUser = com.example.generated.ProfileUser.newBuilder()
-                    .setFullname(entity.getFullname())
-                    .setBio(entity.getBio())
-                    .build();
+                .setFullname(entity.getFullname())
+                .setBio(entity.getBio())
+                .build();
 
 
 
@@ -438,8 +450,7 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
     }
 
     private static Sort buildSort(String sortBy, String sortDir) {
-        // Dopasuj do NAZW PÓL w encji ProfileUser (nie do kolumn SQL)
-        // Najczęściej: "userId", "fullname", "createdAt", "updatedAt"
+
         Set<String> allowed = Set.of( "fullname", "createdAt", "updatedAt");
 
         String by = (sortBy == null) ? "fullname" : sortBy.trim();

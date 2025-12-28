@@ -35,4 +35,6 @@ service ProfilesCommandsService {
   rpc DeleteAdminProfile(UserId) returns (ApiResponse);
 
   rpc DeleteAllProfiles(UserId) returns (ApiResponse);
+
+
 }

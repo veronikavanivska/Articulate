@@ -17,6 +17,15 @@ public interface PublicationCoauthorRepository extends JpaRepository<Publication
 
     @Modifying
     @Transactional
+    @Query(value = """
+        update publication_coauthor
+        set full_name = :fullName
+        where user_id = :userId
+        """, nativeQuery = true)
+    int updateFullNameByUserId(@Param("userId") long userId, @Param("fullName") String fullName);
+
+    @Modifying
+    @Transactional
     @Query("DELETE FROM PublicationCoauthor c WHERE c.publication.id = :publicationId")
     void deleteByPublicationId(@Param("publicationId") Long publicationId);
 }
