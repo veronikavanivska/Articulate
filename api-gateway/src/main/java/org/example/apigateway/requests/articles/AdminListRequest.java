@@ -8,6 +8,7 @@ public class AdminListRequest {
     private Long typeId;
     private Long disciplineId;
     private Long cycleId;
+    private String title;
 
     private int page = 0;
     private int size = 20;

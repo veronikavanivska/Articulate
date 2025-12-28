@@ -4,9 +4,10 @@ import lombok.Data;
 
 @Data
 public class ListMeinMonoPublishersRequest {
-    private long versionId;
-    private int page;
-    private int size;
+    private Long versionId;
+    private Integer page;
+    private Integer size;
     private String sortDir;
+    private String title;
 
 }

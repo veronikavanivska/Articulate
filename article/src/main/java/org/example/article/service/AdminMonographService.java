@@ -6,6 +6,7 @@ import org.example.article.entities.MEiN.monographs.MonographChapter;
 import org.example.article.entities.MEiN.monographs.Monographic;
 import org.example.article.helpers.ChapterSpecification;
 import org.example.article.helpers.MonographSpecification;
+import org.example.article.helpers.SpecText;
 import org.example.article.repositories.MonographChapterRepository;
 import org.example.article.repositories.MonographicRepository;
 import org.springframework.data.domain.Page;
@@ -33,7 +34,7 @@ public class AdminMonographService extends AdminMonographServiceGrpc.AdminMonogr
     public void adminListMonographs(ListAdminMonographsRequest request, StreamObserver<ListMonographsResponse> responseObserver) {
         Long authorId = request.getOwnerId() > 0 ? request.getOwnerId() : null;
         doList(responseObserver , authorId , request.getTypeId(), request.getDisciplineId(), request.getCycleId(),
-                request.getPage(), request.getSize(), request.getSortBy() , request.getSortDir());
+                request.getPage(), request.getSize(), request.getSortBy() , request.getSortDir(), request.getTitle());
 
     }
 
@@ -41,7 +42,7 @@ public class AdminMonographService extends AdminMonographServiceGrpc.AdminMonogr
     public void adminListChapters(ListAdminChaptersRequest request, StreamObserver<ListChaptersResponse> responseObserver) {
         Long authorId = request.getOwnerId() > 0 ? request.getOwnerId() : null;
         doListChapter(responseObserver , authorId , request.getTypeId(), request.getDisciplineId(), request.getCycleId(),
-                request.getPage(), request.getSize(), request.getSortBy() , request.getSortDir());
+                request.getPage(), request.getSize(), request.getSortBy() , request.getSortDir(),request.getTitle());
 
     }
 
@@ -62,7 +63,7 @@ public class AdminMonographService extends AdminMonographServiceGrpc.AdminMonogr
     }
 
     private void doList(StreamObserver<ListMonographsResponse> responseObserver, Long authorId, long typeId, long disciplineId, long cycleId,
-                        int page, int size, String sortBy, String sortDir) {
+                        int page, int size, String sortBy, String sortDir,String title) {
 
         int pg = Math.max(0, page);
         int sz = size > 0 ? Math.min(size, 100) : 20;
@@ -82,7 +83,7 @@ public class AdminMonographService extends AdminMonographServiceGrpc.AdminMonogr
                 typeId > 0 ? typeId : null,
                 disciplineId > 0 ? disciplineId : null,
                 cycleId > 0 ? cycleId : null
-        );
+        ).and(SpecText.containsIgnoreCase(title, "title"));
 
         Page<Monographic> pages = monographicRepository.findAll(spec, pageable);
 
@@ -105,7 +106,7 @@ public class AdminMonographService extends AdminMonographServiceGrpc.AdminMonogr
     }
 
     private void doListChapter(StreamObserver<ListChaptersResponse> responseObserver, Long authorId, long typeId, long disciplineId, long cycleId,
-                               int page, int size, String sortBy, String sortDir) {
+                               int page, int size, String sortBy, String sortDir,String title) {
 
         int pg = Math.max(0, page);
         int sz = size > 0 ? Math.min(size, 100) : 20;
@@ -125,7 +126,7 @@ public class AdminMonographService extends AdminMonographServiceGrpc.AdminMonogr
                 typeId > 0 ? typeId : null,
                 disciplineId > 0 ? disciplineId : null,
                 cycleId > 0 ? cycleId : null
-        );
+        ).and(SpecText.containsIgnoreCase(title, "monograficChapterTitle"));
 
         Page<MonographChapter> pages = monographChapterRepository.findAll(spec, pageable);
 

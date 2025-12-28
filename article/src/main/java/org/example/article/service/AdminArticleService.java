@@ -53,7 +53,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
     public void adminListPublications(ListAdminPublicationRequest request, StreamObserver<ListPublicationsResponse> responseObserver) {
         Long authorId = request.getOwnerId() > 0 ? request.getOwnerId() : null;
         doList(responseObserver , authorId , request.getTypeId(), request.getDisciplineId(), request.getCycleId(),
-                request.getPage(), request.getSize(), request.getSortBy() , request.getSortDir());
+                request.getPage(), request.getSize(), request.getSortBy() , request.getSortDir(), request.getTitle());
     }
 
     @Override
@@ -610,11 +610,11 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
      *  Private function for ListPublication
      */
     private void doList(StreamObserver<ListPublicationsResponse> responseObserver, Long authorId, long typeId, long disciplineId, long cycleId,
-                        int page, int size, String sortBy, String sortDir){
+                        int page, int size, String sortBy, String sortDir, String title){
 
         int pg = Math.max(0, page);
         int sz = size > 0 ? Math.min(size, 100) : 20;
-
+        String q = (title == null) ? "" : title.trim();
         String sortProposition = switch(sortBy){
             case "publicationYear" -> "publicationYear";
             case "meinPoints"      -> "meinPoints";
@@ -629,7 +629,8 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                 authorId ,
                 typeId       > 0 ? typeId       : null,
                 disciplineId > 0 ? disciplineId : null,
-                cycleId      > 0 ? cycleId      : null
+                cycleId      > 0 ? cycleId      : null,
+                q
         );
 
         Page<Publication> pages = publicationRepository.findAll(spec, pageable);

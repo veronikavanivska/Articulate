@@ -8,10 +8,7 @@ import org.example.article.entities.MEiN.monographs.MonographAuthor;
 import org.example.article.entities.MEiN.monographs.MonographChapter;
 import org.example.article.entities.MEiN.monographs.MonographChapterAuthor;
 import org.example.article.entities.MEiN.monographs.Monographic;
-import org.example.article.helpers.ChapterSpecification;
-import org.example.article.helpers.CommutePoints;
-import org.example.article.helpers.MonographSpecification;
-import org.example.article.helpers.SlotSyncService;
+import org.example.article.helpers.*;
 import org.example.article.repositories.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -627,17 +624,17 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
     @Override
     public void listMyMonographs(ListMonographsRequest request, StreamObserver<ListMonographsResponse> responseObserver) {
         doList(responseObserver, request.getUserId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(),
-                request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());
+                request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
     }
 
     @Override
     public void listMyChapters(ListChaptersRequest request, StreamObserver<ListChaptersResponse> responseObserver) {
         doListChapter(responseObserver, request.getUserId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(),
-                request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());
+                request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
     }
 
     private void doList(StreamObserver<ListMonographsResponse> responseObserver, Long authorId, long typeId, long disciplineId, long cycleId,
-                        int page, int size, String sortBy, String sortDir) {
+                        int page, int size, String sortBy, String sortDir,String title) {
 
         int pg = Math.max(0, page);
         int sz = size > 0 ? Math.min(size, 100) : 20;
@@ -657,7 +654,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
                 typeId > 0 ? typeId : null,
                 disciplineId > 0 ? disciplineId : null,
                 cycleId > 0 ? cycleId : null
-        );
+        ).and(SpecText.containsIgnoreCase(title, "title"));
 
         Page<Monographic> pages = monographicRepository.findAll(spec, pageable);
 
@@ -680,7 +677,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
     }
 
     private void doListChapter(StreamObserver<ListChaptersResponse> responseObserver, Long authorId, long typeId, long disciplineId, long cycleId,
-                        int page, int size, String sortBy, String sortDir) {
+                        int page, int size, String sortBy, String sortDir, String title) {
 
         int pg = Math.max(0, page);
         int sz = size > 0 ? Math.min(size, 100) : 20;
@@ -700,7 +697,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
                 typeId > 0 ? typeId : null,
                 disciplineId > 0 ? disciplineId : null,
                 cycleId > 0 ? cycleId : null
-        );
+        ).and(SpecText.containsIgnoreCase(title, "monograficChapterTitle"));
 
         Page<MonographChapter> pages = monographChapterRepository.findAll(spec, pageable);
 

@@ -98,7 +98,7 @@ public class WorkerMonoController {
     public ListMonographsResponse listMyMonographs(@RequestBody ListRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerMonoClient.listMonographs(userId, request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());
+        var response = WorkerMonoClient.listMonographs(userId, request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
 
         ListMonographsResponse monographsResponse = new ListMonographsResponse();
 
@@ -125,7 +125,7 @@ public class WorkerMonoController {
     public org.example.apigateway.responses.mono.ListChaptersResponse listMyChapters(@RequestBody ListRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerMonoClient.listChapters(userId, request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());
+        var response = WorkerMonoClient.listChapters(userId, request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(),request.getTitle());
 
         org.example.apigateway.responses.mono.ListChaptersResponse chapterViewResponse = new org.example.apigateway.responses.mono.ListChaptersResponse();
 

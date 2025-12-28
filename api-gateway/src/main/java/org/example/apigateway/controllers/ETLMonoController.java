@@ -1,11 +1,10 @@
 package org.example.apigateway.controllers;
 
-import org.example.apigateway.clients.ETLArticleClient;
 import org.example.apigateway.clients.ETLMonoClient;
+import org.example.apigateway.clients.ProfilesClient;
 import org.example.apigateway.config.SecurityConfig;
 import org.example.apigateway.mappers.MeinMonoPublisherMapper;
 import org.example.apigateway.mappers.MeinMonoVersionItemMapper;
-import org.example.apigateway.mappers.MeinVersionItemMapper;
 import org.example.apigateway.mappers.PageMetaMapper;
 import org.example.apigateway.requests.articles.ListMeinMonoPublishersRequest;
 import org.example.apigateway.requests.articles.ListMeinMonoVersionsRequest;
@@ -23,7 +22,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -202,7 +200,14 @@ public class ETLMonoController {
     @PostMapping("/admin/listMeinMonoPublishers")
     public ResponseEntity<ListMonoPublishersResponse> listMeinMonoPublishers(@RequestBody ListMeinMonoPublishersRequest request) {
         try {
-            var response = ETLMonoClient.adminListMeinMonoPublishers(request.getVersionId(), request.getPage(), request.getSize(), request.getSortDir());
+            Long versionId = request.getVersionId() == null ? 0 : request.getVersionId();
+            String title = request.getTitle() == null ? "" : request.getTitle().trim();
+            int page = request.getPage() == null ? 0 : Math.max(request.getPage(), 0);
+            int size = request.getSize() == null ? 20 : Math.min(Math.max(request.getSize(), 1), 100);
+            String sortDir = request.getSortDir() == null ? "asc" : request.getSortDir().trim();
+
+            //var response = ProfilesClient.allProfiles(title, page, size, sortBy, sortDir);
+            var response = ETLMonoClient.adminListMeinMonoPublishers(versionId, page, size, sortDir, title);
 
             List<MeinMonoPublisherItem> list = response.getItemsList().stream()
                     .map(MeinMonoPublisherMapper::map)

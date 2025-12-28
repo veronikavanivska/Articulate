@@ -90,7 +90,8 @@ message AdminListMeinJournalsRequest {
   int64 version_id = 1;         // 0 => użyj aktywnej
   int32 page = 6;               // 0-based
   int32 size = 7;               // domyślnie 20, max 100
-  string sortDir = 9;           // "ASC"|"DESC" (domyślnie ASC)
+  string sortDir = 9;
+  string title = 10; // "ASC"|"DESC" (domyślnie ASC)
 }
 message AdminListMeinJournalsResponse {
   repeated MeinJournalItem items = 1;
@@ -139,6 +140,7 @@ message ListAdminPublicationRequest{
   int64 typeId = 2;
   int64 disciplineId = 3;
   int64 cycleId = 4;
+  string title = 10;
 
   // paginacja
   int32 page = 5;
@@ -153,6 +155,7 @@ message ListAdminMonographsRequest{
   int64 typeId = 2;
   int64 disciplineId = 3;
   int64 cycleId = 4;
+  string title = 10;
 
   // paginacja
   int32 page = 5;
@@ -166,6 +169,7 @@ message ListAdminChaptersRequest{
   int64 typeId = 2;
   int64 disciplineId = 3;
   int64 cycleId = 4;
+  string title = 10;
 
   // paginacja
   int32 page = 5;
@@ -278,6 +282,7 @@ message ListPublicationsRequest {
   int64 typeId = 2;
   int64 disciplineId = 3;
   int64 cycleId = 4;
+  string title = 9;
 
   // paginacja
   int32 page = 5;          // 0-based
@@ -449,6 +454,7 @@ message ListMonographsRequest {
   int64 typeId = 2;
   int64 disciplineId = 3;
   int64 cycleId = 4;
+  string title = 10;
 
   int32 page = 5;          // 0-based
   int32 size = 6;          // np. 20
@@ -529,6 +535,7 @@ message ListChaptersRequest{
   int64 typeId = 2;
   int64 disciplineId = 3;
   int64 cycleId = 4;
+  string title = 10;
 
   int32 page = 5;
   int32 size = 6;
@@ -608,6 +615,7 @@ message AdminListMeinMonoPublishersRequest {
   int32 page = 2;
   int32 size = 3;
   string sortDir = 9;
+  string title = 10;
 
 }
 

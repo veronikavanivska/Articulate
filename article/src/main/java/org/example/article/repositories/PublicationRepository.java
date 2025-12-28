@@ -32,7 +32,7 @@ public interface PublicationRepository extends JpaRepository<Publication, Long>,
     Optional<Publication> findWithAllRelations(@Param("id") Long id);
 
 
-    @EntityGraph(attributePaths = {"type", "discipline", "cycle", "coauthors"})
+    @EntityGraph(attributePaths = {"type", "discipline", "cycle", "coauthors", "title"})
     Page<Publication> findAll(Specification<Publication> spec, Pageable pageable);
 
     List<Publication> findAllByCycle(EvalCycle cycleId);

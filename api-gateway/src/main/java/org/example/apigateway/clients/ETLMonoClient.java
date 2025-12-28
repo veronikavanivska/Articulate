@@ -60,12 +60,13 @@ public class ETLMonoClient {
         return stub.adminListMeinMonoVersions(request);
     }
 
-    public static AdminListMeinMonoPublishersResponse adminListMeinMonoPublishers(Long versionId, Integer page, Integer size, String sortDir){
+    public static AdminListMeinMonoPublishersResponse adminListMeinMonoPublishers(Long versionId, Integer page, Integer size, String sortDir,String title){
         AdminListMeinMonoPublishersRequest request = AdminListMeinMonoPublishersRequest.newBuilder()
                 .setVersionId(versionId)
                 .setPage(page)
                 .setSize(size)
                 .setSortDir(sortDir)
+                .setTitle(title)
                 .build();
 
         return stub.adminListMeinMonoPublishers(request);

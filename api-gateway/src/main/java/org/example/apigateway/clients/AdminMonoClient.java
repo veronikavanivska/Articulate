@@ -11,7 +11,7 @@ public class AdminMonoClient {
     private static AdminMonographServiceGrpc.AdminMonographServiceBlockingStub stub;
 
     public static ListMonographsResponse listMonographs(Long ownerId, Long typeId, Long disciplineId, Long cycleId, int page,
-                                                        int size, String sortBy, String sortDir) {
+                                                        int size, String sortBy, String sortDir, String title) {
         ListAdminMonographsRequest.Builder request = ListAdminMonographsRequest.newBuilder()
                 .setPage(page)
                 .setSize(size)
@@ -22,12 +22,13 @@ public class AdminMonoClient {
         if (typeId != null) request.setTypeId(typeId);
         if (disciplineId != null) request.setDisciplineId(disciplineId);
         if (cycleId != null) request.setCycleId(cycleId);
+        if (title != null) request.setTitle(title);
 
         return stub.adminListMonographs(request.build());
     }
 
     public static ListChaptersResponse listChapters(Long ownerId, Long typeId, Long disciplineId, Long cycleId, Integer page,
-                                                    int size, String sortBy, String sortDir){
+                                                    int size, String sortBy, String sortDir, String title) {
         ListAdminChaptersRequest.Builder request = ListAdminChaptersRequest.newBuilder()
                                .setPage(page)
                 .setSize(size)
@@ -38,6 +39,7 @@ public class AdminMonoClient {
         if (typeId != null) request.setTypeId(typeId);
         if (disciplineId != null) request.setDisciplineId(disciplineId);
         if (cycleId != null) request.setCycleId(cycleId);
+        if (title != null) request.setTitle(title);
 
         return stub.adminListChapters(request.build());
     }

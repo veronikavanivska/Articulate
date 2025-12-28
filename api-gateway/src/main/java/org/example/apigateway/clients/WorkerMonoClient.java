@@ -221,7 +221,7 @@ public class WorkerMonoClient {
     }
 
     public static ListMonographsResponse listMonographs(long ownerId, Long typeId, Long disciplineId, Long cycleId, int page,
-                                                        int size, String sortBy, String sortDir) {
+                                                        int size, String sortBy, String sortDir, String title) {
 
         ListMonographsRequest.Builder request = ListMonographsRequest.newBuilder()
                 .setUserId(ownerId)
@@ -233,13 +233,14 @@ public class WorkerMonoClient {
         if (typeId != null) request.setTypeId(typeId);
         if (disciplineId != null) request.setDisciplineId(disciplineId);
         if (cycleId != null) request.setCycleId(cycleId);
+        if (title != null) request.setTitle(title);
 
 
 
         return stub.listMyMonographs(request.build());
     }
 
-    public static ListChaptersResponse listChapters(long ownerId, Long typeId, Long disciplineId, Long cycleId, int page, int size, String sortBy, String sortDir) {
+    public static ListChaptersResponse listChapters(long ownerId, Long typeId, Long disciplineId, Long cycleId, int page, int size, String sortBy, String sortDir, String title) {
         ListChaptersRequest.Builder request = ListChaptersRequest.newBuilder()
                 .setUserId(ownerId)
                 .setPage(page)
@@ -250,6 +251,7 @@ public class WorkerMonoClient {
         if (typeId != null) request.setTypeId(typeId);
         if (disciplineId != null) request.setDisciplineId(disciplineId);
         if (cycleId != null) request.setCycleId(cycleId);
+        if (title != null) request.setTitle(title);
 
         return stub.listMyChapters(request.build());
     }

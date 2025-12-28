@@ -11,7 +11,7 @@ public final class PublicationSpecification {
    private PublicationSpecification() {}
 
     public static Specification<Publication> list(
-            Long userId, Long typeId, Long disciplineId, Long cycleId) {
+            Long userId, Long typeId, Long disciplineId, Long cycleId, String title) {
        return (root, query, criteriaBuilder) -> {
            List<jakarta.persistence.criteria.Predicate> preds = new ArrayList<>();
 
@@ -28,6 +28,10 @@ public final class PublicationSpecification {
 
            if(cycleId != null) {
                preds.add(criteriaBuilder.equal(root.join("cycle", JoinType.LEFT).get("id"), cycleId));
+           }
+           if (title != null && !title.trim().isEmpty()) {
+               String pattern = "%" + title.trim().toLowerCase() + "%";
+               preds.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), pattern));
            }
 
            return criteriaBuilder.and(preds.toArray(jakarta.persistence.criteria.Predicate[]::new));

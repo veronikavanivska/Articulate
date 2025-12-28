@@ -26,7 +26,7 @@ public class AdminArticleController {
     @PostMapping("/listPublication")
     public ListPublicationResponse listPublication(@RequestBody AdminListRequest request) {
 
-        var response = AdminArticleClient.adminListPublications(request.getId(),request.getTypeId(),request.getDisciplineId(),request.getCycleId(),request.getPage(),request.getSize(),request.getSortBy(),request.getSortDir());
+        var response = AdminArticleClient.adminListPublications(request.getId(),request.getTypeId(),request.getDisciplineId(),request.getCycleId(),request.getPage(),request.getSize(),request.getSortBy(),request.getSortDir(),request.getTitle());
 
         List<PublicationViewResponse> publicationView = new ArrayList<>();
         for(PublicationView view : response.getItemsList())

@@ -13,7 +13,7 @@ public class AdminArticleClient {
     private static AdminArticleServiceGrpc.AdminArticleServiceBlockingStub stub;
 
     public static ListPublicationsResponse adminListPublications(Long ownerId, Long typeId, Long disciplineId, Long cycleId, int page,
-    int size, String sortBy, String sortDir) {
+    int size, String sortBy, String sortDir,String title) {
 
         ListAdminPublicationRequest.Builder request = ListAdminPublicationRequest.newBuilder()
                 .setPage(page)
@@ -26,6 +26,7 @@ public class AdminArticleClient {
         if (typeId != null) request.setTypeId(typeId);
         if (disciplineId != null) request.setDisciplineId(disciplineId);
         if (cycleId != null) request.setCycleId(cycleId);
+        if(title != null) request.setTitle(title);
 
 
         return stub.adminListPublications(request.build());

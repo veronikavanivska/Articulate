@@ -16,6 +16,7 @@ import org.example.apigateway.responses.MEiNResponse;
 import org.example.apigateway.responses.articles.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -241,9 +242,15 @@ public class ETLArticleController {
     }
 
     @PostMapping("/admin/listMeinJournals")
-    public ResponseEntity<ListMeinJournalResponse> listMeinJournal(@RequestBody ListMeinJournalRequest request) {
+    public ResponseEntity<ListMeinJournalResponse> listMeinJournal(@RequestBody ListMeinJournalRequest request, Sort sort) {
         try {
-            var response = ETLArticleClient.adminListMeinJournals(request.getVersionId(), request.getPage(), request.getSize(), request.getSortDir());
+            Long versionId = request.getVersionId() == null ? 0 : request.getVersionId();
+            String title = request.getTitle() == null ? "" : request.getTitle().trim();
+            int page = request.getPage() == null ? 0 : Math.max(request.getPage(), 0);
+            int size = request.getSize() == null ? 20 : Math.min(Math.max(request.getSize(), 1), 100);
+            String sortDir = request.getSortDir() == null ? "asc" : request.getSortDir().trim();
+
+            var response = ETLArticleClient.adminListMeinJournals(versionId, page, size, sortDir ,title);
 
             List<org.example.apigateway.responses.articles.MeinJournalItem> listOfJournals = response.getItemsList().stream()
                     .map(MeinJournalItemMapper::toMeinJournalItem)

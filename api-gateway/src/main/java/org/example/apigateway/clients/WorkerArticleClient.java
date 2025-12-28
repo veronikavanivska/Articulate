@@ -62,7 +62,7 @@ public class WorkerArticleClient {
     }
 
     public static ListPublicationsResponse listMyPublications(Long userId, Long typeId, Long disciplineId, Long cycleId,
-                                                       int page, int size, String sortBy, String sortDir){
+                                                       int page, int size, String sortBy, String sortDir,String title){
 
         ListPublicationsRequest.Builder request = ListPublicationsRequest.newBuilder()
                 .setPage(page)
@@ -74,6 +74,7 @@ public class WorkerArticleClient {
         if (typeId != null) request.setTypeId(typeId);
         if (disciplineId != null) request.setDisciplineId(disciplineId);
         if (cycleId != null) request.setCycleId(cycleId);
+        if(title != null) request.setTitle(title);
 
         return stub.listMyPublications(request.build());
     }

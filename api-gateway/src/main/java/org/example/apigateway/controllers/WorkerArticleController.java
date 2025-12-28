@@ -41,7 +41,7 @@ public class WorkerArticleController {
     public ListPublicationResponse listMyPublications(@RequestBody ListRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerArticleClient.listMyPublications(userId, request.getTypeId(), request.getDisciplineId(),request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());
+        var response = WorkerArticleClient.listMyPublications(userId, request.getTypeId(), request.getDisciplineId(),request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
 
         ListPublicationResponse publicationResponse = new ListPublicationResponse();
 

@@ -25,7 +25,7 @@ public class AdminMonoController {
 
     @PostMapping("/listMonographs")
     public ListMonographsResponse listMonographs(@RequestBody AdminListRequest request) {
-        var response = AdminMonoClient.listMonographs(request.getId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());
+        var response = AdminMonoClient.listMonographs(request.getId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
 
         List<MonographViewResponse> monographView = new ArrayList<>();
         for(MonographView view: response.getMonoghraficViewList()){
@@ -43,7 +43,7 @@ public class AdminMonoController {
 
     @PostMapping("/listChapters")
     public ListChaptersResponse listChapters(@RequestBody AdminListRequest request) {
-        var response = AdminMonoClient.listChapters(request.getId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir());
+        var response = AdminMonoClient.listChapters(request.getId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
         List<ChapterViewResponse> chapterView = new ArrayList<>();
         for(ChapterView view: response.getChapterViewList()){
             ChapterViewResponse result = ChapterViewMapper.map(view);
