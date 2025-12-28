@@ -4,6 +4,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.example.article.helpers.DisciplineSyncService;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -21,8 +22,9 @@ import java.util.*;
 public class ETLService {
 
     private final JdbcTemplate jdbcTemplate;
-
-    public ETLService(JdbcTemplate jdbcTemplate) {
+    private final DisciplineSyncService disciplineSyncService;
+    public ETLService(JdbcTemplate jdbcTemplate, DisciplineSyncService disciplineSyncService) {
+        this.disciplineSyncService = disciplineSyncService;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -71,6 +73,8 @@ public class ETLService {
         Map<Integer, String> codeColumns = ExcelHeader.detectCodeColumns(labelNames);
 
         updateCodesFromHeader(codeColumns,topNames);
+        ensureDisciplinesFromCodes(codeColumns, topNames);
+
 
         Integer iLp      = ExcelHeader.find(labelNames, "Lp.", "Lp");
         Integer iUID     = ExcelHeader.find(labelNames, "Unikatowy Identyfikator Czasopisma");
@@ -218,5 +222,66 @@ public class ETLService {
                         throw new IllegalStateException("Inserted version, but cannot read it back by hash");
                     }, sha256
             );
+    }
+
+    private void ensureDisciplinesFromCodes(Map<Integer, String> codeColumns, Map<Integer, String> topNames) {
+
+        final String SQL_FIND_DISC_ID_BY_CODE =
+                "SELECT discipline_id FROM discipline_mein_code WHERE mein_code = ? LIMIT 1";
+
+        // wymaga UNIQUE(name) w article.discipline
+        final String SQL_UPSERT_DISC_BY_NAME_RETURN_ID = """
+        INSERT INTO discipline(name)
+        VALUES (?)
+        ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+        RETURNING id
+    """;
+
+        final String SQL_UPDATE_DISC_NAME =
+                "UPDATE discipline SET name = ? WHERE id = ?";
+
+        final String SQL_LINK = """
+        INSERT INTO discipline_mein_code(discipline_id, mein_code)
+        VALUES (?, ?)
+        ON CONFLICT DO NOTHING
+    """;
+
+        // żeby nie robić sync kilka razy dla tej samej dyscypliny w jednej paczce
+        Map<Long, String> touched = new HashMap<>();
+
+        // Iterujemy po kolumnach-kodach
+        for (var entry : codeColumns.entrySet()) {
+            int colId = entry.getKey();
+            String code = entry.getValue();
+
+            String name = topNames.get(colId);
+            if (name == null) continue;
+
+            name = name.trim();
+            if (name.isBlank() || "nan".equalsIgnoreCase(name)) continue;
+
+            Long disciplineId = null;
+
+            // 1) jeśli code już ma mapping -> użyj go (i ewentualnie zrób rename)
+            disciplineId = jdbcTemplate.query(SQL_FIND_DISC_ID_BY_CODE, ps -> ps.setString(1, code), rs ->
+                    rs.next() ? rs.getLong(1) : null
+            );
+
+            if (disciplineId != null) {
+                // Proste podejście: aktualizuj nazwę zawsze (tani update)
+                jdbcTemplate.update(SQL_UPDATE_DISC_NAME, name, disciplineId);
+            } else {
+                // 2) ensure discipline po nazwie i weź id
+                disciplineId = jdbcTemplate.queryForObject(SQL_UPSERT_DISC_BY_NAME_RETURN_ID, Long.class, name);
+
+                // 3) link discipline <-> code
+                jdbcTemplate.update(SQL_LINK, disciplineId, code);
+            }
+
+            touched.put(disciplineId, name);
         }
+
+        disciplineSyncService.syncUpserts(touched);
+    }
+
 }

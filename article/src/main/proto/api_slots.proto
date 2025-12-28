@@ -1,5 +1,5 @@
 syntax = "proto3";
-import "api_article.proto";
+import "api_article_ar.proto";
 package com.example.generated;
 option java_multiple_files = true;
 

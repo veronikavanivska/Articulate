@@ -7,6 +7,7 @@ import io.grpc.stub.StreamObserver;
 import org.example.article.entities.*;
 import org.example.article.entities.MEiN.article.MeinVersion;
 import org.example.article.entities.MEiN.monographs.MeinMonoVersion;
+import org.example.article.helpers.DisciplineSyncService;
 import org.example.article.helpers.PublicationSpecification;
 import org.example.article.repositories.*;
 import org.example.article.service.Async.AsyncMeinService;
@@ -34,12 +35,12 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
     private final MeinMonoVersionRepository meinMonoVersionRepository;
     private final AsyncJobRepository asyncJobRepository;
     private final AsyncMeinService asyncMeinService;
+    private final DisciplineSyncService disciplineSyncService;
 
-
-    public AdminArticleService(PublicationTypeRepository publicationTypeRepository, DisciplineRepository disciplineRepository, PublicationRepository publicationRepository, EvalCycleRepository evalCycleRepository, MeinVersionRepository meinVersionRepository, MeinMonoVersionRepository meinMonoVersionRepository, AsyncJobRepository asyncJobRepository, AsyncMeinService asyncMeinService) {
+    public AdminArticleService(DisciplineSyncService disciplineSyncService,PublicationTypeRepository publicationTypeRepository, DisciplineRepository disciplineRepository, PublicationRepository publicationRepository, EvalCycleRepository evalCycleRepository, MeinVersionRepository meinVersionRepository, MeinMonoVersionRepository meinMonoVersionRepository, AsyncJobRepository asyncJobRepository, AsyncMeinService asyncMeinService) {
 
         this.publicationTypeRepository = publicationTypeRepository;
-
+        this.disciplineSyncService = disciplineSyncService;
         this.disciplineRepository = disciplineRepository;
         this.publicationRepository = publicationRepository;
         this.evalCycleRepository = evalCycleRepository;
@@ -195,6 +196,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
 
         Discipline saved = disciplineRepository.save(d);
 
+        disciplineSyncService.syncUpsert(saved.getId(), saved.getName());
 
         RefItem response = RefItem.newBuilder()
                 .setId(saved.getId())
@@ -350,6 +352,8 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
 
         discipline.setName(disciplineName);
         disciplineRepository.save(discipline);
+
+        disciplineSyncService.syncUpsert(discipline.getId(), discipline.getName());
 
         RefItem refItem = RefItem.newBuilder().setId(discipline.getId()).setName(discipline.getName()).build();
         responseObserver.onNext(refItem);
@@ -560,7 +564,7 @@ public class AdminArticleService extends AdminArticleServiceGrpc.AdminArticleSer
                 () -> new StatusRuntimeException(Status.NOT_FOUND.withDescription("Discipline not found" + disciplineId)));
 
         disciplineRepository.delete(discipline);
-
+        disciplineSyncService.syncDelete(disciplineId);
         ApiResponse response = ApiResponse.newBuilder()
                 .setMessage("Discipline is deleted")
                 .setCode(200)

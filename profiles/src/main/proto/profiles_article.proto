@@ -20,3 +20,30 @@ message SyncAuthorFullNameResponse {
   int32 updated_monograph_chapter_author = 3;
   int32 total_updated = 4;
 }
+
+
+service ProfilesDisciplineSyncService {
+  rpc UpsertDisciplines(UpsertDisciplinesRequest) returns (UpsertDisciplinesResponse);
+  rpc DeleteDiscipline(DeleteDisciplineRequest) returns (DeleteDisciplineResponse);
+}
+
+message DisciplineUpsertItem {
+  int64 id = 1;
+  string name = 2;
+}
+
+message UpsertDisciplinesRequest {
+  repeated DisciplineUpsertItem items = 1;
+}
+
+message UpsertDisciplinesResponse {
+  int32 upserted = 1;
+}
+
+message DeleteDisciplineRequest {
+  int64 id = 1;
+}
+
+message DeleteDisciplineResponse {
+  int64 id = 1;
+}

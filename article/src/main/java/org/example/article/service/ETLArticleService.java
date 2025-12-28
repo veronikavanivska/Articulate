@@ -59,7 +59,7 @@ public class ETLArticleService extends ETLArticleServiceGrpc.ETLArticleServiceIm
         this.meinJournalCodeRepository = meinJournalCodeRepository;
     }
 
-    //TODO: think about etl functions i also have to implement
+
     /**
      * ETL import
      */
