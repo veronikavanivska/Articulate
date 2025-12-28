@@ -399,6 +399,7 @@ public void adminDeleteMeinVersion(DeleteMeinVersionRequest request,
     @Override
     public void adminListMeinJournals(AdminListMeinJournalsRequest request, StreamObserver<AdminListMeinJournalsResponse> responseObserver) {
         Long versionId = request.getVersionId();
+        String q = request.getTitle() == null ? "" : request.getTitle().trim();
 
         if (!meinVersionRepository.existsById(versionId)) {
             responseObserver.onError(Status.NOT_FOUND.withDescription("Not found the mein version").asRuntimeException());
@@ -411,7 +412,11 @@ public void adminDeleteMeinVersion(DeleteMeinVersionRequest request,
 
         Pageable pageable = PageRequest.of(pg, sz);
 
-        Page<MeinJournal> page = meinJournalRepository.findByVersion_Id(versionId, pageable);
+        Page<MeinJournal> page =
+                q.isEmpty()
+                        ? meinJournalRepository.findByVersion_Id(versionId, pageable)
+                        : meinJournalRepository.findByVersion_IdAndTitle1ContainingIgnoreCaseOrTitle2ContainingIgnoreCase(versionId, q, q, pageable);
+                ;
 
 
         PageMeta pageMeta = PageMeta.newBuilder()

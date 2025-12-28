@@ -94,6 +94,7 @@ message AdminListMeinJournalsRequest {
   int32 page = 6;               // 0-based
   int32 size = 7;               // domyślnie 20, max 100
   string sortDir = 9;           // "ASC"|"DESC" (domyślnie ASC)
+  string title = 10;
 }
 
 message AdminListMeinJournalsResponse {
@@ -612,6 +613,7 @@ message AdminListMeinMonoPublishersRequest {
   int32 page = 2;
   int32 size = 3;
   string sortDir = 9;
+  string title = 10;
 
 }
 

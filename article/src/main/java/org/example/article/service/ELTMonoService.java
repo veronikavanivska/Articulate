@@ -180,6 +180,7 @@ public class ELTMonoService extends ETLMonoServiceGrpc.ETLMonoServiceImplBase {
     @Override
     public void adminListMeinMonoPublishers(AdminListMeinMonoPublishersRequest request, StreamObserver<AdminListMeinMonoPublishersResponse> responseObserver) {
         long versionId = request.getVersionId();
+        String q = request.getTitle() == null ? "" : request.getTitle().trim();
 
         if(!meinMonoVersionRepository.existsById(versionId)) {
             responseObserver.onError(Status.NOT_FOUND.withDescription("Not found the mein mono version").asRuntimeException());
@@ -193,7 +194,13 @@ public class ELTMonoService extends ETLMonoServiceGrpc.ETLMonoServiceImplBase {
         Sort sort = Sort.by(desc ? Sort.Direction.DESC : Sort.Direction.ASC, "level");
         Pageable pageable = PageRequest.of(pg, sz, sort);
 
-        Page<MeinMonoPublisher> page = meinMonoPublisherRepository.findByVersion_Id(versionId, pageable);
+//        Page<MeinMonoPublisher> page = meinMonoPublisherRepository.findByVersion_Id(versionId, pageable);
+
+        Page<MeinMonoPublisher> page =
+                q.isEmpty()
+                        ? meinMonoPublisherRepository.findByVersion_Id(versionId, pageable)
+                        : meinMonoPublisherRepository.findByVersion_IdAndNameContainingIgnoreCase(versionId, q, pageable);
+
 
         PageMeta pageMeta = PageMeta.newBuilder()
                 .setSize(page.getSize())

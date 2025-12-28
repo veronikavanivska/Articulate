@@ -1,6 +1,7 @@
 package org.example.article.repositories;
 
 import org.example.article.entities.MEiN.article.MeinJournal;
+import org.example.article.entities.MEiN.monographs.MeinMonoPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -79,4 +80,11 @@ public interface MeinJournalRepository extends JpaRepository<MeinJournal, Long> 
     @Transactional
     @Query(value = "DELETE FROM mein_journal WHERE version_id = :vid", nativeQuery = true)
     int deleteJournalsByVersion(@Param("vid") long vid);
+
+    Page<MeinJournal> findByVersion_IdAndTitle1ContainingIgnoreCaseOrTitle2ContainingIgnoreCase(
+            long versionId,
+            String title1,
+            String title2,
+            Pageable pageable
+    );
 }

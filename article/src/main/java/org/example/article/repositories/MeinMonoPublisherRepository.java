@@ -39,4 +39,10 @@ public interface MeinMonoPublisherRepository extends JpaRepository<MeinMonoPubli
               """, nativeQuery = true)
     long countPublishers(@Param("versionId") long versionId);
 
+    Page<MeinMonoPublisher> findByVersion_IdAndNameContainingIgnoreCase(
+            long versionId,
+            String name,
+            Pageable pageable
+    );
+
 }
