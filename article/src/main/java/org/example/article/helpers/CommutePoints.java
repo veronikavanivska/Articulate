@@ -42,7 +42,7 @@ public class CommutePoints {
         var cycle = evalCycleRepository.findByYear(year)
                 .orElseThrow(() -> new IllegalArgumentException("No eval cycle for year " + year));
         if (cycle.getMeinVersion() == null || cycle.getMeinVersion().getId() == null) {
-            return new CommuteResultArticle(cycle, null, null, 0, false);
+            return new CommuteResultArticle(cycle, null, null,0, true);
         }
         Long versionId = cycle.getMeinVersion().getId();
 
@@ -65,7 +65,7 @@ public class CommutePoints {
         boolean ok = meinJournalRepository.existsByIssnAndEissn(versionId, issn, eissn);
 
         if (!ok) {
-            return new CommuteResultArticle(cycle, null, null, 0, true);
+            return new CommuteResultArticle(cycle, null, null,  OFF_LIST__ARTICLE_POINTS, true);
         }
 
 
@@ -88,7 +88,7 @@ public class CommutePoints {
         var cycle = evalCycleRepository.findByYear(year)
                 .orElseThrow(() -> new IllegalArgumentException("No eval cycle for year " + year));
         if (cycle.getMeinMonoVersion() == null || cycle.getMeinMonoVersion().getId() == null) {
-            return new CommuteResultMono(cycle, null, null, 0, false);
+            return new CommuteResultMono(cycle, null, null,  0, true);
         }
 
         Long versionId = cycle.getMeinMonoVersion().getId();

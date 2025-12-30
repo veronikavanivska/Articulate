@@ -34,7 +34,8 @@ public class WorkerMonoController {
     public MonographViewResponse createMonograph(@RequestBody CreateMonographRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerMonoClient.createMonograph(userId, request.getTypeId(), request.getDisciplineId(), request.getTitle(), request.getDoi(), request.getIsbn(), request.getMonograficPublisherTitle(), request.getPublicationYear(), request.getCoauthors());
+        String doi = request.getDoi() == null ? "" : request.getDoi();
+            var response = WorkerMonoClient.createMonograph(userId, request.getTypeId(), request.getDisciplineId(), request.getTitle(), doi, request.getIsbn(), request.getMonograficPublisherTitle(), request.getPublicationYear(), request.getCoauthors());
 
         MonographViewResponse monographViewResponse = MonographViewMapper.map(response);
 
@@ -44,8 +45,8 @@ public class WorkerMonoController {
     @PostMapping("/createChapter")
     public ChapterViewResponse createChapter(@RequestBody CreateChapterRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
-
-        var response = WorkerMonoClient.createChapter(userId, request.getTypeId(), request.getDisciplineId(), request.getMonograficChapterTitle(), request.getMonograficTitle(), request.getMonographPublisher(), request.getDoi(), request.getIsbn(), request.getPublicationYear(), request.getCoauthor());
+        String doi = request.getDoi() == null ? "" : request.getDoi();
+        var response = WorkerMonoClient.createChapter(userId, request.getTypeId(), request.getDisciplineId(), request.getMonograficChapterTitle(), request.getMonograficTitle(), request.getMonographPublisher(), doi, request.getIsbn(), request.getPublicationYear(), request.getCoauthor());
 
         ChapterViewResponse chapterViewResponse = ChapterViewMapper.map(response);
         return chapterViewResponse;

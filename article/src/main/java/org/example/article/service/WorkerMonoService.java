@@ -55,7 +55,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
                     .withDescription("You already added this monograph").asRuntimeException());
             return;
         }
-
+        System.out.println("gRPC inputCount = " + request.getInputCount());
         if (request.getInputCount() == 0) {
             throw Status.INVALID_ARGUMENT.withDescription("At least one author (including owner) must be provided").asRuntimeException();
         }
@@ -113,7 +113,7 @@ public class WorkerMonoService extends WorkerMonographServiceGrpc.WorkerMonograp
                 .cycle(result.cycle())
                 .title(request.getTitle())
                 .doi(request.getDoi())
-                .isbn(normalizeIsbn13Strict(request.getIsbn()))
+                .isbn(request.getIsbn())
                 .publicationYear(request.getPublicationYear())
                 .monograficTitle(request.getMonograficPublisherTitle())
                 .meinPoints(result.points());

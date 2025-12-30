@@ -76,9 +76,19 @@ public class SlotService extends SlotServiceGrpc.SlotServiceImplBase {
                 return;
             }
 
+            int k = 0;
+// tylko wewnętrzni, unikalni
+            for (SlotAuthor a : item.getAuthorsList()) {
+                long aid = a.getUserId();
+                if (aid <= 0) continue; // external
+                if (isEvaluatedInDiscipline(aid, disciplineId, evalYear)) {
+                    k++;
+                }
+            }
+            if (k <= 0) k = 1; // bezpieczeństwo
             // compute slotValue + pointsRecalc
             SlotComputation comp = SlotComute.computeSlotValueAndPointsRecalc(
-                    userId, disciplineId, evalYear, kind, item, ownerSt
+                    userId, disciplineId, evalYear, kind, item, ownerSt , k
             );
 
             // total limit
@@ -289,4 +299,19 @@ public class SlotService extends SlotServiceGrpc.SlotServiceImplBase {
                     }
                 });
     }
+
+    private boolean isEvaluatedInDiscipline(long authorId, long disciplineId, int evalYear) {
+        try {
+            // U Ciebie: rzuca wyjątek jeśli autor NIE jest przypisany do dyscypliny.
+            ProfilesClient.getOrCreateStatement(authorId, disciplineId, evalYear);
+            return true;
+        } catch (StatusRuntimeException e) {
+            // autor nieewaluowany w tej dyscyplinie albo inny błąd domenowy -> false
+            // (opcjonalnie możesz filtrować po kodzie statusu, jeśli chcesz)
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 }
