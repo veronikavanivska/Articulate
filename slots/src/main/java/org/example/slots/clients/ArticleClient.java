@@ -5,17 +5,19 @@ import com.example.generated.CycleItem;
 import com.google.protobuf.Empty;
 import io.grpc.Channel;
 import org.example.slots.Client;
+import org.springframework.stereotype.Component;
 
 @Client(host = "${article.server.host}", port = "${article.server.port}")
+@Component
 public class ArticleClient {
 
-    private static ArticleServiceGrpc.ArticleServiceBlockingStub stub;
+    private ArticleServiceGrpc.ArticleServiceBlockingStub stub;
 
-    public static CycleItem getActiveEvalCycle() {
+    public CycleItem getActiveEvalCycle() {
         return stub.getActiveEvalCycle(Empty.getDefaultInstance());
     }
 
-    public static void init(Channel channel) {
+    public void init(Channel channel) {
         stub = ArticleServiceGrpc.newBlockingStub(channel);
     }
 }

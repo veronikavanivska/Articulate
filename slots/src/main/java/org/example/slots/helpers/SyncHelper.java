@@ -6,6 +6,7 @@ import com.example.generated.SlotItemType;
 import com.example.generated.SlotSyncAction;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import org.example.slots.clients.ArticleClient;
 import org.example.slots.clients.ArticleSlotsClient;
 import org.example.slots.clients.ProfilesClient;
 import org.example.slots.entities.PublicationKind;
@@ -26,9 +27,13 @@ import static org.example.slots.helpers.SlotComute.isMono;
 @Service
 public class SyncHelper {
     private final SlotDraftItemRepository itemRepo;
+    private final ProfilesClient profilesClient;
+    private final ArticleSlotsClient articleSlotsClient;
 
-    public SyncHelper(SlotDraftItemRepository itemRepo) {
+    public SyncHelper(SlotDraftItemRepository itemRepo, ProfilesClient profilesClient, ArticleSlotsClient articleSlotsClient) {
         this.itemRepo = itemRepo;
+        this.profilesClient = profilesClient;
+        this.articleSlotsClient = articleSlotsClient;
     }
 
     @Transactional
@@ -52,93 +57,6 @@ public class SyncHelper {
         return itemRepo.deleteAllByKindAndPublicationId(kind, itemId);
     }
 
-//    private int handleUpdated(PublicationKind kind, SlotItemType itemType, long itemId) {
-//
-//
-//        List<SlotDraftItem> items = itemRepo.findAllByKindAndPublicationIdFetchDraft(kind, itemId);
-//        if (items.isEmpty()) return 0;
-//
-//        int updated = 0;
-//        int removedForLimits = 0;
-//
-//        for (SlotDraftItem di : items) {
-//            SlotDraft draft = di.getDraft();
-//            if (draft == null) {
-//                itemRepo.delete(di);
-//                continue;
-//            }
-//
-//            final ItemForSlots item;
-//            try {
-//                item = ArticleSlotsClient.getItemForSlots(draft.getUserId(), itemType, itemId);
-//            } catch (StatusRuntimeException e) {
-//
-//                if (e.getStatus().getCode() == Status.Code.NOT_FOUND) {
-//                    itemRepo.delete(di);
-//                }
-//                continue;
-//            }
-//
-//
-//            if (item.getPublicationYear() != draft.getEvalYear()) {
-//                itemRepo.delete(di);
-//                continue;
-//            }
-//
-//
-//            final var ownerSt = ProfilesClient
-//                    .getOrCreateStatement(draft.getUserId(), draft.getDisciplineId(), draft.getEvalYear())
-//                    .getStatement();
-//
-//            SlotComputation comp = SlotComute.computeSlotValueAndPointsRecalc(
-//                    draft.getUserId(),
-//                    draft.getDisciplineId(),
-//                    draft.getEvalYear(),
-//                    kind,
-//                    item,
-//                    ownerSt,
-//                    k
-//            );
-//
-//            BigDecimal oldSlot = SlotComute.nz(di.getSlotValue());
-//            BigDecimal newSlot = SlotComute.nz(comp.slotValue());
-//
-//            BigDecimal usedNow = SlotComute.nz(itemRepo.sumSlotValue(draft.getId()));
-//            BigDecimal usedAfter = usedNow.subtract(oldSlot).add(newSlot);
-//
-//            if (usedAfter.compareTo(SlotComute.nz(draft.getMaxSlots())) > 0) {
-//                itemRepo.delete(di);
-//                removedForLimits++;
-//
-//                continue;
-//            }
-//
-//            if (isMono(kind)) {
-//                BigDecimal usedMonoNow = SlotComute.nz(itemRepo.sumSlotValueMono(draft.getId()));
-//                BigDecimal oldMono = oldSlot;
-//                BigDecimal newMono = newSlot;
-//
-//                BigDecimal usedMonoAfter = usedMonoNow.subtract(oldMono).add(newMono);
-//
-//                if (usedMonoAfter.compareTo(SlotComute.nz(draft.getMaxMonoSlots())) > 0) {
-//                    itemRepo.delete(di);
-//                    removedForLimits++;
-//                    continue;
-//                }
-//            }
-//
-//            di.setTitle(item.getTitle() == null ? "" : item.getTitle());
-//            di.setPublicationYear(item.getPublicationYear());
-//            di.setPoints(comp.points());
-//            di.setSlotValue(comp.slotValue());
-//            di.setPointsRecalc(comp.pointsRecalc());
-//
-//            itemRepo.save(di);
-//            updated++;
-//        }
-//
-//        return updated;
-//    }
 private int handleUpdated(PublicationKind kind, SlotItemType itemType, long itemId) {
 
     List<SlotDraftItem> items = itemRepo.findAllByKindAndPublicationIdFetchDraft(kind, itemId);
@@ -159,7 +77,7 @@ private int handleUpdated(PublicationKind kind, SlotItemType itemType, long item
 
         final ItemForSlots item;
         try {
-            item = ArticleSlotsClient.getItemForSlots(draft.getUserId(), itemType, itemId);
+            item = articleSlotsClient.getItemForSlots(draft.getUserId(), itemType, itemId);
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.NOT_FOUND) {
                 itemRepo.delete(di);
@@ -172,7 +90,7 @@ private int handleUpdated(PublicationKind kind, SlotItemType itemType, long item
             continue;
         }
 
-        final var ownerSt = ProfilesClient
+        final var ownerSt = profilesClient
                 .getOrCreateStatement(draft.getUserId(), draft.getDisciplineId(), draft.getEvalYear())
                 .getStatement();
 
@@ -239,7 +157,7 @@ private int handleUpdated(PublicationKind kind, SlotItemType itemType, long item
         boolean ok;
         try {
             // U Ciebie: rzuca wyjątek, jeśli autor NIE jest przypisany do dyscypliny.
-            ProfilesClient.getOrCreateStatement(authorId, disciplineId, evalYear);
+            profilesClient.getOrCreateStatement(authorId, disciplineId, evalYear);
             ok = true;
         } catch (StatusRuntimeException e) {
             ok = false;

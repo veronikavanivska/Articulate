@@ -5,13 +5,15 @@ import com.example.generated.GetOrCreateStatementResponse;
 import com.example.generated.ProfilesServiceGrpc;
 import io.grpc.Channel;
 import org.example.slots.Client;
+import org.springframework.stereotype.Component;
 
 @Client(host = "${profiles.server.host}", port = "${profiles.server.port}")
+@Component
 public class ProfilesClient {
 
-    private static ProfilesServiceGrpc.ProfilesServiceBlockingStub stub;
+    private ProfilesServiceGrpc.ProfilesServiceBlockingStub stub;
 
-    public static GetOrCreateStatementResponse getOrCreateStatement(long userId, long disciplineId, int evalYear) {
+    public GetOrCreateStatementResponse getOrCreateStatement(long userId, long disciplineId, int evalYear) {
         return stub.getOrCreateStatement(
                 GetOrCreateStatementRequest.newBuilder()
                         .setUserId(userId)
@@ -21,7 +23,7 @@ public class ProfilesClient {
         );
     }
 
-    public static void init(Channel channel) {
+    public void init(Channel channel) {
         stub = ProfilesServiceGrpc.newBlockingStub(channel);
     }
 }

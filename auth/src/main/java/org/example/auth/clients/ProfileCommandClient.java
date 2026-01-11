@@ -1,17 +1,20 @@
 package org.example.auth.clients;
 
 import com.example.generated.*;
+import com.rabbitmq.client.Command;
 import org.example.auth.Client;
 import io.grpc.Channel;
+import org.springframework.stereotype.Component;
 
 @Client(
         host = "${profiles.server.host}", port = "${profiles.server.port}"
 )
+@Component
 public class ProfileCommandClient {
 
-    private static  ProfilesCommandsServiceGrpc.ProfilesCommandsServiceBlockingStub stub;
+    private  ProfilesCommandsServiceGrpc.ProfilesCommandsServiceBlockingStub stub;
 
-    public static ApiResponse ensureUserProfile(long userId) {
+    public ApiResponse ensureUserProfile(long userId) {
         return stub.ensureUserProfile(
                 EnsureUserProfileRequest.newBuilder()
                         .setUserId(userId)
@@ -19,7 +22,7 @@ public class ProfileCommandClient {
         );
     }
 
-    public static ApiResponse ensureWorkerProfile(long userId) {
+    public ApiResponse ensureWorkerProfile(long userId) {
         return stub.ensureWorkerProfile(
                 EnsureWorkerProfileRequest.newBuilder()
                         .setUserId(userId)
@@ -27,7 +30,7 @@ public class ProfileCommandClient {
         );
     }
 
-    public static ApiResponse ensureAdminProfile(long userId) {
+    public ApiResponse ensureAdminProfile(long userId) {
         return stub.ensureAdminProfile(
                 EnsureAdminProfileRequest.newBuilder()
                         .setUserId(userId)
@@ -35,7 +38,7 @@ public class ProfileCommandClient {
         );
     }
 
-    public static ApiResponse deleteWorkerProfile(long userId) {
+    public ApiResponse deleteWorkerProfile(long userId) {
 
         return stub.deleteWorkerProfile(
                 UserId.newBuilder()
@@ -44,7 +47,7 @@ public class ProfileCommandClient {
         );
     }
 
-    public static ApiResponse deleteAdminProfile(long userId) {
+    public ApiResponse deleteAdminProfile(long userId) {
 
         return stub.deleteAdminProfile(
                 UserId.newBuilder()
@@ -53,7 +56,7 @@ public class ProfileCommandClient {
         );
     }
 
-    public static ApiResponse deleteAllProfiles(long userId) {
+    public ApiResponse deleteAllProfiles(long userId) {
 
         return stub.deleteAllProfiles(
                 UserId.newBuilder()
@@ -62,7 +65,7 @@ public class ProfileCommandClient {
         );
     }
 
-    public static void init(Channel channel) {
+    public void init(Channel channel) {
         stub = ProfilesCommandsServiceGrpc.newBlockingStub(channel);
     }
 }

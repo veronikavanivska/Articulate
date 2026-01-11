@@ -4,14 +4,15 @@ import com.example.generated.*;
 import com.google.protobuf.Empty;
 import io.grpc.Channel;
 import org.example.article.Client;
+import org.springframework.stereotype.Component;
 
 @Client(host = "${slot.server.host}", port = "${slot.server.port}")
+@Component
 public class SlotsClient {
 
+    private SlotServiceGrpc.SlotServiceBlockingStub stub;
 
-    private static SlotServiceGrpc.SlotServiceBlockingStub stub;
-
-    public static void notifyUpdated(SlotItemType type, long id) {
+    public void notifyUpdated(SlotItemType type, long id) {
         stub.syncSlotItem(SyncSlotItemRequest.newBuilder()
                 .setAction(SlotSyncAction.SLOT_SYNC_ACTION_UPDATED)
                 .setItemType(type)
@@ -19,7 +20,7 @@ public class SlotsClient {
                 .build());
     }
 
-    public static void notifyDeleted(SlotItemType type, long id) {
+    public void notifyDeleted(SlotItemType type, long id) {
         stub.syncSlotItem(SyncSlotItemRequest.newBuilder()
                 .setAction(SlotSyncAction.SLOT_SYNC_ACTION_DELETED)
                 .setItemType(type)
@@ -27,7 +28,7 @@ public class SlotsClient {
                 .build());
     }
 
-    public static void init(Channel channel) {
+    public void init(Channel channel) {
         stub = SlotServiceGrpc.newBlockingStub(channel);
     }
 

@@ -6,13 +6,15 @@ import com.example.generated.ItemForSlots;
 import com.example.generated.SlotItemType;
 import io.grpc.Channel;
 import org.example.slots.Client;
+import org.springframework.stereotype.Component;
 
 @Client(host = "${article.server.host}", port = "${article.server.port}")
+@Component
 public class ArticleSlotsClient {
 
-    private static ArticleSlotsServiceGrpc.ArticleSlotsServiceBlockingStub stub;
+    private ArticleSlotsServiceGrpc.ArticleSlotsServiceBlockingStub stub;
 
-    public static ItemForSlots getItemForSlots(long userId, SlotItemType type, long id) {
+    public ItemForSlots getItemForSlots(long userId, SlotItemType type, long id) {
         return stub.getItemForSlots(
                 GetItemForSlotsRequest.newBuilder()
                         .setUserId(userId)
@@ -22,7 +24,7 @@ public class ArticleSlotsClient {
         );
     }
 
-    public static void init(Channel channel) {
+    public void init(Channel channel) {
         stub = ArticleSlotsServiceGrpc.newBlockingStub(channel);
     }
 }

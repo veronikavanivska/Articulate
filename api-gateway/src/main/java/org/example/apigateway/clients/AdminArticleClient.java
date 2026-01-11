@@ -4,15 +4,17 @@ import com.example.generated.*;
 import com.google.protobuf.FieldMask;
 import io.grpc.Channel;
 import org.example.apigateway.Client;
+import org.springframework.stereotype.Component;
 
 @Client(host = "${article.server.host}",
         port = "${article.server.port}"
 )
+@Component
 public class AdminArticleClient {
 
-    private static AdminArticleServiceGrpc.AdminArticleServiceBlockingStub stub;
+    private  AdminArticleServiceGrpc.AdminArticleServiceBlockingStub stub;
 
-    public static ListPublicationsResponse adminListPublications(Long ownerId, Long typeId, Long disciplineId, Long cycleId, int page,
+    public  ListPublicationsResponse adminListPublications(Long ownerId, Long typeId, Long disciplineId, Long cycleId, int page,
     int size, String sortBy, String sortDir,String title) {
 
         ListAdminPublicationRequest.Builder request = ListAdminPublicationRequest.newBuilder()
@@ -32,7 +34,7 @@ public class AdminArticleClient {
         return stub.adminListPublications(request.build());
     }
 
-    public static PublicationView adminGetPublication(long publicationId , long ownerId) {
+    public  PublicationView adminGetPublication(long publicationId , long ownerId) {
         GetPublicationRequest request = GetPublicationRequest.newBuilder()
                 .setId(publicationId)
                 .setUserId(ownerId)
@@ -43,7 +45,7 @@ public class AdminArticleClient {
 
 
     //discipline
-    public static AdminListDisciplinesResponse adminListDisciplines(int page, int size, String sortDir) {
+    public  AdminListDisciplinesResponse adminListDisciplines(int page, int size, String sortDir) {
 
         AdminListDisciplinesRequest request = AdminListDisciplinesRequest.newBuilder()
                 .setPage(page)
@@ -54,7 +56,7 @@ public class AdminArticleClient {
         return stub.adminListDisciplines(request);
     }
 
-    public static RefItem adminCreateDiscipline(String disciplineName) {
+    public  RefItem adminCreateDiscipline(String disciplineName) {
         CreateDisciplineRequest request = CreateDisciplineRequest.newBuilder()
                 .setDisciplineName(disciplineName)
                 .build();
@@ -62,7 +64,7 @@ public class AdminArticleClient {
         return stub.adminCreateDiscipline(request);
     }
 
-    public static RefItem adminUpdateDiscipline(long disciplineId, String disciplineName) {
+    public  RefItem adminUpdateDiscipline(long disciplineId, String disciplineName) {
         UpdateDisciplineRequest request = UpdateDisciplineRequest.newBuilder()
                 .setId(disciplineId)
                 .setDisciplineName(disciplineName)
@@ -71,7 +73,7 @@ public class AdminArticleClient {
         return stub.adminUpdateDiscipline(request);
     }
 
-    public static ApiResponse adminDeleteDiscipline(long disciplineId) {
+    public  ApiResponse adminDeleteDiscipline(long disciplineId) {
         DeleteDisciplineRequest request = DeleteDisciplineRequest.newBuilder()
                 .setId(disciplineId)
                 .build();
@@ -81,7 +83,7 @@ public class AdminArticleClient {
 
 
     //types
-    public static AdminListTypesResponse adminListPublicationTypes(int page, int size, String sortDir) {
+    public  AdminListTypesResponse adminListPublicationTypes(int page, int size, String sortDir) {
         AdminListTypesRequest request = AdminListTypesRequest.newBuilder()
                 .setPage(page)
                 .setSize(size)
@@ -91,7 +93,7 @@ public class AdminArticleClient {
         return stub.adminListPublicationTypes(request);
     }
 
-    public static RefItem adminCreatePublicationType(String typeName) {
+    public  RefItem adminCreatePublicationType(String typeName) {
         CreateTypeRequest request = CreateTypeRequest.newBuilder()
                 .setName(typeName)
                 .build();
@@ -99,7 +101,7 @@ public class AdminArticleClient {
         return stub.adminCreatePublicationType(request);
     }
 
-    public static RefItem adminUpdatePublicationType(long publicationId, String typeName) {
+    public  RefItem adminUpdatePublicationType(long publicationId, String typeName) {
         UpdateTypeRequest request = UpdateTypeRequest.newBuilder()
                 .setId(publicationId)
                 .setName(typeName)
@@ -108,7 +110,7 @@ public class AdminArticleClient {
         return stub.adminUpdatePublicationType(request);
     }
 
-    public static ApiResponse adminDeletePublicationType(long publicationId) {
+    public  ApiResponse adminDeletePublicationType(long publicationId) {
         DeleteTypeRequest request = DeleteTypeRequest.newBuilder()
                 .setId(publicationId)
                 .build();
@@ -118,7 +120,7 @@ public class AdminArticleClient {
 
 
     //cycle
-    public static AdminListCyclesResponse adminListEvalCycles(int page, int size, String sortDir) {
+    public  AdminListCyclesResponse adminListEvalCycles(int page, int size, String sortDir) {
         AdminListCyclesRequest request = AdminListCyclesRequest.newBuilder()
                 .setPage(page)
                 .setSize(size)
@@ -128,7 +130,7 @@ public class AdminArticleClient {
         return stub.adminListEvalCycles(request);
     }
 
-    public static CycleItem adminCreateCycle(String cycleName, int yearFrom, int yearTo, boolean isActive, int activeYear) {
+    public  CycleItem adminCreateCycle(String cycleName, int yearFrom, int yearTo, boolean isActive, int activeYear) {
         CreateCycleRequest request = CreateCycleRequest.newBuilder()
                 .setName(cycleName)
                 .setYearFrom(yearFrom)
@@ -140,7 +142,7 @@ public class AdminArticleClient {
         return stub.adminCreateEvalCycle(request);
     }
 
-    public static CycleItem adminUpdateCycle(long cycleId, String cycleName , Integer yearFrom, Integer yearTo, Boolean isActive, Long meinVersionId, Long MeinMonoVersionId, Integer activeYear) {
+    public  CycleItem adminUpdateCycle(long cycleId, String cycleName , Integer yearFrom, Integer yearTo, Boolean isActive, Long meinVersionId, Long MeinMonoVersionId, Integer activeYear) {
 
         UpdateCycleRequest.Builder req = UpdateCycleRequest.newBuilder()
                 .setId(cycleId);
@@ -182,7 +184,7 @@ public class AdminArticleClient {
         return stub.adminUpdateEvalCycle(req.build());
     }
 
-    public static ApiResponse adminDeleteCycle(long cycleId) {
+    public  ApiResponse adminDeleteCycle(long cycleId) {
         DeleteCycleRequest request = DeleteCycleRequest.newBuilder()
                 .setId(cycleId)
                 .build();
@@ -190,7 +192,7 @@ public class AdminArticleClient {
         return stub.adminDeleteEvalCycle(request);
     }
 
-    public static void init(Channel channel){
+    public  void init(Channel channel){
         stub = AdminArticleServiceGrpc.newBlockingStub(channel);
     }
 

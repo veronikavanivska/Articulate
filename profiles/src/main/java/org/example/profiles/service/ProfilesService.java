@@ -6,6 +6,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.example.profiles.entities.ProfileUser;
+import org.example.profiles.helper.ArticleNameSyncService;
 import org.example.profiles.helper.Mapper;
 import org.example.profiles.repositories.*;
 
@@ -21,7 +22,6 @@ import java.util.Set;
 
 @Service
 
-//TODO: add discipline
 public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase {
 
     private final ProfileUserRepository profileUserRepository;
@@ -31,10 +31,12 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
     private final DisciplineRepository disciplineRepository;
     private final ProfileWorkerStatementRepository profileWorkerStatementRepository;
     private final Mapper mapper;
+    private final ArticleNameSyncService articleNameSyncService;
 
-    public ProfilesService( ProfileUserRepository profileUserRepository, Mapper mapper,ProfileWorkerRepository profileWorkerRepository, ProfileAdminRepository profileAdminRepository, ProfileWorkerDisciplineRepository profileWorkerDisciplineRepository, DisciplineRepository disciplineRepository, ProfileWorkerStatementRepository profileWorkerStatementRepository) {
+    public ProfilesService( ArticleNameSyncService articleNameSyncService,ProfileUserRepository profileUserRepository, Mapper mapper,ProfileWorkerRepository profileWorkerRepository, ProfileAdminRepository profileAdminRepository, ProfileWorkerDisciplineRepository profileWorkerDisciplineRepository, DisciplineRepository disciplineRepository, ProfileWorkerStatementRepository profileWorkerStatementRepository) {
         super();
         this.profileUserRepository = profileUserRepository;
+        this.articleNameSyncService = articleNameSyncService;
         this.profileWorkerRepository = profileWorkerRepository;
         this.profileAdminRepository = profileAdminRepository;
         this.profileWorkerDisciplineRepository = profileWorkerDisciplineRepository;
@@ -113,7 +115,7 @@ public class ProfilesService extends ProfilesServiceGrpc.ProfilesServiceImplBase
 
         if (!java.util.Objects.equals(oldFullName, newFullName)) {
             try {
-                org.example.profiles.clients.ArticleClient.syncAuthorFullName(userId, newFullName);
+                articleNameSyncService.syncUpdatedFullName(userId, newFullName);
                 System.out.println("[AuthorNameSync] updated userId=" + userId);
             } catch (Exception e) {
                 System.err.println("[AuthorNameSync] failed userId=" + userId + ": " + e.getMessage());

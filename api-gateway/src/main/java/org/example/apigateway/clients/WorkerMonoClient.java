@@ -5,6 +5,7 @@ import com.google.protobuf.FieldMask;
 import io.grpc.Channel;
 import org.example.apigateway.Client;
 import org.example.apigateway.requests.articles.Coauthors;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,10 +13,11 @@ import java.util.List;
 @Client(host = "${article.server.host}",
         port = "${article.server.port}"
 )
+@Component
 public class WorkerMonoClient {
-    private static WorkerMonographServiceGrpc.WorkerMonographServiceBlockingStub stub;
+    private WorkerMonographServiceGrpc.WorkerMonographServiceBlockingStub stub;
 
-    public static MonographView createMonograph(long userId, long typeId, long disciplineId, String title, String doi, String isbn, String monograficPublisherTitle, int publicationYest, List<Coauthors> coauthors){
+    public MonographView createMonograph(long userId, long typeId, long disciplineId, String title, String doi, String isbn, String monograficPublisherTitle, int publicationYest, List<Coauthors> coauthors){
         List<CoauthorInput> coauthorInputs = new ArrayList<>();
 
         for(Coauthors coauthor: coauthors){
@@ -43,7 +45,7 @@ public class WorkerMonoClient {
     }
 
 
-    public static ChapterView createChapter(long userId, long typeId, long disciplineId, String monographChapterTitle, String monographTitle, String monographPublisherTitle, String doi, String isbn, int publicationYear, List<Coauthors> coauthors){
+    public ChapterView createChapter(long userId, long typeId, long disciplineId, String monographChapterTitle, String monographTitle, String monographPublisherTitle, String doi, String isbn, int publicationYear, List<Coauthors> coauthors){
         List<CoauthorInput> coauthorInputs = new ArrayList<>();
 
         for(Coauthors coauthor: coauthors){
@@ -71,7 +73,7 @@ public class WorkerMonoClient {
         return stub.createChapter(request);
     }
 
-    public static MonographView getMonograph(long id, long userId){
+    public MonographView getMonograph(long id, long userId){
         GetMonographRequest request = GetMonographRequest.newBuilder()
                 .setId(id)
                 .setUserId(userId)
@@ -80,7 +82,7 @@ public class WorkerMonoClient {
         return stub.getMonograph(request);
     }
 
-    public static ChapterView getChapter(long id, long userId){
+    public ChapterView getChapter(long id, long userId){
         GetChapterRequest request = GetChapterRequest.newBuilder()
                 .setId(id)
                 .setUserId(userId)
@@ -89,7 +91,7 @@ public class WorkerMonoClient {
         return stub.getChapter(request);
     }
 
-    public static MonographView updateMonograph(long id , long userId, Long typeId, Long disciplineId, String title, String doi, String isbn, String monographPublisherTitle, Integer publicationYear, List<Coauthors> coauthors){
+    public MonographView updateMonograph(long id , long userId, Long typeId, Long disciplineId, String title, String doi, String isbn, String monographPublisherTitle, Integer publicationYear, List<Coauthors> coauthors){
         UpdateMonographRequest.Builder req = UpdateMonographRequest.newBuilder()
                 .setId(id)
                 .setUserId(userId);
@@ -152,7 +154,7 @@ public class WorkerMonoClient {
     }
 
 
-    public static ChapterView updateChapter(long id, long userId, Long typeId, Long disciplineId, String monographChapterTitle, String monographTitle, String monographPublisherTitle, String doi, String isbn, Integer publicationYear, List<Coauthors> coauthors)
+    public ChapterView updateChapter(long id, long userId, Long typeId, Long disciplineId, String monographChapterTitle, String monographTitle, String monographPublisherTitle, String doi, String isbn, Integer publicationYear, List<Coauthors> coauthors)
     {
         UpdateChapterRequest.Builder req = UpdateChapterRequest.newBuilder()
                 .setId(id)
@@ -220,7 +222,7 @@ public class WorkerMonoClient {
         return stub.updateChapter(req.build());
     }
 
-    public static ListMonographsResponse listMonographs(long ownerId, Long typeId, Long disciplineId, Long cycleId, int page,
+    public ListMonographsResponse listMonographs(long ownerId, Long typeId, Long disciplineId, Long cycleId, int page,
                                                         int size, String sortBy, String sortDir, String title) {
 
         ListMonographsRequest.Builder request = ListMonographsRequest.newBuilder()
@@ -240,7 +242,7 @@ public class WorkerMonoClient {
         return stub.listMyMonographs(request.build());
     }
 
-    public static ListChaptersResponse listChapters(long ownerId, Long typeId, Long disciplineId, Long cycleId, int page, int size, String sortBy, String sortDir, String title) {
+    public ListChaptersResponse listChapters(long ownerId, Long typeId, Long disciplineId, Long cycleId, int page, int size, String sortBy, String sortDir, String title) {
         ListChaptersRequest.Builder request = ListChaptersRequest.newBuilder()
                 .setUserId(ownerId)
                 .setPage(page)
@@ -256,7 +258,7 @@ public class WorkerMonoClient {
         return stub.listMyChapters(request.build());
     }
 
-    public static ApiResponse deleteMonograph(long id, long userId) {
+    public ApiResponse deleteMonograph(long id, long userId) {
         DeleteMonographRequest request = DeleteMonographRequest.newBuilder()
                 .setId(id)
                 .setUserId(userId)
@@ -265,7 +267,7 @@ public class WorkerMonoClient {
         return stub.deleteMonograph(request);
     }
 
-    public static ApiResponse deleteChapter(long id, long userId) {
+    public ApiResponse deleteChapter(long id, long userId) {
         DeleteChapterRequest request = DeleteChapterRequest.newBuilder()
                 .setId(id)
                 .setUserId(userId)
@@ -274,7 +276,7 @@ public class WorkerMonoClient {
         return stub.deleteChapter(request);
     }
 
-    public static void init(Channel channel){
+    public void init(Channel channel){
         stub = WorkerMonographServiceGrpc.newBlockingStub(channel);
     }
 }

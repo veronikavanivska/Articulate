@@ -32,11 +32,17 @@ public class SlotService extends SlotServiceGrpc.SlotServiceImplBase {
     private final SlotDraftRepository draftRepo;
     private final SlotDraftItemRepository itemRepo;
     private final SyncHelper syncHelper;
+    private final ProfilesClient profilesClient;
+    private final ArticleSlotsClient articleSlotsClient;
+    private final ArticleClient articleClient;
 
-    public SlotService(SyncHelper syncHelper, SlotDraftRepository draftRepo, SlotDraftItemRepository itemRepo) {
+    public SlotService(ArticleClient articleClient , ProfilesClient profilesClient, ArticleSlotsClient articleSlotsClient,SyncHelper syncHelper, SlotDraftRepository draftRepo, SlotDraftItemRepository itemRepo) {
         this.draftRepo = draftRepo;
         this.itemRepo = itemRepo;
         this.syncHelper = syncHelper;
+        this.profilesClient = profilesClient;
+        this.articleSlotsClient = articleSlotsClient;
+        this.articleClient = articleClient;
     }
 
     // =========================================================
@@ -59,10 +65,10 @@ public class SlotService extends SlotServiceGrpc.SlotServiceImplBase {
 
             PublicationKind kind = toKind(request.getItemType());
 
-            ItemForSlots item = ArticleSlotsClient.getItemForSlots(userId, request.getItemType(), itemId);
+            ItemForSlots item = articleSlotsClient.getItemForSlots(userId, request.getItemType(), itemId);
             requireYear(item, evalYear);
 
-            WorkerStatement ownerSt = ProfilesClient.getOrCreateStatement(userId, disciplineId, evalYear).getStatement();
+            WorkerStatement ownerSt = profilesClient.getOrCreateStatement(userId, disciplineId, evalYear).getStatement();
 
             BigDecimal maxSlots = SlotComute.bd(ownerSt.getMaxSlots(), SlotComute.SCALE_SLOT);
             BigDecimal maxMonoSlots = SlotComute.bd(ownerSt.getMaxMonoSlots(), SlotComute.SCALE_SLOT);
@@ -145,7 +151,7 @@ public class SlotService extends SlotServiceGrpc.SlotServiceImplBase {
     @Transactional(readOnly = true)
     public void getDraft(GetDraftRequest request, StreamObserver<DraftView> responseObserver) {
 
-        CycleItem active = ArticleClient.getActiveEvalCycle();
+        CycleItem active = articleClient.getActiveEvalCycle();
 
         long ctxCycleId = request.getCycleId() > 0 ? request.getCycleId() : active.getId();
         int ctxEvalYear = request.getEvalYear() > 0 ? request.getEvalYear() : active.getActiveYear();
@@ -208,7 +214,7 @@ public class SlotService extends SlotServiceGrpc.SlotServiceImplBase {
 
         double maxSlots = 0.0;
         try {
-            WorkerStatement st = ProfilesClient.getOrCreateStatement(userId, disciplineId, ctxEvalYear).getStatement();
+            WorkerStatement st = profilesClient.getOrCreateStatement(userId, disciplineId, ctxEvalYear).getStatement();
             maxSlots = st.getMaxSlots();
         } catch (Exception ignore) {}
 
@@ -258,7 +264,7 @@ public class SlotService extends SlotServiceGrpc.SlotServiceImplBase {
     }
 
     private CycleItem requireActiveCycle() {
-        CycleItem active = ArticleClient.getActiveEvalCycle();
+        CycleItem active = articleClient.getActiveEvalCycle();
         if (!active.getIsActive() || active.getActiveYear() <= 0) {
             throw Status.FAILED_PRECONDITION.withDescription("No active eval cycle / activeYear.").asRuntimeException();
         }
@@ -303,7 +309,7 @@ public class SlotService extends SlotServiceGrpc.SlotServiceImplBase {
     private boolean isEvaluatedInDiscipline(long authorId, long disciplineId, int evalYear) {
         try {
             // U Ciebie: rzuca wyjątek jeśli autor NIE jest przypisany do dyscypliny.
-            ProfilesClient.getOrCreateStatement(authorId, disciplineId, evalYear);
+            profilesClient.getOrCreateStatement(authorId, disciplineId, evalYear);
             return true;
         } catch (StatusRuntimeException e) {
             // autor nieewaluowany w tej dyscyplinie albo inny błąd domenowy -> false

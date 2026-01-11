@@ -7,30 +7,32 @@ import com.example.generated.ListTypesResponse;
 import com.google.protobuf.Empty;
 import io.grpc.Channel;
 import org.example.apigateway.Client;
+import org.springframework.stereotype.Component;
 
 @Client(host = "${article.server.host}",
         port = "${article.server.port}"
 )
+@Component
 public class ArticleClient {
 
-    private static ArticleServiceGrpc.ArticleServiceBlockingStub stub;
+    private  ArticleServiceGrpc.ArticleServiceBlockingStub stub;
 
     // dla dropdown
-    public static ListTypesResponse listPublicationTypes(){
+    public  ListTypesResponse listPublicationTypes(){
         return stub.listPublicationTypes(Empty.getDefaultInstance());
     }
 
-    public static ListDisciplinesResponse listDisciplines(){
+    public  ListDisciplinesResponse listDisciplines(){
 
         return stub.listDisciplines(Empty.getDefaultInstance());
     }
 
-    public static ListCyclesResponse listCycles(){
+    public  ListCyclesResponse listCycles(){
         return stub.listEvalCycles(Empty.getDefaultInstance());
     }
 
 
-    public static void init(Channel channel) {
+    public  void init(Channel channel) {
         stub = ArticleServiceGrpc.newBlockingStub(channel);
     }
 }

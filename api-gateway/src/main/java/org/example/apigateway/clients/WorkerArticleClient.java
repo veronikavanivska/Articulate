@@ -6,6 +6,7 @@ import com.google.protobuf.FieldMask;
 import io.grpc.Channel;
 import org.example.apigateway.Client;
 import org.example.apigateway.requests.articles.Coauthors;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.ArrayList;
@@ -14,11 +15,12 @@ import java.util.List;
 @Client(host = "${article.server.host}",
         port = "${article.server.port}"
 )
+@Component
 public class WorkerArticleClient {
-    private static WorkerArticleServiceGrpc.WorkerArticleServiceBlockingStub stub;
 
+    private WorkerArticleServiceGrpc.WorkerArticleServiceBlockingStub stub;
 
-    public static PublicationView createPublication(long userId, long typeId, long disciplineId, String title, String doi,
+    public PublicationView createPublication(long userId, long typeId, long disciplineId, String title, String doi,
                                              String issn, String eissn, String journalTitle, int publicationYear,
                                              List<Coauthors> coauthors){
 
@@ -52,7 +54,7 @@ public class WorkerArticleClient {
 
 
 
-    public static PublicationView getPublication(long userId, long publicationId){
+    public PublicationView getPublication(long userId, long publicationId){
         GetPublicationRequest request = GetPublicationRequest.newBuilder()
                 .setId(publicationId)
                 .setUserId(userId)
@@ -61,7 +63,7 @@ public class WorkerArticleClient {
         return stub.getPublication(request);
     }
 
-    public static ListPublicationsResponse listMyPublications(Long userId, Long typeId, Long disciplineId, Long cycleId,
+    public ListPublicationsResponse listMyPublications(Long userId, Long typeId, Long disciplineId, Long cycleId,
                                                        int page, int size, String sortBy, String sortDir,String title){
 
         ListPublicationsRequest.Builder request = ListPublicationsRequest.newBuilder()
@@ -79,7 +81,7 @@ public class WorkerArticleClient {
         return stub.listMyPublications(request.build());
     }
 
-    public static PublicationView updatePublication(long id, long userId, Long typeId, Long disciplineId,
+    public PublicationView updatePublication(long id, long userId, Long typeId, Long disciplineId,
                                              String title, String doi, String issn, String eissn,
                                              String journalTitle, Integer publicationYear, List<Coauthors> replaceCoauthors){
 
@@ -148,7 +150,7 @@ public class WorkerArticleClient {
         return stub.updatePublication(req.build());
     }
 
-    public static ApiResponse deletePublication(long id, long userId){
+    public ApiResponse deletePublication(long id, long userId){
         DeletePublicationRequest request = DeletePublicationRequest.newBuilder()
                 .setId(id)
                 .setUserId(userId)
@@ -157,7 +159,7 @@ public class WorkerArticleClient {
         return stub.deletePublication(request);
     }
 
-    public static void init(Channel channel) {
+    public void init(Channel channel) {
         stub = WorkerArticleServiceGrpc.newBlockingStub(channel);
     }
 }

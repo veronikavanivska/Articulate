@@ -1,7 +1,6 @@
 package org.example.apigateway.controllers;
 
 
-import com.example.generated.MeinJournalItem;
 import org.example.apigateway.clients.ETLArticleClient;
 import org.example.apigateway.config.SecurityConfig;
 import org.example.apigateway.mappers.MeinJournalItemMapper;
@@ -16,7 +15,6 @@ import org.example.apigateway.responses.MEiNResponse;
 import org.example.apigateway.responses.articles.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,170 +24,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.example.apigateway.mappers.MeinJournalItemMapper.toMeinJournalItem;
-import static org.example.apigateway.mappers.MeinVersionItemMapper.toMeinVersionItem;
-import static org.example.apigateway.mappers.PageMetaMapper.toPageMeta;
-
-//@RequestMapping("/etl")
-//@RestController
-//public class ETLArticleController {
-//
-//    @PostMapping("/admin/import")
-//    public MEiNResponse importMEiN(@RequestParam("file") MultipartFile file,
-//                                   @RequestParam("label") String label,
-//                                   @RequestParam(value = "activateAfter", defaultValue = "true") boolean activateAfter
-//    ){
-//        Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
-//        var response = ETLArticleClient.importFile(file, file.getName(), label, userId, activateAfter);
-//
-//        MEiNResponse meinResponse = new MEiNResponse();
-//        meinResponse.setVersion_id(response.getVersionId());
-//        meinResponse.setAlreadyImported(response.getAlreadyImported());
-//
-//        return meinResponse;
-//    }
-//
-//    @GetMapping("/admin/activeMeinVersion")
-//    public GetActiveMeinVersionResponse getActiveMeinVersion(){
-//
-//        var response = ETLArticleClient.adminGetActiveMeinVersion();
-//        GetActiveMeinVersionResponse meinResponse = new GetActiveMeinVersionResponse();
-//        meinResponse.setMeinVersion(toMeinVersionItem(response.getVersion()));
-//        return meinResponse;
-//    }
-//
-//    @GetMapping("/admin/meinVersion")
-//    public GetMeinVersionItem getMeinVersion(@RequestParam long versionId){
-//
-//        var response = ETLArticleClient.adminGetMeinVersion(versionId);
-//        GetMeinVersionItem meinResponse = new GetMeinVersionItem();
-//        meinResponse.setMeinVersion(toMeinVersionItem(response.getVersion()));
-//        meinResponse.setDistinctCodes(response.getDistinctCodes());
-//        meinResponse.setDistinctIssn(response.getDistinctIssn());
-//        meinResponse.setDistinctEissn(response.getDistinctEissn());
-//
-//        return meinResponse;
-//    }
-//
-//    @PostMapping("/admin/listMeinJournals")
-//    public ListMeinJournalResponse listMeinJournal(@RequestBody ListMeinJournalRequest request) {
-//        var response = ETLArticleClient.adminListMeinJournals(request.getVersionId(), request.getPage(), request.getSize(), request.getSortDir());
-//
-//        ListMeinJournalResponse meinResponse = new ListMeinJournalResponse();
-//
-//        List<org.example.apigateway.responses.articles.MeinJournalItem>  listOfJournals = new ArrayList<>();
-//
-//        for(MeinJournalItem item : response.getItemsList()){
-//            org.example.apigateway.responses.articles.MeinJournalItem d = toMeinJournalItem(item);
-//            listOfJournals.add(d);
-//        }
-//
-//
-//        meinResponse.setMeinJournals(listOfJournals);
-//        meinResponse.setPageMeta(toPageMeta(response.getPage()));
-//
-//        return meinResponse;
-//    }
-//
-//
-//    @PostMapping("/admin/getMeinJournal")
-//    public GetMeinJournalResponse adminGetMeinJournal(@RequestBody GetMeinJournalRequest request) {
-//
-//        var response = ETLArticleClient.adminGetMeinJournal(request.getVersionId(), request.getJournalId());
-//
-//        GetMeinJournalResponse meinResponse = new GetMeinJournalResponse();
-//
-//        meinResponse.setId(response.getItem().getId());
-//        meinResponse.setUid(response.getItem().getUid());
-//        meinResponse.setTitle1(response.getItem().getTitle1());
-//        meinResponse.setTitle2(response.getItem().getTitle2());
-//        meinResponse.setIssn(response.getItem().getIssn());
-//        meinResponse.setIssn2(response.getItem().getIssn2());
-//        meinResponse.setEissn(response.getItem().getEissn());
-//        meinResponse.setEissn2(response.getItem().getEissn2());
-//        meinResponse.setPoints(response.getItem().getPoints());
-//
-//        List<GetMeinJournalResponse.CodeRef> codeRefs = response.getItem()
-//                .getCodesList().stream()
-//                .map(src -> {
-//                    GetMeinJournalResponse.CodeRef ref  = new GetMeinJournalResponse.CodeRef();
-//                    ref.setCode(src.getCode());
-//                    ref.setName(src.getName());
-//                    return ref;
-//                }).collect(Collectors.toList());
-//
-//        meinResponse.setCodes(codeRefs);
-//
-//        return meinResponse;
-//    }
-//
-//    @PostMapping("/admin/activateMeinVersion")
-//    public ApiResponse adminActivateMeinVersion(@RequestParam long versionId){
-//        var response = ETLArticleClient.adminActivateMeinVersion(versionId);
-//
-//
-//        ApiResponse apiResponse = new ApiResponse();
-//        apiResponse.setCode(response.getCode());
-//        apiResponse.setMessage(response.getMessage());
-//
-//        return apiResponse;
-//    }
-//
-//    @PostMapping("/admin/deactivateMeinVersion")
-//    public ApiResponse adminDeactivateMeinVersion(@RequestParam long versionId){
-//        var response = ETLArticleClient.adminDeactivateMeinVersion(versionId);
-//
-//        ApiResponse apiResponse = new ApiResponse();
-//        apiResponse.setCode(response.getCode());
-//        apiResponse.setMessage(response.getMessage());
-//
-//        return apiResponse;
-//    }
-//
-//    @DeleteMapping("/admin/deleteMeinVersion")
-//    public AsyncResponse adminDeleteMeinVersion(@RequestParam long versionId){
-//        var response = ETLArticleClient.adminDeleteMeinVersion(versionId);
-//
-//       AsyncResponse deleteResponse = new AsyncResponse();
-//       deleteResponse.setJobId(response.getJobId());
-//       deleteResponse.setMessage(response.getMessage());
-//       return deleteResponse;
-//    }
-//
-//    @PostMapping("/admin/recalcCycleScores")
-//    public AsyncResponse recalcCycleScores(@RequestParam long cycleId){
-//
-//        var response = ETLArticleClient.adminRecalcCycleScores(cycleId);
-//
-//        AsyncResponse recalcResponse = new AsyncResponse();
-//        recalcResponse.setJobId(response.getJobId());
-//        recalcResponse.setMessage(response.getMessage());
-//        return recalcResponse;
-//    }
-//
-//    @GetMapping("/admin/getJobStatus")
-//    public JobStatusResponse getJobStatus(@RequestParam long jobId){
-//        var response = ETLArticleClient.getJobStatus(jobId);
-//
-//        JobStatusResponse jobStatusResponse = new JobStatusResponse();
-//        jobStatusResponse.setJobId(response.getJobId());
-//        jobStatusResponse.setStatus(response.getStatus());
-//        jobStatusResponse.setType(response.getType());
-//        jobStatusResponse.setError(response.getError());
-//
-//        return jobStatusResponse;
-//    }
-//
-//
-//
-//
-//
-//}
 @RequestMapping("/etl")
 @RestController
 public class ETLArticleController {
     private static final Logger log = LoggerFactory.getLogger(ETLArticleController.class);
+    private final ETLArticleClient etlArticleClient;
 
+    public ETLArticleController(ETLArticleClient etlArticleClient) {
+        this.etlArticleClient = etlArticleClient;
+    }
     @PostMapping("/admin/import")
     public ResponseEntity<MEiNResponse> importMEiN(@RequestParam("file") MultipartFile file,
                                                    @RequestParam("label") String label,
@@ -200,7 +43,7 @@ public class ETLArticleController {
             if (uid != null) userId = Long.parseLong(uid);
 
             String filename = file.getOriginalFilename();
-            var response = ETLArticleClient.importFile(file, filename, label, userId, activateAfter);
+            var response = etlArticleClient.importFile(file, filename, label, userId, activateAfter);
 
             MEiNResponse meinResponse = new MEiNResponse();
             meinResponse.setVersion_id(response.getVersionId());
@@ -215,7 +58,7 @@ public class ETLArticleController {
     @GetMapping("/admin/activeMeinVersion")
     public ResponseEntity<GetActiveMeinVersionResponse> getActiveMeinVersion() {
         try {
-            var response = ETLArticleClient.adminGetActiveMeinVersion();
+            var response = etlArticleClient.adminGetActiveMeinVersion();
             GetActiveMeinVersionResponse meinResponse = new GetActiveMeinVersionResponse();
             meinResponse.setMeinVersion(MeinVersionItemMapper.toMeinVersionItem(response.getVersion()));
             return ResponseEntity.ok(meinResponse);
@@ -228,7 +71,7 @@ public class ETLArticleController {
     @GetMapping("/admin/meinVersion")
     public ResponseEntity<GetMeinVersionItem> getMeinVersion(@RequestParam long versionId) {
         try {
-            var response = ETLArticleClient.adminGetMeinVersion(versionId);
+            var response = etlArticleClient.adminGetMeinVersion(versionId);
             GetMeinVersionItem meinResponse = new GetMeinVersionItem();
             meinResponse.setMeinVersion(MeinVersionItemMapper.toMeinVersionItem(response.getVersion()));
             meinResponse.setDistinctCodes(response.getDistinctCodes());
@@ -242,7 +85,7 @@ public class ETLArticleController {
     }
 
     @PostMapping("/admin/listMeinJournals")
-    public ResponseEntity<ListMeinJournalResponse> listMeinJournal(@RequestBody ListMeinJournalRequest request, Sort sort) {
+    public ResponseEntity<ListMeinJournalResponse> listMeinJournal(@RequestBody ListMeinJournalRequest request) {
         try {
             Long versionId = request.getVersionId() == null ? 0 : request.getVersionId();
             String title = request.getTitle() == null ? "" : request.getTitle().trim();
@@ -250,7 +93,7 @@ public class ETLArticleController {
             int size = request.getSize() == null ? 20 : Math.min(Math.max(request.getSize(), 1), 100);
             String sortDir = request.getSortDir() == null ? "asc" : request.getSortDir().trim();
 
-            var response = ETLArticleClient.adminListMeinJournals(versionId, page, size, sortDir ,title);
+            var response = etlArticleClient.adminListMeinJournals(versionId, page, size, sortDir ,title);
 
             List<org.example.apigateway.responses.articles.MeinJournalItem> listOfJournals = response.getItemsList().stream()
                     .map(MeinJournalItemMapper::toMeinJournalItem)
@@ -269,7 +112,7 @@ public class ETLArticleController {
     @PostMapping("/admin/getMeinJournal")
     public ResponseEntity<GetMeinJournalResponse> adminGetMeinJournal(@RequestBody GetMeinJournalRequest request) {
         try {
-            var response = ETLArticleClient.adminGetMeinJournal(request.getVersionId(), request.getJournalId());
+            var response = etlArticleClient.adminGetMeinJournal(request.getVersionId(), request.getJournalId());
             var item = response.getItem();
 
             GetMeinJournalResponse meinResponse = new GetMeinJournalResponse();
@@ -302,7 +145,7 @@ public class ETLArticleController {
     @PostMapping("/admin/activateMeinVersion")
     public ResponseEntity<ApiResponse> adminActivateMeinVersion(@RequestParam long versionId) {
         try {
-            var response = ETLArticleClient.adminActivateMeinVersion(versionId);
+            var response = etlArticleClient.adminActivateMeinVersion(versionId);
             ApiResponse apiResponse = new ApiResponse();
             apiResponse.setCode(response.getCode());
             apiResponse.setMessage(response.getMessage());
@@ -316,7 +159,7 @@ public class ETLArticleController {
     @PostMapping("/admin/deactivateMeinVersion")
     public ResponseEntity<ApiResponse> adminDeactivateMeinVersion(@RequestParam long versionId) {
         try {
-            var response = ETLArticleClient.adminDeactivateMeinVersion(versionId);
+            var response = etlArticleClient.adminDeactivateMeinVersion(versionId);
             ApiResponse apiResponse = new ApiResponse();
             apiResponse.setCode(response.getCode());
             apiResponse.setMessage(response.getMessage());
@@ -330,7 +173,7 @@ public class ETLArticleController {
     @DeleteMapping("/admin/deleteMeinVersion")
     public ResponseEntity<AsyncResponse> adminDeleteMeinVersion(@RequestParam long versionId) {
         try {
-            var response = ETLArticleClient.adminDeleteMeinVersion(versionId);
+            var response = etlArticleClient.adminDeleteMeinVersion(versionId);
             AsyncResponse deleteResponse = new AsyncResponse();
             deleteResponse.setJobId(response.getJobId());
             deleteResponse.setMessage(response.getMessage());
@@ -344,7 +187,7 @@ public class ETLArticleController {
     @PostMapping("/admin/recalcCycleScores")
     public ResponseEntity<AsyncResponse> recalcCycleScores(@RequestParam long cycleId) {
         try {
-            var response = ETLArticleClient.adminRecalcCycleScores(cycleId);
+            var response = etlArticleClient.adminRecalcCycleScores(cycleId);
             AsyncResponse recalcResponse = new AsyncResponse();
             recalcResponse.setJobId(response.getJobId());
             recalcResponse.setMessage(response.getMessage());
@@ -358,7 +201,7 @@ public class ETLArticleController {
     @GetMapping("/admin/getJobStatus")
     public ResponseEntity<JobStatusResponse> getJobStatus(@RequestParam long jobId) {
         try {
-            var response = ETLArticleClient.getJobStatus(jobId);
+            var response = etlArticleClient.getJobStatus(jobId);
             JobStatusResponse jobStatusResponse = new JobStatusResponse();
             jobStatusResponse.setJobId(response.getJobId());
             jobStatusResponse.setStatus(response.getStatus());
@@ -373,7 +216,7 @@ public class ETLArticleController {
 
     @PostMapping("/admin/listMeinVersions")
     public ResponseEntity<ListMeinVersionResponse> adminListMeinVersions(@RequestBody ListSmthRequest request) {
-        var response = ETLArticleClient.adminListMeinVersions(request.getPage(), request.getSize(), request.getSortDir());
+        var response = etlArticleClient.adminListMeinVersions(request.getPage(), request.getSize(), request.getSortDir());
 
         ListMeinVersionResponse listMeinVersionResponse = new ListMeinVersionResponse();
 

@@ -4,6 +4,7 @@ import com.example.generated.*;
 import com.google.protobuf.ByteString;
 import io.grpc.Channel;
 import org.example.apigateway.Client;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -11,11 +12,12 @@ import java.io.IOException;
 @Client(host = "${article.server.host}",
         port = "${article.server.port}"
 )
+@Component
 public class ETLMonoClient {
 
-    private static ETLMonoServiceGrpc.ETLMonoServiceBlockingStub stub;
+    private ETLMonoServiceGrpc.ETLMonoServiceBlockingStub stub;
 
-    public static ImportMEiNReply importFile(MultipartFile file, String fileName, String label, long importedBy){
+    public ImportMEiNReply importFile(MultipartFile file, String fileName, String label, long importedBy){
 
         ByteString fileBytes = null;
         try {
@@ -34,7 +36,7 @@ public class ETLMonoClient {
         return stub.importFile(request);
     }
 
-    public static AdminGetMeinMonoVersionResponse adminGetMeinMonoVersion(Long versionId){
+    public AdminGetMeinMonoVersionResponse adminGetMeinMonoVersion(Long versionId){
         AdminGetMeinMonoVersionRequest request = AdminGetMeinMonoVersionRequest.newBuilder()
                 .setId(versionId)
                 .build();
@@ -42,7 +44,7 @@ public class ETLMonoClient {
         return stub.adminGetMeinMonoVersion(request);
     }
 
-    public static AdminGetMeinMonoPublisherResponse adminGetMeinMonoPublisher(Long publisherId){
+    public AdminGetMeinMonoPublisherResponse adminGetMeinMonoPublisher(Long publisherId){
         AdminGetMeinMonoPublisherRequest request = AdminGetMeinMonoPublisherRequest.newBuilder()
                 .setId(publisherId)
                 .build();
@@ -50,7 +52,7 @@ public class ETLMonoClient {
         return stub.adminGetMeinMonoPublisher(request);
     }
 
-    public static AdminListMeinMonoVersionsResponse adminListMeinMonoVersions(Integer page, Integer size, String sortDir) {
+    public AdminListMeinMonoVersionsResponse adminListMeinMonoVersions(Integer page, Integer size, String sortDir) {
         AdminListMeinMonoVersionsRequest request = AdminListMeinMonoVersionsRequest.newBuilder()
                 .setPage(page)
                 .setSize(size)
@@ -60,7 +62,7 @@ public class ETLMonoClient {
         return stub.adminListMeinMonoVersions(request);
     }
 
-    public static AdminListMeinMonoPublishersResponse adminListMeinMonoPublishers(Long versionId, Integer page, Integer size, String sortDir,String title){
+    public AdminListMeinMonoPublishersResponse adminListMeinMonoPublishers(Long versionId, Integer page, Integer size, String sortDir,String title){
         AdminListMeinMonoPublishersRequest request = AdminListMeinMonoPublishersRequest.newBuilder()
                 .setVersionId(versionId)
                 .setPage(page)
@@ -72,7 +74,7 @@ public class ETLMonoClient {
         return stub.adminListMeinMonoPublishers(request);
     }
 
-    public static DeleteMeinMonoVersionResponse deleteMeinMonoVersion(Long versionId){
+    public DeleteMeinMonoVersionResponse deleteMeinMonoVersion(Long versionId){
         DeleteMeinMonoVersionRequest request = DeleteMeinMonoVersionRequest.newBuilder()
                 .setId(versionId)
                 .build();
@@ -80,7 +82,7 @@ public class ETLMonoClient {
         return stub.adminDeleteMeinMonoVersion(request);
     }
 
-    public static AdminRecalcMonoCycleScoresResponse adminRecalcMonoCycleScores(Long cycleId){
+    public AdminRecalcMonoCycleScoresResponse adminRecalcMonoCycleScores(Long cycleId){
         AdminRecalcMonoCycleScoresRequest request = AdminRecalcMonoCycleScoresRequest.newBuilder()
                 .setCycleId(cycleId)
                 .build();
@@ -88,7 +90,7 @@ public class ETLMonoClient {
         return stub.adminRecalculateMonoCycleScores(request);
     }
 
-    public static void init(Channel channel) {
+    public void init(Channel channel) {
         stub = ETLMonoServiceGrpc.newBlockingStub(channel);
     }
 

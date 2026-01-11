@@ -29,13 +29,18 @@ import java.util.List;
 @RequestMapping("/monograph/worker")
 public class WorkerMonoController {
 
+    private final WorkerMonoClient workerMonoClient;
+
+    public WorkerMonoController(WorkerMonoClient workerMonoClient) {
+        this.workerMonoClient = workerMonoClient;
+    }
 
     @PostMapping("/createMonograph")
     public MonographViewResponse createMonograph(@RequestBody CreateMonographRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
         String doi = request.getDoi() == null ? "" : request.getDoi();
-            var response = WorkerMonoClient.createMonograph(userId, request.getTypeId(), request.getDisciplineId(), request.getTitle(), doi, request.getIsbn(), request.getMonograficPublisherTitle(), request.getPublicationYear(), request.getCoauthors());
+            var response = workerMonoClient.createMonograph(userId, request.getTypeId(), request.getDisciplineId(), request.getTitle(), doi, request.getIsbn(), request.getMonograficPublisherTitle(), request.getPublicationYear(), request.getCoauthors());
 
         MonographViewResponse monographViewResponse = MonographViewMapper.map(response);
 
@@ -46,7 +51,7 @@ public class WorkerMonoController {
     public ChapterViewResponse createChapter(@RequestBody CreateChapterRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
         String doi = request.getDoi() == null ? "" : request.getDoi();
-        var response = WorkerMonoClient.createChapter(userId, request.getTypeId(), request.getDisciplineId(), request.getMonograficChapterTitle(), request.getMonograficTitle(), request.getMonographPublisher(), doi, request.getIsbn(), request.getPublicationYear(), request.getCoauthor());
+        var response = workerMonoClient.createChapter(userId, request.getTypeId(), request.getDisciplineId(), request.getMonograficChapterTitle(), request.getMonograficTitle(), request.getMonographPublisher(), doi, request.getIsbn(), request.getPublicationYear(), request.getCoauthor());
 
         ChapterViewResponse chapterViewResponse = ChapterViewMapper.map(response);
         return chapterViewResponse;
@@ -56,7 +61,7 @@ public class WorkerMonoController {
     public MonographViewResponse getMonograph(@RequestParam("id") Long id){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerMonoClient.getMonograph(id, userId);
+        var response = workerMonoClient.getMonograph(id, userId);
 
         MonographViewResponse monographViewResponse = MonographViewMapper.map(response);
 
@@ -67,7 +72,7 @@ public class WorkerMonoController {
     public ChapterViewResponse getChapter(@RequestParam("id") Long id){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerMonoClient.getChapter(id, userId);
+        var response = workerMonoClient.getChapter(id, userId);
 
         ChapterViewResponse chapterViewResponse = ChapterViewMapper.map(response);
 
@@ -78,7 +83,7 @@ public class WorkerMonoController {
     public MonographViewResponse updateMonograph(@RequestBody UpdateMonographRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerMonoClient.updateMonograph(request.getId(),userId, request.getTypeId(), request.getDisciplineId(), request.getTitle(), request.getDoi(), request.getIsbn(), request.getMonograficPublisherTitle(), request.getPublicationYear(), request.getCoauthors());
+        var response = workerMonoClient.updateMonograph(request.getId(),userId, request.getTypeId(), request.getDisciplineId(), request.getTitle(), request.getDoi(), request.getIsbn(), request.getMonograficPublisherTitle(), request.getPublicationYear(), request.getCoauthors());
 
         MonographViewResponse monographViewResponse = MonographViewMapper.map(response);
         return monographViewResponse;
@@ -88,7 +93,7 @@ public class WorkerMonoController {
     public ChapterViewResponse updateChapter(@RequestBody UpdateChapterRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerMonoClient.updateChapter(request.getId(),userId , request.getTypeId(), request.getDisciplineId(), request.getMonograficChapterTitle(), request.getMonograficTitle(), request.getMonographPublisher(), request.getDoi(), request.getIsbn(), request.getPublicationYear(), request.getCoauthor());
+        var response = workerMonoClient.updateChapter(request.getId(),userId , request.getTypeId(), request.getDisciplineId(), request.getMonograficChapterTitle(), request.getMonograficTitle(), request.getMonographPublisher(), request.getDoi(), request.getIsbn(), request.getPublicationYear(), request.getCoauthor());
 
         ChapterViewResponse chapterViewResponse = ChapterViewMapper.map(response);
 
@@ -99,7 +104,7 @@ public class WorkerMonoController {
     public ListMonographsResponse listMyMonographs(@RequestBody ListRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerMonoClient.listMonographs(userId, request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
+        var response = workerMonoClient.listMonographs(userId, request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
 
         ListMonographsResponse monographsResponse = new ListMonographsResponse();
 
@@ -126,7 +131,7 @@ public class WorkerMonoController {
     public org.example.apigateway.responses.mono.ListChaptersResponse listMyChapters(@RequestBody ListRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerMonoClient.listChapters(userId, request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(),request.getTitle());
+        var response = workerMonoClient.listChapters(userId, request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(),request.getTitle());
 
         org.example.apigateway.responses.mono.ListChaptersResponse chapterViewResponse = new org.example.apigateway.responses.mono.ListChaptersResponse();
 
@@ -151,7 +156,7 @@ public class WorkerMonoController {
     @DeleteMapping("/deleteMonograph")
     public ApiResponse deleteMonograph(@RequestParam("id") Long id){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
-        var response = WorkerMonoClient.deleteMonograph( id,userId);
+        var response = workerMonoClient.deleteMonograph( id,userId);
 
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(response.getCode());
@@ -163,7 +168,7 @@ public class WorkerMonoController {
     @DeleteMapping("/deleteChapter")
     public ApiResponse deleteChapter(@RequestParam("id") Long id){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
-        var response = WorkerMonoClient.deleteChapter( id,userId);
+        var response = workerMonoClient.deleteChapter( id,userId);
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(response.getCode());
         apiResponse.setMessage(response.getMessage());

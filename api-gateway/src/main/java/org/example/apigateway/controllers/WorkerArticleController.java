@@ -18,11 +18,16 @@ import java.util.List;
 @RequestMapping("/article")
 public class WorkerArticleController {
 
+    private final WorkerArticleClient workerArticleClient;
+
+    public WorkerArticleController(WorkerArticleClient workerArticleClient) {
+        this.workerArticleClient = workerArticleClient;
+    }
     @PostMapping("/worker/createPublication")
     public PublicationViewResponse createPublication(@RequestBody CreatePublicationRequest request) {
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerArticleClient.createPublication(userId, request.getTypeId(), request.getDisciplineId(), request.getTitle(), request.getDoi(), request.getIssn(), request.getEissn(), request.getJournalTitle(), request.getPublicationYear(), request.getCoauthors() );
+        var response = workerArticleClient.createPublication(userId, request.getTypeId(), request.getDisciplineId(), request.getTitle(), request.getDoi(), request.getIssn(), request.getEissn(), request.getJournalTitle(), request.getPublicationYear(), request.getCoauthors() );
 
         return PublicationViewMapper.map(response);
     }
@@ -31,7 +36,7 @@ public class WorkerArticleController {
     public PublicationViewResponse getPublication(@RequestParam  long publicationId) {
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerArticleClient.getPublication(userId, publicationId);
+        var response = workerArticleClient.getPublication(userId, publicationId);
 
         return PublicationViewMapper.map(response);
 
@@ -41,7 +46,7 @@ public class WorkerArticleController {
     public ListPublicationResponse listMyPublications(@RequestBody ListRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerArticleClient.listMyPublications(userId, request.getTypeId(), request.getDisciplineId(),request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
+        var response = workerArticleClient.listMyPublications(userId, request.getTypeId(), request.getDisciplineId(),request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
 
         ListPublicationResponse publicationResponse = new ListPublicationResponse();
 
@@ -66,7 +71,7 @@ public class WorkerArticleController {
     @PatchMapping("/worker/updatePublication")
     public PublicationViewResponse updatePublication(@RequestBody UpdatePublicationRequest request){
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
-        var response = WorkerArticleClient.updatePublication(request.getId(), userId , request.getTypeId(), request.getDisciplineId(), request.getTitle(), request.getDoi(), request.getIssn(), request.getEissn(), request.getJournalTitle(), request.getPublicationYear(),request.getReplaceCoauthors());
+        var response = workerArticleClient.updatePublication(request.getId(), userId , request.getTypeId(), request.getDisciplineId(), request.getTitle(), request.getDoi(), request.getIssn(), request.getEissn(), request.getJournalTitle(), request.getPublicationYear(),request.getReplaceCoauthors());
 
         return PublicationViewMapper.map(response);
     }
@@ -76,7 +81,7 @@ public class WorkerArticleController {
 
         Long userId =  Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = WorkerArticleClient.deletePublication( publicationId, userId);
+        var response = workerArticleClient.deletePublication( publicationId, userId);
 
         ApiResponse apiResponse = new ApiResponse();
 

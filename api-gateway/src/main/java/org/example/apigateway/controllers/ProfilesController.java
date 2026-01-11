@@ -22,11 +22,17 @@ import java.util.List;
 @RequestMapping("/profile")
 public class ProfilesController {
 
+    private final ProfilesClient profilesClient;
+
+    public ProfilesController(ProfilesClient profilesClient) {
+        this.profilesClient = profilesClient;
+    }
+
     @GetMapping("/me")
     public GetProfileResponse getProfile() {
         Long userId = Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = ProfilesClient.getProfile(userId);
+        var response = profilesClient.getProfile(userId);
 
         return ProfileMapper.toResponse(response);
     }
@@ -35,7 +41,7 @@ public class ProfilesController {
     public Response<Void> updateProfile(@RequestBody UpdateProfileRequest request) {
         Long userId = Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = ProfilesClient.updateMyProfile(request, userId);
+        var response = profilesClient.updateMyProfile(request, userId);
 
         var api = response.getResponse();
 
@@ -48,7 +54,7 @@ public class ProfilesController {
 
     @GetMapping("/someone")
     public GetProfileResponse getSomeOneProfile(@RequestParam Long userId) {
-        var response = ProfilesClient.seeSomeoneProfile(userId);
+        var response = profilesClient.seeSomeoneProfile(userId);
 
         return ProfileMapper.toResponse(response);
     }
@@ -57,7 +63,7 @@ public class ProfilesController {
     public ListWorkerDisciplineResponse getWorkerDisciplines() {
         Long userId = Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = ProfilesClient.listWorkerDisciplines(userId);
+        var response = profilesClient.listWorkerDisciplines(userId);
 
         ListWorkerDisciplineResponse result = new ListWorkerDisciplineResponse();
 
@@ -81,7 +87,7 @@ public class ProfilesController {
 
     @PostMapping("/addDiscipline")
     public ListWorkerDisciplineResponse addWorkerDiscipline(@RequestParam Long userId, @RequestParam Long disciplineId) {
-        var response = ProfilesClient.addWorkerDiscipline(userId, disciplineId);
+        var response = profilesClient.addWorkerDiscipline(userId, disciplineId);
 
         ListWorkerDisciplineResponse result = new ListWorkerDisciplineResponse();
 
@@ -105,7 +111,7 @@ public class ProfilesController {
 
     @DeleteMapping("deleteDiscipline")
     public ListWorkerDisciplineResponse removeWorkerDiscipline(@RequestParam Long userId, @RequestParam Long disciplineId){
-        var response = ProfilesClient.removeWorkerDiscipline(userId, disciplineId);
+        var response = profilesClient.removeWorkerDiscipline(userId, disciplineId);
 
         ListWorkerDisciplineResponse result = new ListWorkerDisciplineResponse();
 
@@ -129,7 +135,7 @@ public class ProfilesController {
 
     @PostMapping("/createStatement")
     public GetOrCreateStatementResponse createStatement(@RequestBody GetOrCreateStatementRequest request) {
-        var response = ProfilesClient.getOrCreateStatement(request.getUserId(), request.getDisciplineId(), request.getEvalYear());
+        var response = profilesClient.getOrCreateStatement(request.getUserId(), request.getDisciplineId(), request.getEvalYear());
         WorkerStatement st = response.getStatement();
 
         GetOrCreateStatementResponse result = new GetOrCreateStatementResponse();
@@ -158,7 +164,7 @@ public class ProfilesController {
 
     @PostMapping("/createStatements")
     public AdminInitStatementsForYearResponse createStatements(@RequestParam int year) {
-        var response = ProfilesClient.adminInitStatementsForYear(year);
+        var response = profilesClient.adminInitStatementsForYear(year);
 
         AdminInitStatementsForYearResponse result = new AdminInitStatementsForYearResponse();
 
@@ -179,7 +185,7 @@ public class ProfilesController {
         String sortBy = request.getSortBy() == null ? "fullname" : request.getSortBy().trim();
         String sortDir = request.getSortDir() == null ? "asc" : request.getSortDir().trim();
 
-        var response = ProfilesClient.allProfiles(fullName, page, size, sortBy, sortDir);
+        var response = profilesClient.allProfiles(fullName, page, size, sortBy, sortDir);
 
         ListProfileResponse result = new ListProfileResponse();
 
@@ -205,7 +211,7 @@ public class ProfilesController {
 
     @GetMapping("/listDisciplines")
     public ListWorkerDisciplineResponse listDisciplines() {
-        var response = ProfilesClient.listDiscipline();
+        var response = profilesClient.listDiscipline();
 
         ListWorkerDisciplineResponse result = new ListWorkerDisciplineResponse();
 

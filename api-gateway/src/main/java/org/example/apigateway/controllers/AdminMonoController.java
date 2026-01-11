@@ -23,9 +23,15 @@ import java.util.List;
 @RestController
 public class AdminMonoController {
 
+    private final AdminMonoClient adminMonoClient;
+
+    public AdminMonoController(AdminMonoClient adminMonoClient) {
+        this.adminMonoClient = adminMonoClient;
+
+    }
     @PostMapping("/listMonographs")
     public ListMonographsResponse listMonographs(@RequestBody AdminListRequest request) {
-        var response = AdminMonoClient.listMonographs(request.getId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
+        var response = adminMonoClient.listMonographs(request.getId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
 
         List<MonographViewResponse> monographView = new ArrayList<>();
         for(MonographView view: response.getMonoghraficViewList()){
@@ -43,7 +49,7 @@ public class AdminMonoController {
 
     @PostMapping("/listChapters")
     public ListChaptersResponse listChapters(@RequestBody AdminListRequest request) {
-        var response = AdminMonoClient.listChapters(request.getId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
+        var response = adminMonoClient.listChapters(request.getId(), request.getTypeId(), request.getDisciplineId(), request.getCycleId(), request.getPage(), request.getSize(), request.getSortBy(), request.getSortDir(), request.getTitle());
         List<ChapterViewResponse> chapterView = new ArrayList<>();
         for(ChapterView view: response.getChapterViewList()){
             ChapterViewResponse result = ChapterViewMapper.map(view);
@@ -60,7 +66,7 @@ public class AdminMonoController {
 
     @PostMapping("/getMonographs")
     public MonographViewResponse getMonograph(@RequestBody AdminGetRequest request) {
-        var response = AdminMonoClient.getMonograph(request.getId(), request.getOwnerId());
+        var response = adminMonoClient.getMonograph(request.getId(), request.getOwnerId());
 
         MonographViewResponse result = MonographViewMapper.map(response);
         return result;
@@ -68,7 +74,7 @@ public class AdminMonoController {
 
     @PostMapping("/getChapters")
     public ChapterViewResponse getChapter(@RequestBody AdminGetRequest request) {
-        var response = AdminMonoClient.getChapter(request.getId(), request.getOwnerId());
+        var response = adminMonoClient.getChapter(request.getId(), request.getOwnerId());
         ChapterViewResponse result = ChapterViewMapper.map(response);
         return result;
 

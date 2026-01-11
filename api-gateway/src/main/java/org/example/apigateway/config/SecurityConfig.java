@@ -38,8 +38,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/auth/registration" , "/auth/login", "/auth/refresh").permitAll()
-                        .requestMatchers("/auth/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/article/worker/**").hasRole("WORKER")
+                        .requestMatchers("/auth/admin/**", "/monograph/admin/**", "/article/admin/**", "/etl/**").hasRole("ADMIN")
+                        .requestMatchers("/article/worker/**", "/monograph/worker/**", "/slots/**").hasRole("WORKER")
                         .anyRequest().authenticated()
                 ).oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt
@@ -108,7 +108,7 @@ public class SecurityConfig {
         JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
         authoritiesConverter.setAuthoritiesClaimName("roles");
         authoritiesConverter.setAuthorityPrefix("");
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
         return converter;

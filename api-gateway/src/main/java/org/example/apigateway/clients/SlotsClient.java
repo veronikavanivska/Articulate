@@ -5,16 +5,17 @@ import io.grpc.Channel;
 import org.example.apigateway.Client;
 import org.example.apigateway.mappers.SlotItemTypeMapper;
 import org.example.apigateway.requests.SlotItemType;
+import org.springframework.stereotype.Component;
 
 @Client(host = "${slots.server.host}",
         port = "${slots.server.port}"
 )
+@Component
 public class SlotsClient {
 
-    private static SlotServiceGrpc.SlotServiceBlockingStub stub;
+    private SlotServiceGrpc.SlotServiceBlockingStub stub;
 
-
-    public static DraftView addToActiveSlot(Long userId, Long disciplineId, SlotItemType itemType, Long itemId) {
+    public DraftView addToActiveSlot(Long userId, Long disciplineId, SlotItemType itemType, Long itemId) {
         AddToSlotRequest req = AddToSlotRequest.newBuilder()
                 .setUserId(userId)
                 .setDisciplineId(disciplineId)
@@ -24,7 +25,7 @@ public class SlotsClient {
         return stub.addToActiveSlot(req);
     }
 
-    public static DraftView removeFromActiveSlot(Long userId, Long disciplineId, SlotItemType itemType, Long itemId) {
+    public DraftView removeFromActiveSlot(Long userId, Long disciplineId, SlotItemType itemType, Long itemId) {
         RemoveFromSlotRequest req = RemoveFromSlotRequest.newBuilder()
                 .setUserId(userId)
                 .setDisciplineId(disciplineId)
@@ -34,7 +35,7 @@ public class SlotsClient {
         return stub.removeFromActiveSlot(req);
     }
 
-    public static DraftView getDraft(Long userId, Long disciplineId, Long cycleId, Integer evalYear) {
+    public DraftView getDraft(Long userId, Long disciplineId, Long cycleId, Integer evalYear) {
         GetDraftRequest req = GetDraftRequest.newBuilder()
                 .setUserId(userId)
                 .setDisciplineId(disciplineId)
@@ -46,7 +47,7 @@ public class SlotsClient {
 
 
 
-    public static void init(Channel channel) {
+    public void init(Channel channel) {
         stub = SlotServiceGrpc.newBlockingStub(channel);
     }
 }

@@ -11,9 +11,15 @@ import java.util.Map;
 @Service
 public class DisciplineSyncService {
 
+    private final ProfileClient profileClient;
+
+    public DisciplineSyncService(ProfileClient profileClient) {
+        this.profileClient = profileClient;
+    }
+
     public void syncUpsert(long id, String name) {
         try {
-            ProfileClient.upsertDiscipline(id, name);
+            profileClient.upsertDiscipline(id, name);
             System.out.println("[DisciplineSync] upsert id=" + id);
         } catch (Exception e) {
             System.err.println("[DisciplineSync] failed upsert id=" + id + ": " + e.getMessage());
@@ -35,7 +41,7 @@ public class DisciplineSyncService {
 
             if (items.isEmpty()) return;
 
-            ProfileClient.upsertDisciplines(items);
+            profileClient.upsertDisciplines(items);
             System.out.println("[DisciplineSync] upserted=" + items.size());
         } catch (Exception e) {
             System.err.println("[DisciplineSync] failed batch upsert: " + e.getMessage());
@@ -44,7 +50,7 @@ public class DisciplineSyncService {
 
     public void syncDelete(long id) {
         try {
-            ProfileClient.deleteDiscipline(id);
+            profileClient.deleteDiscipline(id);
             System.out.println("[DisciplineSync] delete id=" + id);
         } catch (Exception e) {
             System.err.println("[DisciplineSync] failed delete id=" + id + ": " + e.getMessage());

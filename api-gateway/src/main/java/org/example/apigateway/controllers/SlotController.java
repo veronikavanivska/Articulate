@@ -13,11 +13,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/slots")
 public class SlotController {
 
+    private final SlotsClient slotsClient;
+
+    public SlotController(SlotsClient slotsClient) {
+        this.slotsClient = slotsClient;
+    }
     @PostMapping("/addToSlot")
     public DraftViewResponse addToActiveSlot(@RequestBody SlotsRequest request) {
         Long userId = Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = SlotsClient.addToActiveSlot(userId, request.getDisciplineId(), request.getItemType(), request.getItemId());
+        var response = slotsClient.addToActiveSlot(userId, request.getDisciplineId(), request.getItemType(), request.getItemId());
 
         DraftViewResponse draftViewResponse = DraftViewMapper.toResponse(response);
 
@@ -29,7 +34,7 @@ public class SlotController {
     public DraftViewResponse removeFromActiveSlot(@RequestBody SlotsRequest request) {
         Long userId = Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = SlotsClient.removeFromActiveSlot(userId, request.getDisciplineId(), request.getItemType(), request.getItemId());
+        var response = slotsClient.removeFromActiveSlot(userId, request.getDisciplineId(), request.getItemType(), request.getItemId());
 
         DraftViewResponse draftViewResponse = DraftViewMapper.toResponse(response);
 
@@ -40,7 +45,7 @@ public class SlotController {
     public DraftViewResponse getSlots(@RequestBody GetDraftRequest request) {
         Long userId = Long.parseLong(SecurityConfig.getCurrentUserId());
 
-        var response = SlotsClient.getDraft(userId, request.getDisciplineId(), request.getEvalCycle(), request.getEvalYear());
+        var response = slotsClient.getDraft(userId, request.getDisciplineId(), request.getEvalCycle(), request.getEvalYear());
 
         DraftViewResponse draftViewResponse = DraftViewMapper.toResponse(response);
 

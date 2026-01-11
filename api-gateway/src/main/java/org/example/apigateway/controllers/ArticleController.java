@@ -17,9 +17,15 @@ import java.util.List;
 @RequestMapping("/article")
 public class ArticleController {
 
+    private final ArticleClient articleClient;
+
+    public ArticleController(ArticleClient articleClient) {
+        this.articleClient = articleClient;
+    }
+
     @GetMapping("listPublicationType")
     public List<RefItem> listPublicationType() {
-        var response = ArticleClient.listPublicationTypes();
+        var response = articleClient.listPublicationTypes();
 
         List<RefItem> refItems = new ArrayList<>();
         for(com.example.generated.RefItem refItem : response.getItemsList())
@@ -37,7 +43,7 @@ public class ArticleController {
 
     @GetMapping("/listDisciplines")
     public List<RefItem> listDisciplines(){
-        var response = ArticleClient.listDisciplines();
+        var response = articleClient.listDisciplines();
 
         List<RefItem> refItems = new ArrayList<>();
         for(com.example.generated.RefItem refItem : response.getItemsList())
@@ -54,7 +60,7 @@ public class ArticleController {
 
     @GetMapping("/listCycles")
     public List<CycleItem> listCycles(){
-        var response = ArticleClient.listCycles();
+        var response = articleClient.listCycles();
         List<CycleItem> cycleItems = new ArrayList<>();
 
         for(com.example.generated.CycleItem cycleItem : response.getItemsList())

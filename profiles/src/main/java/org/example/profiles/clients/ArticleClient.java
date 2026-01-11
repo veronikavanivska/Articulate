@@ -5,13 +5,15 @@ import com.example.generated.SyncAuthorFullNameRequest;
 import com.example.generated.SyncAuthorFullNameResponse;
 import org.example.profiles.Client;
 import io.grpc.Channel;
+import org.springframework.stereotype.Component;
 
 @Client(host = "${article.server.host}", port = "${article.server.port}")
+@Component
 public class ArticleClient {
 
-    private static ArticleProfileSyncServiceGrpc.ArticleProfileSyncServiceBlockingStub stub;
+    private ArticleProfileSyncServiceGrpc.ArticleProfileSyncServiceBlockingStub stub;
 
-    public static SyncAuthorFullNameResponse syncAuthorFullName(long userId, String fullName) {
+    public SyncAuthorFullNameResponse syncAuthorFullName(long userId, String fullName) {
         if (stub == null) {
             throw new IllegalStateException("ArticleClient is not initialized. Did you forget to call init(channel)?");
         }
@@ -26,7 +28,7 @@ public class ArticleClient {
         return stub.syncAuthorFullName(req);
     }
 
-    public static void init(Channel channel) {
+    public void init(Channel channel) {
         stub = ArticleProfileSyncServiceGrpc.newBlockingStub(channel);
     }
 }

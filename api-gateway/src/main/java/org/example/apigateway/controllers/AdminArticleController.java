@@ -23,10 +23,16 @@ import java.util.List;
 @RequestMapping("/article/admin")
 public class AdminArticleController {
 
+    private final AdminArticleClient adminArticleClient;
+
+    public AdminArticleController(AdminArticleClient adminArticleClient) {
+        this.adminArticleClient = adminArticleClient;
+    }
+
     @PostMapping("/listPublication")
     public ListPublicationResponse listPublication(@RequestBody AdminListRequest request) {
 
-        var response = AdminArticleClient.adminListPublications(request.getId(),request.getTypeId(),request.getDisciplineId(),request.getCycleId(),request.getPage(),request.getSize(),request.getSortBy(),request.getSortDir(),request.getTitle());
+        var response = adminArticleClient.adminListPublications(request.getId(),request.getTypeId(),request.getDisciplineId(),request.getCycleId(),request.getPage(),request.getSize(),request.getSortBy(),request.getSortDir(),request.getTitle());
 
         List<PublicationViewResponse> publicationView = new ArrayList<>();
         for(PublicationView view : response.getItemsList())
@@ -47,7 +53,7 @@ public class AdminArticleController {
 
     @PostMapping("/getPublication")
     public  PublicationViewResponse getPublication(@RequestBody AdminGetRequest request) {
-        var response = AdminArticleClient.adminGetPublication(request.getId(), request.getOwnerId());
+        var response = adminArticleClient.adminGetPublication(request.getId(), request.getOwnerId());
 
         PublicationViewResponse viewResponse = PublicationViewMapper.map(response);
 
@@ -56,7 +62,7 @@ public class AdminArticleController {
 
     @PostMapping("/listDisciplines")
     public  ListSmthResponse<RefItem> listDisciplines(@RequestBody ListSmthRequest request) {
-        var response = AdminArticleClient.adminListDisciplines(request.getPage(), request.getSize(), request.getSortDir());
+        var response = adminArticleClient.adminListDisciplines(request.getPage(), request.getSize(), request.getSortDir());
 
         ListSmthResponse<RefItem> result = new ListSmthResponse<>();
 
@@ -80,7 +86,7 @@ public class AdminArticleController {
 
     @PostMapping("/createDiscipline")
     public RefItem createDiscipline(@RequestParam("name") String name) {
-        var response = AdminArticleClient.adminCreateDiscipline(name);
+        var response = adminArticleClient.adminCreateDiscipline(name);
 
         RefItem refItem = new RefItem();
         refItem.setId(response.getId());
@@ -92,7 +98,7 @@ public class AdminArticleController {
 
     @PostMapping("/updateDiscipline")
     public RefItem updateDiscipline(@RequestParam("name") String name, @RequestParam("id") Long id) {
-        var response = AdminArticleClient.adminUpdateDiscipline(id, name);
+        var response = adminArticleClient.adminUpdateDiscipline(id, name);
 
         RefItem refItem = new RefItem();
         refItem.setId(response.getId());
@@ -103,7 +109,7 @@ public class AdminArticleController {
 
     @DeleteMapping("/deleteDiscipline")
     public ApiResponse deleteDiscipline(@RequestParam("id") Long id) {
-        var response = AdminArticleClient.adminDeleteDiscipline(id);
+        var response = adminArticleClient.adminDeleteDiscipline(id);
 
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(response.getCode());
@@ -114,7 +120,7 @@ public class AdminArticleController {
 
     @PostMapping("/listTypes")
     public ListSmthResponse<RefItem> listTypes(@RequestBody ListSmthRequest request) {
-        var response = AdminArticleClient.adminListPublicationTypes(request.getPage(), request.getSize(), request.getSortDir());
+        var response = adminArticleClient.adminListPublicationTypes(request.getPage(), request.getSize(), request.getSortDir());
 
         ListSmthResponse<RefItem> result = new ListSmthResponse<>();
         List<RefItem> refItem = new ArrayList<>();
@@ -135,7 +141,7 @@ public class AdminArticleController {
 
     @PostMapping("/createType")
     public RefItem createType(@RequestParam("name") String name) {
-        var response = AdminArticleClient.adminCreatePublicationType(name);
+        var response = adminArticleClient.adminCreatePublicationType(name);
 
         RefItem refItem = new RefItem();
         refItem.setId(response.getId());
@@ -146,7 +152,7 @@ public class AdminArticleController {
 
     @PostMapping("/updateType")
     public RefItem updateType(@RequestParam("name") String name, @RequestParam("id") Long id) {
-        var response = AdminArticleClient.adminUpdatePublicationType(id, name);
+        var response = adminArticleClient.adminUpdatePublicationType(id, name);
 
         RefItem refItem = new RefItem();
         refItem.setId(response.getId());
@@ -157,7 +163,7 @@ public class AdminArticleController {
 
     @DeleteMapping("/deleteType")
     public ApiResponse deleteType(@RequestParam("id") Long id) {
-        var response = AdminArticleClient.adminDeletePublicationType(id);
+        var response = adminArticleClient.adminDeletePublicationType(id);
 
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(response.getCode());
@@ -168,7 +174,7 @@ public class AdminArticleController {
 
     @PostMapping("/listEvalCycles")
     public ListSmthResponse<CycleItem> listEvalCycles(@RequestBody ListSmthRequest request) {
-        var response = AdminArticleClient.adminListEvalCycles(request.getPage(), request.getSize(), request.getSortDir());
+        var response = adminArticleClient.adminListEvalCycles(request.getPage(), request.getSize(), request.getSortDir());
 
         ListSmthResponse<CycleItem> result = new ListSmthResponse<>();
         List<CycleItem> cycleItem = new ArrayList<>();
@@ -194,7 +200,7 @@ public class AdminArticleController {
 
     @PostMapping("/createEvalCycle")
     public CycleItem createEvalCycle(@RequestBody CreateCycleRequest request) {
-        var response = AdminArticleClient.adminCreateCycle(request.getName(), request.getYearFrom(), request.getYearTo(), request.isActive(), request.getActiveYear());
+        var response = adminArticleClient.adminCreateCycle(request.getName(), request.getYearFrom(), request.getYearTo(), request.isActive(), request.getActiveYear());
 
         CycleItem cycleItem = new CycleItem();
         cycleItem.setId(response.getId());
@@ -212,7 +218,7 @@ public class AdminArticleController {
 
     @PatchMapping("/updateEvalCycle")
     public CycleItem updateEvalCycle(@RequestBody UpdateCycleRequest request) {
-        var response = AdminArticleClient.adminUpdateCycle(request.getId(), request.getName(), request.getYearFrom(), request.getYearTo(), request.getActive(), request.getMeinVersionId(), request.getMeinMonoVersionId(),request.getActiveYear());
+        var response = adminArticleClient.adminUpdateCycle(request.getId(), request.getName(), request.getYearFrom(), request.getYearTo(), request.getActive(), request.getMeinVersionId(), request.getMeinMonoVersionId(),request.getActiveYear());
 
         CycleItem cycleItem = new CycleItem();
         cycleItem.setId(response.getId());
@@ -229,7 +235,7 @@ public class AdminArticleController {
 
     @DeleteMapping("/deleteEvalCycle")
     public ApiResponse deleteEvalCycle(@RequestParam("id") Long id) {
-        var response = AdminArticleClient.adminDeleteCycle(id);
+        var response = adminArticleClient.adminDeleteCycle(id);
 
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(response.getCode());

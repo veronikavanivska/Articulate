@@ -6,10 +6,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ProfileSyncService {
+    private final ProfileCommandClient profileCommandClient;
 
+    public ProfileSyncService(ProfileCommandClient profileCommandClient) {
+        this.profileCommandClient = profileCommandClient;
+    }
     public void syncUserRegistered(long userId) {
         try {
-            ApiResponse resp = ProfileCommandClient.ensureUserProfile(userId);
+            ApiResponse resp = profileCommandClient.ensureUserProfile(userId);
             logResult("EnsureUserProfile", userId, resp);
         } catch (Exception e) {
             System.err.println("[ProfileSync] failed EnsureUserProfile userId=" + userId + ": " + e.getMessage());
@@ -21,13 +25,13 @@ public class ProfileSyncService {
             ApiResponse resp;
 
             if ("ROLE_WORKER".equals(role)) {
-                resp = ProfileCommandClient.ensureWorkerProfile(userId);
+                resp = profileCommandClient.ensureWorkerProfile(userId);
                 logResult("EnsureWorkerProfile", userId, resp);
                 return;
             }
 
             if ("ROLE_ADMIN".equals(role)) {
-                resp = ProfileCommandClient.ensureAdminProfile(userId);
+                resp = profileCommandClient.ensureAdminProfile(userId);
                 logResult("EnsureAdminProfile", userId, resp);
                 return;
             }
@@ -45,13 +49,13 @@ public class ProfileSyncService {
             ApiResponse resp;
 
             if ("ROLE_WORKER".equals(role)) {
-                resp = ProfileCommandClient.deleteWorkerProfile(userId);
+                resp = profileCommandClient.deleteWorkerProfile(userId);
                 logResult("DeleteWorkerProfile", userId, resp);
                 return;
             }
 
             if ("ROLE_ADMIN".equals(role)) {
-                resp = ProfileCommandClient.deleteAdminProfile(userId);
+                resp = profileCommandClient.deleteAdminProfile(userId);
                 logResult("DeleteAdminProfile", userId, resp);
                 return;
             }
@@ -65,7 +69,7 @@ public class ProfileSyncService {
 
     public void syncUserDeleted(long userId) {
         try {
-            ApiResponse resp = ProfileCommandClient.deleteAllProfiles(userId);
+            ApiResponse resp = profileCommandClient.deleteAllProfiles(userId);
             logResult("DeleteAllProfiles", userId, resp);
         } catch (Exception e) {
             System.err.println("[ProfileSync] failed DeleteAllProfiles userId=" + userId + ": " + e.getMessage());

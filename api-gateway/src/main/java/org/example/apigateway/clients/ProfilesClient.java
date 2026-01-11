@@ -5,6 +5,7 @@ import com.google.protobuf.Empty;
 import io.grpc.Channel;
 import org.example.apigateway.Client;
 import org.example.apigateway.requests.profiles.UpdateProfileRequest;
+import org.springframework.stereotype.Component;
 
 import static org.example.apigateway.mappers.ProfileMapper.toGrpc;
 
@@ -12,34 +13,35 @@ import static org.example.apigateway.mappers.ProfileMapper.toGrpc;
         host = "${profiles.server.host}",
         port = "${profiles.server.port}"
 )
+@Component
 public class ProfilesClient {
 
-    private static ProfilesServiceGrpc.ProfilesServiceBlockingStub stub;
+    private ProfilesServiceGrpc.ProfilesServiceBlockingStub stub;
 
-    public static GetProfileResponse getProfile(Long userId) {
+    public GetProfileResponse getProfile(Long userId) {
         GetProfileRequest request = GetProfileRequest.newBuilder().setUserId(userId).build();
 
         return stub.getMyProfile(request);
     }
 
-    public static UpdateMyProfileResponse updateMyProfile(UpdateProfileRequest request, Long userId) {
+    public UpdateMyProfileResponse updateMyProfile(UpdateProfileRequest request, Long userId) {
         UpdateMyProfileRequest grpcReq = toGrpc(request, userId);
 
         return stub.updateMyProfile(grpcReq);
     }
 
-    public static GetProfileResponse seeSomeoneProfile(Long userId) {
+    public GetProfileResponse seeSomeoneProfile(Long userId) {
         SeeSomeoneProfileRequest request = SeeSomeoneProfileRequest.newBuilder().setUserId(userId).build();
         return stub.seeSomeoneProfile(request);
     }
 
-    public static ListWorkerDisciplinesResponse listWorkerDisciplines(Long userId) {
+    public ListWorkerDisciplinesResponse listWorkerDisciplines(Long userId) {
         ListWorkerDisciplinesRequest request = ListWorkerDisciplinesRequest.newBuilder().setUserId(userId).build();
         return stub.listWorkerDisciplines(request);
     }
 
 
-    public static ListWorkerDisciplinesResponse addWorkerDiscipline(Long userId, Long disciplineId) {
+    public ListWorkerDisciplinesResponse addWorkerDiscipline(Long userId, Long disciplineId) {
         AddWorkerDisciplineRequest req = AddWorkerDisciplineRequest.newBuilder()
                 .setUserId(userId)
                 .setDisciplineId(disciplineId)
@@ -47,7 +49,7 @@ public class ProfilesClient {
         return stub.addWorkerDiscipline(req);
     }
 
-    public static ListWorkerDisciplinesResponse removeWorkerDiscipline(Long userId, Long disciplineId) {
+    public ListWorkerDisciplinesResponse removeWorkerDiscipline(Long userId, Long disciplineId) {
         RemoveWorkerDisciplineRequest req = RemoveWorkerDisciplineRequest.newBuilder()
                 .setUserId(userId)
                 .setDisciplineId(disciplineId)
@@ -55,7 +57,7 @@ public class ProfilesClient {
         return stub.removeWorkerDiscipline(req);
     }
 
-    public static GetOrCreateStatementResponse getOrCreateStatement(Long userId, Long disciplineId, int evalYear) {
+    public GetOrCreateStatementResponse getOrCreateStatement(Long userId, Long disciplineId, int evalYear) {
         GetOrCreateStatementRequest req = GetOrCreateStatementRequest.newBuilder()
                 .setUserId(userId)
                 .setDisciplineId(disciplineId)
@@ -64,14 +66,14 @@ public class ProfilesClient {
         return stub.getOrCreateStatement(req);
     }
 
-    public static AdminInitStatementsForYearResponse adminInitStatementsForYear(int evalYear) {
+    public AdminInitStatementsForYearResponse adminInitStatementsForYear(int evalYear) {
         AdminInitStatementsForYearRequest req = AdminInitStatementsForYearRequest.newBuilder()
                 .setEvalYear(evalYear)
                 .build();
         return stub.adminInitStatementsForYear(req);
     }
 
-    public static ListAllProfilesResponse allProfiles(String fullName, Integer page ,  Integer size , String sortBy, String sortDir) {
+    public ListAllProfilesResponse allProfiles(String fullName, Integer page ,  Integer size , String sortBy, String sortDir) {
         ListAllProfilesRequest request = ListAllProfilesRequest.newBuilder()
                 .setFullname(fullName)
                 .setPage(page)
@@ -82,11 +84,11 @@ public class ProfilesClient {
         return stub.listAllProfiles(request);
     }
 
-    public static ListDisciplineResponse listDiscipline() {
+    public ListDisciplineResponse listDiscipline() {
         return stub.listDisciplines(Empty.getDefaultInstance());
     }
 
-    public static void init(Channel channel) {
+    public void init(Channel channel) {
         stub = ProfilesServiceGrpc.newBlockingStub(channel);
     }
 
